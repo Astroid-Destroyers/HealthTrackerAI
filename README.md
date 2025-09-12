@@ -1,3 +1,5 @@
+# [CLICK TO PREVIEW SITE](https://health-tracker-ai-sigma.vercel.app/)
+
 # Next.js & HeroUI Template
 
 This is a template for creating applications using Next.js 14 (pages directory) and HeroUI (v2).
@@ -54,4 +56,4 @@ After modifying the `.npmrc` file, you need to run `pnpm install` again to ensur
 
 Licensed under the [MIT license](https://github.com/heroui-inc/next-pages-template/blob/main/LICENSE).
 "# HealthTrackerAI" 
-"# HealthTrackerAI" 
+"# HealthTrackerAI"
