@@ -8,20 +8,55 @@ export const Logo: React.FC<IconSvgProps> = ({
   ...props
 }) => (
   <svg
-    fill="none"
-    height={size || height}
-    viewBox="0 0 32 32"
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 512 512"
     width={size || height}
+    height={size || height}
     {...props}
   >
-    <path
-      clipRule="evenodd"
-      d="M17.6482 10.1305L15.8785 7.02583L7.02979 22.5499H10.5278L17.6482 10.1305ZM19.8798 14.0457L18.11 17.1983L19.394 19.4511H16.8453L15.1056 22.5499H24.7272L19.8798 14.0457Z"
-      fill="currentColor"
-      fillRule="evenodd"
-    />
+    <defs>
+      <style>
+        {`
+          // .cls-1 { fill: #4d4d4d; }
+          .cls-2 { fill: #aadb41; }
+          .cls-3 { fill: #abe042; }
+          .cls-4 { fill: #17b7ee; stroke: #17b7ee; stroke-miterlimit: 10; }
+        `}
+      </style>
+    </defs>
+    <g id="Layer_2" data-name="Layer 2">
+      <rect className="cls-1" width="512" height="512" />
+    </g>
+    <g id="Layer_1" data-name="Layer 1">
+      <g>
+        <polygon
+          className="cls-4"
+          points="199.87 315.45 71.83 443.46 108.58 480.21 273.34 315.45 199.87 315.45"
+        />
+        <polygon
+          className="cls-4"
+          points="312.13 196.55 440.17 68.54 403.42 31.79 238.66 196.55 312.13 196.55"
+        />
+        <path
+          className="cls-3"
+          d="M440.17,405.82l-74.39,74.39V186.03l74.39-74.39v294.17Z"
+        />
+        <path
+          className="cls-4"
+          d="M146.22,325.96l-74.39,74.39V106.18L146.22,31.79v294.17Z"
+        />
+        <rect
+          className="cls-2"
+          x="178.89"
+          y="224.1"
+          width="154.23"
+          height="63.8"
+        />
+      </g>
+    </g>
   </svg>
 );
+
 
 export const DiscordIcon: React.FC<IconSvgProps> = ({
   size = 24,
