@@ -41,9 +41,9 @@ function TestingPage() {
             />
             <div className="flex items-center gap-2 w-full justify-start">
               <Switch
-                checked={jsonOutput}
-                onCheckedChange={setJsonOutput}
-                id="json-output-toggle"
+                  checked={jsonOutput}
+                  id="json-output-toggle"
+                  onChange={(e) => setJsonOutput(e.target.checked)}
               />
               <label htmlFor="json-output-toggle" className="text-sm">JSON output</label>
             </div>
