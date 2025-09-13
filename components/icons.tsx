@@ -17,16 +17,13 @@ export const Logo: React.FC<IconSvgProps> = ({
     <defs>
       <style>
         {`
-          // .cls-1 { fill: #4d4d4d; }
           .cls-2 { fill: #aadb41; }
           .cls-3 { fill: #abe042; }
           .cls-4 { fill: #17b7ee; stroke: #17b7ee; stroke-miterlimit: 10; }
         `}
       </style>
     </defs>
-    <g id="Layer_2" data-name="Layer 2">
-      <rect className="cls-1" width="512" height="512" />
-    </g>
+  
     <g id="Layer_1" data-name="Layer 1">
       <g>
         <polygon
