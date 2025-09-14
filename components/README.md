@@ -49,3 +49,52 @@ const result = await OpenAPIClient.ask(input);
 ## Output
 
 The output will be displayed in your UI, either as formatted JSON or plain text, depending on the response.
+
+### Example:
+
+Input:
+`this is the input`
+
+Output:
+```
+{
+  role: 'assistant',
+  content: "this is the response",
+  refusal: null,
+  annotations: []
+}
+```
+
+For purposes in the the app only we can have it return json format that we can parse for ai responses from user input. 
+
+### Example
+
+Input: `in json format with keys and values return an example address`
+
+Output:
+```
+{
+  role: 'assistant',
+  content: '{\n' +
+    '  "street": "123 Main Street",\n' +
+    '  "city": "Anytown",\n' +
+    '  "state": "CA",\n' +
+    '  "zip": "12345"\n' +
+    '}',
+  refusal: null,
+  annotations: []
+}
+```
+
+Can be parsed into:
+```
+{
+  "street": "123 Main Street",
+  "city": "Anytown",
+  "state": "CA",
+  "zip": "12345"
+}
+```
+done automatically through the function
+
+

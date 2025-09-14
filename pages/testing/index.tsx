@@ -6,7 +6,7 @@ import { Card } from "@heroui/card";
 import { Switch } from "@heroui/switch";
 import { useState } from "react";
 
-import { OpenAPIClient } from '.././../components/openapi';
+import { OpenAPIClient } from ".././../components/openapi";
 
 function TestingPage() {
   const [question, setQuestion] = useState("");
@@ -26,6 +26,7 @@ function TestingPage() {
 
     try {
       const result = await OpenAPIClient.ask(input);
+      console.log(result);
       if (result.json !== undefined) {
         setDisplay(JSON.stringify(result.json, null, 2));
       } else {
