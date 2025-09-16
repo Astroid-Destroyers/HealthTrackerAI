@@ -4,15 +4,22 @@ import { Head } from "./head";
 
 import { Navbar } from "@/components/navbar";
 
+import { useState } from "react";
+
+
+
+
+
 export default function DefaultLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [loggedIn, setLoggedIn] = useState(false);
   return (
     <div className="relative flex flex-col h-screen">
       <Head />
-      <Navbar />
+      <Navbar loggedIn={loggedIn} setLoggedIn={setLoggedIn} />
       <main className="container mx-auto max-w-7xl px-6 flex-grow pt-16">
         {children}
       </main>
