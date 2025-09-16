@@ -11,6 +11,7 @@ import DefaultLayout from "@/layouts/default";
 import bannerImage from './heathtracker banner.png';
 // import { Image } from "@heroui/image";
 import Image from "next/image";
+import { useAuth } from "@/providers/AuthProvider";
 
 // const openai = new OpenAI({
 //   apiKey: process.env.OPENAI_API_KEY,
@@ -24,6 +25,7 @@ import Image from "next/image";
 // console.log(response.output_text);
 
 export default function IndexPage() {
+  const { user, loading } = useAuth();
   
   return (
     <DefaultLayout>
@@ -37,6 +39,15 @@ export default function IndexPage() {
           style={{ backgroundColor: 'transparent' }}
         />
       </div>
+
+      {!loading && user && (
+        <section className="flex flex-col items-center justify-center py-4">
+          <h1 className="text-3xl font-bold text-center">
+            Welcome {user.displayName || user.email?.split('@')[0] || 'User'}!
+          </h1>
+        </section>
+      )}
+
       <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
         <div className="inline-block max-w-xl text-center justify-center">
           Welcome to HealthTrackerAI
