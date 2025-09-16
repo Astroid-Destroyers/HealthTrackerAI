@@ -46,6 +46,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
   const { user, loading } = useAuth(); // <-- live auth state
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+  const router = useRouter();
 
   // form state
   const [email, setEmail] = useState("");
@@ -64,8 +65,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
     setSubmitting(false);
   };
 
-    const [loggingOut, setLoggingOut] = useState(false);
-    const router = useRouter();
+  const [loggingOut, setLoggingOut] = useState(false);
 
 
   const handlePrimary = useCallback(async () => {
@@ -188,35 +188,43 @@ export const Navbar: React.FC<NavbarProps> = () => {
         </NavbarItem>
 
         {/* Right side auth controls */}
-       {/* Right side auth controls */}
-{!loading && !user ? (
-  <NavbarItem>
-    <Button color="primary" variant="flat" onPress={() => setIsLoginOpen(true)}>
-      Login / Signup
-    </Button>
-  </NavbarItem>
-) : (
-  <NavbarItem className="flex items-center gap-2">
-    <Button
-      color="danger"
-      variant="flat"
-      isLoading={loggingOut}
-      isDisabled={loggingOut}
-      onPress={handleLogout}
-    >
-      Logout
-    </Button>
-    {user && (
-      <Tooltip content={user.displayName || user.email || "User"} placement="bottom">
-        <div
-          className="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-white font-semibold cursor-pointer hover:opacity-80 transition-opacity"
-        >
-          {(user.displayName?.[0] || user.email?.[0] || "?").toUpperCase()}
-        </div>
-      </Tooltip>
-    )}
-  </NavbarItem>
-)}
+        {!loading && !user ? (
+          <NavbarItem>
+            <Button color="primary" variant="flat" onPress={() => setIsLoginOpen(true)}>
+              Login / Signup
+            </Button>
+          </NavbarItem>
+        ) : (
+          <NavbarItem className="flex items-center gap-2">
+            <Button
+              color="danger"
+              isDisabled={loggingOut}
+              isLoading={loggingOut}
+              variant="flat"
+              onPress={handleLogout}
+            >
+              Logout
+            </Button>
+            {user && (
+              <Tooltip content={user.displayName || user.email || "User"} placement="bottom">
+                <div
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-white font-semibold cursor-pointer hover:opacity-80 transition-opacity"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => router.push("/profile")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      router.push("/profile");
+                    }
+                  }}
+                >
+                  {(user.displayName?.[0] || user.email?.[0] || "?").toUpperCase()}
+                </div>
+              </Tooltip>
+            )}
+          </NavbarItem>
+        )}
 
       </NavbarContent>
 
