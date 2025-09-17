@@ -30,7 +30,6 @@ import {
   signInWithPopup,
 } from "firebase/auth";
 import { auth } from "../lib/firebase";
-
 import { useAuth } from "../providers/AuthProvider";
 
 import { siteConfig } from "@/config/site";
