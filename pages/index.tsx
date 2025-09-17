@@ -1,16 +1,14 @@
-import { OpenAI } from "openai";
+import Image from "next/image";
+
 import { Link } from "@heroui/link";
 import { Snippet } from "@heroui/snippet";
 import { Code } from "@heroui/code";
 import { button as buttonStyles } from "@heroui/theme";
 
+import bannerImage from "./heathtracker banner.png";
 import { siteConfig } from "@/config/site";
-import { title, subtitle } from "@/components/primitives";
 import { GithubIcon } from "@/components/icons";
 import DefaultLayout from "@/layouts/default";
-import bannerImage from './heathtracker banner.png';
-// import { Image } from "@heroui/image";
-import Image from "next/image";
 import { useAuth } from "@/providers/AuthProvider";
 
 // const openai = new OpenAI({

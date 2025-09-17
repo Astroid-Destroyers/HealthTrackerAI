@@ -1,10 +1,12 @@
-import { useAuth } from "@/providers/AuthProvider";
+import { useRouter } from "next/router";
+import { useEffect } from "react";
+
 import { Button } from "@heroui/button";
 import { Card, CardHeader, CardBody } from "@heroui/card";
 import { Avatar } from "@heroui/avatar";
+
+import { useAuth } from "@/providers/AuthProvider";
 import DefaultLayout from "@/layouts/default";
-import { useRouter } from "next/router";
-import { useEffect } from "react";
 
 export default function ProfilePage() {
   const { user, loading } = useAuth();
@@ -67,15 +69,15 @@ export default function ProfilePage() {
             </CardHeader>
             <CardBody className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-default-600">Email</label>
+                <span className="text-sm font-medium text-default-600">Email</span>
                 <p className="text-lg">{user.email}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-default-600">Display Name</label>
+                <span className="text-sm font-medium text-default-600">Display Name</span>
                 <p className="text-lg">{user.displayName || "Not set"}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-default-600">Account Created</label>
+                <span className="text-sm font-medium text-default-600">Account Created</span>
                 <p className="text-lg">
                   {user.metadata?.creationTime
                     ? new Date(user.metadata.creationTime).toLocaleDateString()
@@ -83,7 +85,7 @@ export default function ProfilePage() {
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium text-default-600">Last Sign In</label>
+                <span className="text-sm font-medium text-default-600">Last Sign In</span>
                 <p className="text-lg">
                   {user.metadata?.lastSignInTime
                     ? new Date(user.metadata.lastSignInTime).toLocaleDateString()
@@ -100,20 +102,20 @@ export default function ProfilePage() {
             </CardHeader>
             <CardBody className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-default-600">Email Verified</label>
+                <span className="text-sm font-medium text-default-600">Email Verified</span>
                 <div className="flex items-center gap-2 mt-1">
                   <div className={`w-3 h-3 rounded-full ${user.emailVerified ? 'bg-success' : 'bg-warning'}`}></div>
                   <span>{user.emailVerified ? "Verified" : "Not verified"}</span>
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium text-default-600">Provider</label>
+                <span className="text-sm font-medium text-default-600">Provider</span>
                 <p className="text-lg capitalize">
                   {user.providerData?.[0]?.providerId?.replace('.com', '') || "Email"}
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium text-default-600">UID</label>
+                <span className="text-sm font-medium text-default-600">UID</span>
                 <p className="text-sm font-mono bg-default-100 p-2 rounded break-all">
                   {user.uid}
                 </p>
