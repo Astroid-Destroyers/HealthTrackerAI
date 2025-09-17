@@ -230,15 +230,14 @@ export const Navbar: React.FC<NavbarProps> = () => {
       </NavbarContent>
 
       <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
-        <Link isExternal href={siteConfig.links.github}>
-          <GithubIcon className="text-default-500" />
-        </Link>
         <ThemeSwitch />
         <NavbarMenuToggle />
       </NavbarContent>
 
       <NavbarMenu>
-        {searchInput}
+        <div className="hidden md:block mb-4">
+          {searchInput}
+        </div>
         <div className="mx-4 mt-2 flex flex-col gap-2">
           {siteConfig.navItems.map((item, index) => (
             <NavbarMenuItem key={`${item}-${index}`}>
@@ -257,6 +256,73 @@ export const Navbar: React.FC<NavbarProps> = () => {
               </Link>
             </NavbarMenuItem>
           ))}
+          
+          {/* Mobile Auth Controls */}
+          <div className="border-t border-default-200 mt-4 pt-4">
+            <NavbarMenuItem className="mb-2">
+              <Link 
+                isExternal 
+                href={siteConfig.links.github}
+                className="flex items-center gap-2"
+              >
+                <GithubIcon className="text-default-500" />
+                GitHub
+              </Link>
+            </NavbarMenuItem>
+            
+            {!loading && !user ? (
+              <NavbarMenuItem>
+                <Button 
+                  color="primary" 
+                  variant="flat" 
+                  className="w-full" 
+                  onPress={() => setIsLoginOpen(true)}
+                >
+                  Login / Signup
+                </Button>
+              </NavbarMenuItem>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <NavbarMenuItem>
+                  <div className="flex items-center gap-3 p-2">
+                    <div className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white font-semibold">
+                      {(user?.displayName?.[0] || user?.email?.[0] || "?").toUpperCase()}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">
+                        {user?.displayName || "User"}
+                      </span>
+                      <span className="text-xs text-default-500">
+                        {user?.email}
+                      </span>
+                    </div>
+                  </div>
+                </NavbarMenuItem>
+                <NavbarMenuItem>
+                  <Button
+                    color="primary"
+                    variant="flat"
+                    className="w-full"
+                    onPress={() => router.push("/profile")}
+                  >
+                    View Profile
+                  </Button>
+                </NavbarMenuItem>
+                <NavbarMenuItem>
+                  <Button
+                    color="danger"
+                    variant="flat"
+                    className="w-full"
+                    isDisabled={loggingOut}
+                    isLoading={loggingOut}
+                    onPress={handleLogout}
+                  >
+                    Logout
+                  </Button>
+                </NavbarMenuItem>
+              </div>
+            )}
+          </div>
         </div>
       </NavbarMenu>
 
