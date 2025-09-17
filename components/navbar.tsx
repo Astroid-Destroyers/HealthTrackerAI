@@ -22,7 +22,6 @@ import clsx from "clsx";
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { useAuth } from "../providers/AuthProvider";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -31,6 +30,8 @@ import {
   signInWithPopup,
 } from "firebase/auth";
 import { auth } from "../lib/firebase";
+
+import { useAuth } from "../providers/AuthProvider";
 
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
