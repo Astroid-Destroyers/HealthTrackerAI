@@ -2,58 +2,56 @@
 importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js');
 
-// Firebase config will be set by the main app
-let firebaseConfig = null;
 let messaging = null;
+let isInitialized = false;
 
+// Initialize Firebase when config is received
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'FIREBASE_CONFIG') {
-    firebaseConfig = event.data.config;
-    if (firebaseConfig && !firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-      messaging = firebase.messaging();
-    }
-  }
-});
+    if (!isInitialized) {
+      try {
+        firebase.initializeApp(event.data.config);
+        messaging = firebase.messaging();
+        isInitialized = true;
 
-// Handle background messages
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'FIREBASE_CONFIG') {
-    firebaseConfig = event.data.config;
-    if (firebaseConfig && !firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-      messaging = firebase.messaging();
+        console.log('Firebase initialized in service worker');
 
-      // Set up background message handler after config is received
-      messaging.onBackgroundMessage((payload) => {
-        console.log('Received background message:', payload);
+        // Set up background message handler
+        messaging.onBackgroundMessage((payload) => {
+          console.log('Received background message:', payload);
 
-        const notificationTitle = payload.notification?.title || 'HealthTrackerAI';
-        const notificationOptions = {
-          body: payload.notification?.body || 'You have a new notification',
-          icon: '/favicon.ico',
-          badge: '/favicon.ico',
-          data: payload.data,
-          tag: payload.data?.tag || 'health-tracker-notification',
-          requireInteraction: false,
-          silent: false,
-          // Mobile-specific options
-          vibrate: [200, 100, 200], // Vibration pattern for mobile devices
-          actions: [
-            {
-              action: 'view',
-              title: 'View',
-              icon: '/favicon.ico'
-            },
-            {
-              action: 'dismiss',
-              title: 'Dismiss'
-            }
-          ]
-        };
+          const notificationTitle = payload.notification?.title || payload.data?.title || 'HealthTrackerAI';
+          const notificationOptions = {
+            body: payload.notification?.body || payload.data?.body || 'You have a new notification',
+            icon: '/favicon.ico',
+            badge: '/favicon.ico',
+            data: payload.data || {},
+            tag: payload.data?.tag || payload.notification?.tag || 'health-tracker-notification',
+            requireInteraction: payload.data?.requireInteraction === 'true' || false,
+            silent: payload.data?.silent === 'true' || false,
+          };
 
-        self.registration.showNotification(notificationTitle, notificationOptions);
-      });
+          // Add mobile-specific options if on mobile
+          if (self.navigator && /Android|iPhone|iPad|iPod/i.test(self.navigator.userAgent)) {
+            notificationOptions.vibrate = [200, 100, 200];
+            notificationOptions.actions = [
+              {
+                action: 'view',
+                title: 'View'
+              },
+              {
+                action: 'dismiss',
+                title: 'Dismiss'
+              }
+            ];
+          }
+
+          return self.registration.showNotification(notificationTitle, notificationOptions);
+        });
+
+      } catch (error) {
+        console.error('Failed to initialize Firebase in service worker:', error);
+      }
     }
   }
 });
@@ -65,7 +63,8 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   const action = event.action;
-  const appUrl = '/';
+  const notificationData = event.notification.data || {};
+  const appUrl = notificationData.url || '/';
 
   // Handle different notification actions
   if (action === 'dismiss') {
@@ -89,4 +88,16 @@ self.addEventListener('notificationclick', (event) => {
       }
     })
   );
+});
+
+// Handle service worker installation
+self.addEventListener('install', (event) => {
+  console.log('Service Worker installing');
+  self.skipWaiting();
+});
+
+// Handle service worker activation
+self.addEventListener('activate', (event) => {
+  console.log('Service Worker activating');
+  event.waitUntil(clients.claim());
 });
