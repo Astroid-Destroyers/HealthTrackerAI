@@ -1,4 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import type { UserRecord } from "firebase-admin/auth";
+import type { QueryDocumentSnapshot } from "firebase-admin/firestore";
+
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
@@ -67,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log(`Found ${listUsersResult.users.length} users in Firebase Auth`);
 
     const users = await Promise.all(
-      listUsersResult.users.map(async (userRecord) => {
+      listUsersResult.users.map(async (userRecord: UserRecord) => {
         const userId = userRecord.uid;
         console.log(`Processing user: ${userId}, email: ${userRecord.email}`);
 
@@ -75,7 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const devicesSnapshot = await db.collection('users').doc(userId).collection('devices').get();
         console.log(`User ${userId} has ${devicesSnapshot.docs.length} devices`);
 
-        const devices = devicesSnapshot.docs.map((deviceDoc) => ({
+        const devices = devicesSnapshot.docs.map((deviceDoc: QueryDocumentSnapshot) => ({
           id: deviceDoc.id,
           ...deviceDoc.data(),
         }));
