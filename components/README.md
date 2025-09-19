@@ -56,7 +56,7 @@ Input:
 `this is the input`
 
 Output:
-```
+```json
 {
   role: 'assistant',
   content: "this is the response",
@@ -72,7 +72,7 @@ For purposes in the the app only we can have it return json format that we can p
 Input: `in json format with keys and values return an example address`
 
 Output:
-```
+```json
 {
   role: 'assistant',
   content: '{\n' +
@@ -87,7 +87,7 @@ Output:
 ```
 
 Can be parsed into:
-```
+```json
 {
   "street": "123 Main Street",
   "city": "Anytown",

@@ -7,8 +7,10 @@ import { updateProfile } from "firebase/auth";
 import { Button } from "@heroui/button";
 import { Card, CardHeader, CardBody } from "@heroui/card";
 import { Input } from "@heroui/input";
+import { Switch } from "@heroui/switch";
 
 import { useAuth } from "@/providers/AuthProvider";
+import { useNotifications } from "@/hooks/useNotifications";
 import DefaultLayout from "@/layouts/default";
 import { EditIcon } from "@/components/icons";
 
@@ -18,6 +20,10 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [updating, setUpdating] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [notificationLoading, setNotificationLoading] = useState(false);
+
+  const { isSupported, requestPermission, getToken, sendTestNotification } = useNotifications();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -26,10 +32,71 @@ export default function ProfilePage() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (user?.displayName) {
-      setDisplayName(user.displayName);
+    if (user?.uid) {
+      // Check if notifications are enabled for this user and device
+      const deviceId = getDeviceId();
+      const storageKey = `notifications_${user.uid}_${deviceId}`;
+      const enabled = localStorage.getItem(storageKey) === "true";
+      setNotificationsEnabled(enabled);
     }
-  }, [user?.displayName]);
+  }, [user?.uid]);
+
+  const getDeviceId = () => {
+    // Create a simple device identifier based on user agent and screen info
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext('2d');
+    ctx?.fillText(navigator.userAgent + screen.width + screen.height, 0, 0);
+    return btoa(canvas.toDataURL()).slice(0, 16);
+  };
+
+  const handleNotificationToggle = async (enabled: boolean) => {
+    if (!user?.uid || !isSupported) return;
+
+    setNotificationLoading(true);
+    try {
+      if (enabled) {
+        // Request permission and get token
+        const permissionResult = await requestPermission();
+        if (permissionResult === 'granted') {
+          await getToken();
+
+          // Store device-specific setting
+          const deviceId = getDeviceId();
+          const storageKey = `notifications_${user.uid}_${deviceId}`;
+          localStorage.setItem(storageKey, 'true');
+          setNotificationsEnabled(true);
+
+          // Send test notification after 3 seconds
+          setTimeout(async () => {
+            try {
+              await sendTestNotification({
+                title: 'Push Notifications Enabled! 🎉',
+                body: 'Welcome to HealthTrackerAI notifications. You\'ll receive updates about your health tracking.',
+                icon: '/favicon.ico',
+                tag: 'welcome-notification',
+                requireInteraction: false,
+              });
+            } catch (error) {
+              console.error('Failed to send test notification:', error);
+            }
+          }, 3000);
+        } else {
+          alert('Notification permission denied. Please enable notifications in your browser settings.');
+        }
+      } else {
+        // Disable notifications for this device
+        const deviceId = getDeviceId();
+        const storageKey = `notifications_${user.uid}_${deviceId}`;
+        localStorage.removeItem(storageKey);
+        setNotificationsEnabled(false);
+      }
+    } catch (error) {
+      console.error('Error toggling notifications:', error);
+      alert('Failed to update notification settings. Please try again.');
+    } finally {
+      setNotificationLoading(false);
+    }
+  };
 
   const handleUpdateProfile = async () => {
     if (!user) return;
@@ -194,6 +261,20 @@ export default function ProfilePage() {
                 <p className="text-lg capitalize">
                   {user.providerData?.[0]?.providerId?.replace('.com', '') || "Email"}
                 </p>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-sm font-medium text-default-600">Push Notifications</span>
+                  <p className="text-xs text-default-500">
+                    {isSupported ? "Receive notifications on this device" : "Not supported on this browser"}
+                  </p>
+                </div>
+                <Switch
+                  isDisabled={!isSupported || notificationLoading}
+                  isSelected={notificationsEnabled}
+                  size="sm"
+                  onValueChange={handleNotificationToggle}
+                />
               </div>
               <div>
                 <span className="text-sm font-medium text-default-600">UID</span>

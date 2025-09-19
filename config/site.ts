@@ -24,6 +24,10 @@ export const siteConfig = {
       label: "About",
       href: "/about",
     },
+    {
+      label: "Contact Us",
+      href: "/contact-us",
+    },
   ],
   navMenuItems: [
     {
