@@ -7,6 +7,7 @@ import { useRouter } from "next/router";
 
 import { fontSans, fontMono } from "@/config/fonts";
 import { AuthProvider } from "@/providers/AuthProvider";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import "@/styles/globals.css";
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -25,6 +26,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <NextThemesProvider attribute="class" defaultTheme="light">
         <AuthProvider>
           <Component {...pageProps} />
+          <InstallPrompt />
         </AuthProvider>
       </NextThemesProvider>
     </HeroUIProvider>

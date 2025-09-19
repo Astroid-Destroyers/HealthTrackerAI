@@ -86,6 +86,10 @@ export const onForegroundMessage = (callback: (payload: any) => void) => {
  */
 export const sendTestNotification = async (payload: NotificationPayload) => {
   if (Notification.permission === 'granted') {
+    // Detect if we're on a mobile device and Chrome
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+
     const notification = new Notification(payload.title, {
       body: payload.body,
       icon: payload.icon || '/favicon.ico',
@@ -94,7 +98,38 @@ export const sendTestNotification = async (payload: NotificationPayload) => {
       requireInteraction: payload.requireInteraction || false,
       silent: payload.silent || false,
       data: payload.data,
+      // Chrome mobile-specific enhancements
+      ...(isMobile && isChrome && {
+        vibrate: [200, 100, 200, 100, 200], // Enhanced vibration pattern for Chrome
+        actions: [
+          { action: 'view', title: 'Open App' },
+          { action: 'dismiss', title: 'Dismiss' }
+        ],
+        // Chrome-specific options
+        renotify: false,
+        noscreen: false,
+      }),
+      // Standard mobile enhancements for other browsers
+      ...((isMobile && !isChrome) && {
+        vibrate: [200, 100, 200],
+        actions: [
+          { action: 'view', title: 'View' },
+          { action: 'dismiss', title: 'Dismiss' }
+        ]
+      })
     });
+
+    // Chrome-specific: Add click handler for better UX
+    if (isChrome) {
+      notification.onclick = () => {
+        notification.close();
+        window.focus();
+        // Navigate to app
+        if (window.location.pathname !== '/') {
+          window.location.href = '/';
+        }
+      };
+    }
 
     // Auto-close after 5 seconds if not requiring interaction
     if (!payload.requireInteraction) {
