@@ -176,6 +176,21 @@ export const Navbar: React.FC<NavbarProps> = () => {
               </NextLink>
             </NavbarItem>
           ))}
+          {/* Admin link - only visible to admin user */}
+          {user && user.email === "new.roeepalmon@gmail.com" && (
+            <NavbarItem>
+              <NextLink
+                className={clsx(
+                  linkStyles({ color: "foreground" }),
+                  "data-[active=true]:text-primary data-[active=true]:font-medium",
+                )}
+                color="foreground"
+                href="/admin"
+              >
+                Admin
+              </NextLink>
+            </NavbarItem>
+          )}
         </div>
       </NavbarContent>
 
@@ -290,6 +305,18 @@ export const Navbar: React.FC<NavbarProps> = () => {
               </Link>
             </NavbarMenuItem>
           ))}
+          {/* Admin link - only visible to admin user in mobile menu */}
+          {user && user.email === "new.roeepalmon@gmail.com" && (
+            <NavbarMenuItem>
+              <Link
+                color="foreground"
+                href="/admin"
+                size="lg"
+              >
+                Admin
+              </Link>
+            </NavbarMenuItem>
+          )}
           
           {/* Mobile Auth Controls */}
           <div className="border-t border-default-200 mt-4 pt-4">
