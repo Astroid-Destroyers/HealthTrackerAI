@@ -1,4 +1,5 @@
 import type { AppProps } from "next/app";
+import { useEffect } from "react";
 
 import { HeroUIProvider } from "@heroui/system";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
@@ -10,6 +11,14 @@ import "@/styles/globals.css";
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
+
+  useEffect(() => {
+    // Service worker registration temporarily disabled to fix HMR issues
+    // TODO: Re-enable for production
+    // if (process.env.NODE_ENV === "production") {
+    //   registerServiceWorker();
+    // }
+  }, []);
 
   return (
     <HeroUIProvider navigate={router.push}>

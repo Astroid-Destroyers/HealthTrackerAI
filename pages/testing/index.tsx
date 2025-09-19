@@ -12,7 +12,6 @@ import { onAuthStateChanged } from "firebase/auth";
 import { useAuth } from "../../providers/AuthProvider";
 
 import { db } from "../../lib/firebase";
-
 import { OpenAPIClient } from "../../components/openapi";
 
 function TestingPage() {
@@ -220,6 +219,14 @@ function TestingPage() {
             </div>
           )}
         </Card>
+
+        {/* FCM Push Notifications Test - Temporarily disabled */}
+        {/*
+        <Card className="p-6 w-full max-w-2xl">
+          <h2 className="text-xl font-bold mb-4">Push Notifications Test</h2>
+          <NotificationTest />
+        </Card>
+        */}
       </section>
     </DefaultLayout>
   );

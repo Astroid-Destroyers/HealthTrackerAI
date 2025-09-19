@@ -52,6 +52,31 @@ public-hoist-pattern[]=*@heroui/*
 
 After modifying the `.npmrc` file, you need to run `pnpm install` again to ensure that the dependencies are installed correctly.
 
+## Email Configuration (Contact Form)
+
+The contact form uses nodemailer to send emails. To set it up:
+
+1. Copy `.env.example` to `.env.local`
+2. Configure your SMTP settings:
+
+```bash
+# Email Configuration for Contact Form
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+CONTACT_EMAIL=support@healthtrackerai.com
+```
+
+### Gmail Setup
+For Gmail, you'll need to:
+1. Enable 2-factor authentication
+2. Generate an App Password: https://support.google.com/accounts/answer/185833
+3. Use the App Password as `SMTP_PASS`
+
+### Other Email Providers
+The configuration works with most SMTP providers. Update the `SMTP_HOST` and `SMTP_PORT` accordingly.
+
 ## License
 
 Licensed under the [MIT license](https://github.com/heroui-inc/next-pages-template/blob/main/LICENSE).
