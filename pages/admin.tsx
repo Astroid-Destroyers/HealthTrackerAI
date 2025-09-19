@@ -220,7 +220,7 @@ export default function AdminPanel() {
               <Card>
                 <CardHeader>
                   <h3 className="text-lg font-semibold">
-                    {selectedUser.email}'s Devices
+                    {selectedUser.email}&apos;s Devices
                   </h3>
                 </CardHeader>
                 <CardBody className="space-y-4">
