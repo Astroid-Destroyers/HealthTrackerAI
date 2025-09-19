@@ -1,22 +1,53 @@
 import { useRouter } from "next/router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+
+// Firebase imports for profile updates
+import { updateProfile } from "firebase/auth";
 
 import { Button } from "@heroui/button";
 import { Card, CardHeader, CardBody } from "@heroui/card";
-import { Avatar } from "@heroui/avatar";
+import { Input } from "@heroui/input";
 
 import { useAuth } from "@/providers/AuthProvider";
 import DefaultLayout from "@/layouts/default";
+import { EditIcon } from "@/components/icons";
 
 export default function ProfilePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [isEditing, setIsEditing] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push("/");
     }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    if (user?.displayName) {
+      setDisplayName(user.displayName);
+    }
+  }, [user?.displayName]);
+
+  const handleUpdateProfile = async () => {
+    if (!user) return;
+
+    setUpdating(true);
+    try {
+      await updateProfile(user, {
+        displayName: displayName.trim() || null,
+      });
+      setIsEditing(false);
+      alert('Profile updated successfully!');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Failed to update profile. Please try again.');
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -46,13 +77,33 @@ export default function ProfilePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Profile Overview Card */}
           <Card className="md:col-span-2">
-            <CardHeader className="flex flex-col items-center gap-4 pb-2">
-              <Avatar
-                src={user.photoURL || undefined}
-                name={user.displayName || user.email || "User"}
-                size="lg"
-                className="w-24 h-24"
-              />
+            <CardHeader className="flex flex-col items-center gap-4 pb-2 relative">
+              <Button
+                isIconOnly
+                aria-label="Edit profile"
+                className="absolute top-4 right-4"
+                size="sm"
+                variant="light"
+                onPress={() => setIsEditing(!isEditing)}
+              >
+                <EditIcon size={16} />
+              </Button>
+              <div className="relative">
+                <div
+                  className="w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-2xl font-semibold text-gray-600 dark:text-gray-300"
+                  role="img"
+                  aria-label={`${(user.displayName || user.email || "U")
+                    .charAt(0)
+                    .toUpperCase()} avatar`}
+                  title={`${(user.displayName || user.email || "U")
+                    .charAt(0)
+                    .toUpperCase()} avatar`}
+                >
+                  {(user.displayName || user.email || "U")
+                    .charAt(0)
+                    .toUpperCase()}
+                </div>
+              </div>
               <div className="text-center">
                 <h2 className="text-2xl font-semibold">
                   {user.displayName || "User"}
@@ -74,7 +125,37 @@ export default function ProfilePage() {
               </div>
               <div>
                 <span className="text-sm font-medium text-default-600">Display Name</span>
-                <p className="text-lg">{user.displayName || "Not set"}</p>
+                {isEditing ? (
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      className="flex-1"
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      placeholder="Enter display name"
+                      size="sm"
+                      value={displayName}
+                    />
+                    <Button
+                      color="primary"
+                      isLoading={updating}
+                      onPress={handleUpdateProfile}
+                      size="sm"
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="flat"
+                      onPress={() => {
+                        setIsEditing(false);
+                        setDisplayName(user.displayName || "");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-lg">{user.displayName || "Not set"}</p>
+                )}
               </div>
               <div>
                 <span className="text-sm font-medium text-default-600">Account Created</span>
