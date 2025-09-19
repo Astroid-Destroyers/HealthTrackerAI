@@ -180,7 +180,7 @@ function TestingPage() {
                   </Button>
                 )}
               </div>
-              <pre className="w-full text-left bg-gray-30 p-4 rounded text-sm overflow-x-auto">
+              <pre className="w-full text-left bg-gray-100 dark:bg-gray-800 p-4 rounded text-sm overflow-x-auto border dark:border-gray-700">
                 {display}
               </pre>
             </div>

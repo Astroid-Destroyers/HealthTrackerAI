@@ -195,18 +195,42 @@ export const Navbar: React.FC<NavbarProps> = () => {
             </Button>
           </NavbarItem>
         ) : (
-          <NavbarItem className="flex items-center gap-2">
-            <Button
-              color="danger"
-              isDisabled={loggingOut}
-              isLoading={loggingOut}
-              variant="flat"
-              onPress={handleLogout}
-            >
-              Logout
-            </Button>
+          <NavbarItem>
             {user && (
-              <Tooltip content={user.displayName || user.email || "User"} placement="bottom">
+              <Tooltip
+                content={
+                  <div className="flex flex-col gap-2 p-2">
+                    <div className="text-center">
+                      <p className="font-semibold">
+                        {user.displayName || "User"}
+                      </p>
+                      <p className="text-sm text-default-500">{user.email}</p>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Button
+                        className="justify-start"
+                        size="sm"
+                        variant="light"
+                        onPress={() => router.push("/profile")}
+                      >
+                        Edit Profile
+                      </Button>
+                      <Button
+                        className="justify-start"
+                        color="danger"
+                        isDisabled={loggingOut}
+                        isLoading={loggingOut}
+                        size="sm"
+                        variant="light"
+                        onPress={handleLogout}
+                      >
+                        {loggingOut ? "Logging out..." : "Logout"}
+                      </Button>
+                    </div>
+                  </div>
+                }
+                placement="bottom"
+              >
                 <div
                   className="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-white font-semibold cursor-pointer hover:opacity-80 transition-opacity"
                   role="button"
@@ -219,7 +243,18 @@ export const Navbar: React.FC<NavbarProps> = () => {
                     }
                   }}
                 >
-                  {(user.displayName?.[0] || user.email?.[0] || "?").toUpperCase()}
+                  {/* display user avatar */}
+                  <span
+                    aria-label={`${(user.displayName || user.email || "U")
+                      .charAt(0)
+                      .toUpperCase()} avatar`}
+                    className="text-sm font-semibold"
+                    role="img"
+                  >
+                    {(user.displayName || user.email || "U")
+                      .charAt(0)
+                      .toUpperCase()}
+                  </span>
                 </div>
               </Tooltip>
             )}
