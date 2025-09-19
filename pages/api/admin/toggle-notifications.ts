@@ -60,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(403).json({ error: "Forbidden: Admin access required" });
     }
 
-    const { userId, deviceId, enabled } = req.body;
+    const { userId, deviceId, enabled, fcmToken, userAgent, deviceInfo } = req.body;
 
     if (!userId || !deviceId || typeof enabled !== "boolean") {
       return res.status(400).json({ error: "Missing required fields: userId, deviceId, enabled" });
@@ -68,10 +68,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Update device notification status
     const deviceRef = db.collection("users").doc(userId).collection("devices").doc(deviceId);
-    await deviceRef.update({
+    
+    const updateData: any = {
       notificationsEnabled: enabled,
       lastUpdated: FieldValue.serverTimestamp(),
-    });
+    };
+
+    // If enabling notifications, store additional device info
+    if (enabled && fcmToken) {
+      updateData.fcmToken = fcmToken;
+      updateData.userAgent = userAgent;
+      updateData.deviceInfo = deviceInfo;
+      updateData.registeredAt = FieldValue.serverTimestamp();
+    }
+
+    await deviceRef.set(updateData, { merge: true });
 
     res.status(200).json({ success: true });
   } catch (error) {

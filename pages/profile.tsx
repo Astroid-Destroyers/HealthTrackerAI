@@ -68,13 +68,44 @@ export default function ProfilePage() {
         // Request permission and get token
         const permissionResult = await requestPermission();
         if (permissionResult === 'granted') {
-          await getToken();
+          const fcmToken = await getToken();
 
           // Store device-specific setting
           const deviceId = getDeviceId();
           const storageKey = `notifications_${user.uid}_${deviceId}`;
           localStorage.setItem(storageKey, 'true');
           setNotificationsEnabled(true);
+
+          // Call backend API to store device info
+          try {
+            const response = await fetch('/api/admin/toggle-notifications', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${await user.getIdToken()}`,
+              },
+              body: JSON.stringify({
+                userId: user.uid,
+                deviceId: deviceId,
+                enabled: true,
+                fcmToken: fcmToken,
+                userAgent: navigator.userAgent,
+                deviceInfo: {
+                  platform: navigator.platform,
+                  language: navigator.language,
+                  screenWidth: screen.width,
+                  screenHeight: screen.height,
+                  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                },
+              }),
+            });
+
+            if (!response.ok) {
+              console.error('Failed to update device info on backend');
+            }
+          } catch (apiError) {
+            console.error('Error calling toggle-notifications API:', apiError);
+          }
 
           // Send test notification after 3 seconds
           setTimeout(async () => {
@@ -99,6 +130,28 @@ export default function ProfilePage() {
         const storageKey = `notifications_${user.uid}_${deviceId}`;
         localStorage.removeItem(storageKey);
         setNotificationsEnabled(false);
+
+        // Call backend API to disable notifications
+        try {
+          const response = await fetch('/api/admin/toggle-notifications', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${await user.getIdToken()}`,
+            },
+            body: JSON.stringify({
+              userId: user.uid,
+              deviceId: deviceId,
+              enabled: false,
+            }),
+          });
+
+          if (!response.ok) {
+            console.error('Failed to update device info on backend');
+          }
+        } catch (apiError) {
+          console.error('Error calling toggle-notifications API:', apiError);
+        }
       }
     } catch (error) {
       console.error('Error toggling notifications:', error);
