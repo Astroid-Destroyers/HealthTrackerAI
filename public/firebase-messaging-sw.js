@@ -17,24 +17,46 @@ self.addEventListener('message', (event) => {
 });
 
 // Handle background messages
-if (messaging) {
-  messaging.onBackgroundMessage((payload) => {
-    console.log('Received background message:', payload);
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'FIREBASE_CONFIG') {
+    firebaseConfig = event.data.config;
+    if (firebaseConfig && !firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+      messaging = firebase.messaging();
 
-    const notificationTitle = payload.notification?.title || 'HealthTrackerAI';
-    const notificationOptions = {
-      body: payload.notification?.body || 'You have a new notification',
-      icon: '/favicon.ico',
-      badge: '/favicon.ico',
-      data: payload.data,
-      tag: payload.data?.tag || 'health-tracker-notification',
-      requireInteraction: false,
-      silent: false,
-    };
+      // Set up background message handler after config is received
+      messaging.onBackgroundMessage((payload) => {
+        console.log('Received background message:', payload);
 
-    self.registration.showNotification(notificationTitle, notificationOptions);
-  });
-}
+        const notificationTitle = payload.notification?.title || 'HealthTrackerAI';
+        const notificationOptions = {
+          body: payload.notification?.body || 'You have a new notification',
+          icon: '/favicon.ico',
+          badge: '/favicon.ico',
+          data: payload.data,
+          tag: payload.data?.tag || 'health-tracker-notification',
+          requireInteraction: false,
+          silent: false,
+          // Mobile-specific options
+          vibrate: [200, 100, 200], // Vibration pattern for mobile devices
+          actions: [
+            {
+              action: 'view',
+              title: 'View',
+              icon: '/favicon.ico'
+            },
+            {
+              action: 'dismiss',
+              title: 'Dismiss'
+            }
+          ]
+        };
+
+        self.registration.showNotification(notificationTitle, notificationOptions);
+      });
+    }
+  }
+});
 
 // Handle notification click
 self.addEventListener('notificationclick', (event) => {
@@ -42,14 +64,21 @@ self.addEventListener('notificationclick', (event) => {
 
   event.notification.close();
 
-  // This will focus on the existing tab if it's already open, or open a new one
+  const action = event.action;
+  const appUrl = '/';
+
+  // Handle different notification actions
+  if (action === 'dismiss') {
+    // Just close the notification, no navigation
+    return;
+  }
+
+  // Default action or 'view' action
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      const appUrl = '/';
-
       // Check if there is already a window/tab open with the target URL
       for (let client of windowClients) {
-        if (client.url === appUrl && 'focus' in client) {
+        if (client.url.includes(appUrl) && 'focus' in client) {
           return client.focus();
         }
       }

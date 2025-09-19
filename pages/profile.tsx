@@ -22,6 +22,16 @@ export default function ProfilePage() {
   const [updating, setUpdating] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [notificationLoading, setNotificationLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isChrome, setIsChrome] = useState(false);
+
+  useEffect(() => {
+    // Detect mobile devices and Chrome
+    const mobileCheck = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const chromeCheck = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+    setIsMobile(mobileCheck);
+    setIsChrome(chromeCheck);
+  }, []);
 
   const { isSupported, requestPermission, getToken, sendTestNotification } = useNotifications();
 
@@ -266,8 +276,17 @@ export default function ProfilePage() {
                 <div>
                   <span className="text-sm font-medium text-default-600">Push Notifications</span>
                   <p className="text-xs text-default-500">
-                    {isSupported ? "Receive notifications on this device" : "Not supported on this browser"}
+                    {isSupported ? (
+                      isChrome && isMobile ? "Chrome mobile: Enhanced notifications with vibration" :
+                      isMobile ? "Receive notifications with vibration on mobile" : "Receive notifications on this device"
+                    ) : "Not supported on this browser"}
                   </p>
+                  {isMobile && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      📱 Mobile: Tap notification to open app
+                      {isChrome && " • Enhanced Chrome experience available"}
+                    </p>
+                  )}
                 </div>
                 <Switch
                   isDisabled={!isSupported || notificationLoading}
