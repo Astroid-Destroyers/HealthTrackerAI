@@ -289,7 +289,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                         {user.displayName || "User"}
                       </span>
                       <span className="text-xs text-default-500 break-all">
-                        {user.email}
+                        {user.email ? user.email.replace("'", "&apos;") : ""}
                       </span>
                     </div>
                     <div className="flex flex-col gap-2 mt-2">
