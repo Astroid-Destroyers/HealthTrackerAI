@@ -31,14 +31,6 @@ interface Device {
   deviceType: string;
 }
 
-interface Device {
-  id: string;
-  userAgent: string;
-  lastLogin: string;
-  notificationsEnabled: boolean;
-  deviceType: string;
-}
-
 const ADMIN_EMAIL = "new.roeepalmon@gmail.com";
 
 export default function AdminPanel() {
@@ -82,8 +74,8 @@ export default function AdminPanel() {
 
         setUsers(data.users);
       }
-    } catch (error) {
-      console.error("Failed to load users:", error);
+    } catch {
+      // Failed to load users
     } finally {
       setLoadingUsers(false);
     }
@@ -111,8 +103,8 @@ export default function AdminPanel() {
         // Refresh users data
         loadUsers();
       }
-    } catch (error) {
-      console.error("Failed to toggle notifications:", error);
+    } catch {
+      // Failed to toggle notifications
     }
   };
 
@@ -142,8 +134,8 @@ export default function AdminPanel() {
       } else {
         alert("Failed to send message");
       }
-    } catch (error) {
-      console.error("Failed to send message:", error);
+    } catch {
+      // Failed to send message
       alert("Failed to send message");
     } finally {
       setSendingMessage(false);
@@ -183,8 +175,12 @@ export default function AdminPanel() {
     <DefaultLayout>
       <div className="container mx-auto max-w-7xl px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-center mb-2">Admin Panel</h1>
-          <p className="text-center text-default-600">
+          <h1 className="text-4xl font-bold text-center mb-4">
+            <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Admin Panel
+            </span>
+          </h1>
+          <p className="text-center text-gray-400 text-lg">
             Manage users and their devices
           </p>
         </div>
@@ -192,9 +188,9 @@ export default function AdminPanel() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Users List */}
           <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <h3 className="text-xl font-semibold">
+            <Card className="backdrop-blur-xl bg-white/5 border border-white/10">
+              <CardHeader className="border-b border-white/10">
+                <h3 className="text-xl font-semibold text-white">
                   All Users ({users.length})
                 </h3>
               </CardHeader>
@@ -205,7 +201,15 @@ export default function AdminPanel() {
                     <p>Loading users...</p>
                   </div>
                 ) : (
-                  <Table aria-label="Users table">
+                  <Table
+                    aria-label="Users table"
+                    className="backdrop-blur-xl bg-transparent"
+                    classNames={{
+                      wrapper: "bg-transparent shadow-none",
+                      th: "bg-white/10 text-white font-semibold border-b border-white/10",
+                      td: "text-gray-300 border-b border-white/5",
+                    }}
+                  >
                     <TableHeader>
                       <TableColumn>Email</TableColumn>
                       <TableColumn>Name</TableColumn>
@@ -239,21 +243,24 @@ export default function AdminPanel() {
           {/* User Device Management */}
           <div>
             {selectedUser ? (
-              <Card>
-                <CardHeader>
-                  <h3 className="text-lg font-semibold">
+              <Card className="backdrop-blur-xl bg-white/5 border border-white/10">
+                <CardHeader className="border-b border-white/10">
+                  <h3 className="text-lg font-semibold text-white">
                     {selectedUser.email}&apos;s Devices
                   </h3>
                 </CardHeader>
                 <CardBody className="space-y-4">
                   {selectedUser.devices.map((device) => (
-                    <div key={device.id} className="border rounded-lg p-4">
+                    <div
+                      key={device.id}
+                      className="border border-white/10 rounded-xl p-4 backdrop-blur-xl bg-white/5"
+                    >
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <p className="font-medium text-sm">
+                          <p className="font-medium text-sm text-white">
                             {getDeviceType(device.userAgent)} Device
                           </p>
-                          <p className="text-xs text-default-500">
+                          <p className="text-xs text-gray-400">
                             Last login:{" "}
                             {new Date(device.lastLogin).toLocaleString()}
                           </p>
@@ -271,14 +278,13 @@ export default function AdminPanel() {
                         />
                       </div>
 
-                      <div className="text-xs text-default-400 mb-2">
+                      <div className="text-xs text-gray-400 mb-2">
                         {device.userAgent.substring(0, 50)}...
                       </div>
 
                       <Button
-                        className="w-full"
+                        className="w-full btn-ai-primary"
                         size="sm"
-                        variant="flat"
                         onPress={() => setSelectedDevice(device)}
                       >
                         Send Message
@@ -297,9 +303,9 @@ export default function AdminPanel() {
                 </CardBody>
               </Card>
             ) : (
-              <Card>
+              <Card className="backdrop-blur-xl bg-white/5 border border-white/10">
                 <CardBody className="text-center py-8">
-                  <p className="text-default-500">
+                  <p className="text-gray-400">
                     Select a user to manage their devices
                   </p>
                 </CardBody>
@@ -310,14 +316,18 @@ export default function AdminPanel() {
 
         {/* Send Custom Message Modal */}
         {selectedDevice && selectedUser && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-md">
-              <CardHeader>
-                <h3 className="text-lg font-semibold">Send Custom Message</h3>
-                <p className="text-sm text-default-600">
-                  To {selectedUser.email} on{" "}
-                  {getDeviceType(selectedDevice.userAgent)} device
-                </p>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-md backdrop-blur-xl bg-slate-900/95 border border-white/20 shadow-2xl">
+              <CardHeader className="border-b border-white/10">
+                <div>
+                  <h3 className="text-lg font-semibold text-white">
+                    Send Custom Message
+                  </h3>
+                  <p className="text-sm text-gray-400">
+                    To {selectedUser.email} on{" "}
+                    {getDeviceType(selectedDevice.userAgent)} device
+                  </p>
+                </div>
               </CardHeader>
               <CardBody className="space-y-4">
                 <Input

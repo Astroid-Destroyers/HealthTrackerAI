@@ -5,16 +5,26 @@ import { Head } from "./head";
 
 import { Navbar } from "@/components/navbar";
 
+interface DefaultLayoutProps {
+  children: React.ReactNode;
+  title?: string;
+  description?: string;
+  image?: string;
+  url?: string;
+}
+
 export default function DefaultLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+  title,
+  description,
+  image,
+  url,
+}: DefaultLayoutProps) {
   const [loggedIn, setLoggedIn] = useState(false);
 
   return (
     <div className="relative flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <Head />
+      <Head description={description} image={image} title={title} url={url} />
       <Navbar loggedIn={loggedIn} setLoggedIn={setLoggedIn} />
       <main className="flex-grow pt-16">{children}</main>
       <footer className="backdrop-blur-xl bg-white/5 border-t border-white/10">
