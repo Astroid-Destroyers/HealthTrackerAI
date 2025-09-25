@@ -3,6 +3,7 @@ import { Link } from "@heroui/link";
 import { Head } from "./head";
 
 import { Navbar } from "@/components/navbar";
+import PWAInstallPrompt from "@/components/pwa-install-prompt";
 
 import { useState } from "react";
 
@@ -23,6 +24,7 @@ export default function DefaultLayout({
       <main className="container mx-auto max-w-7xl px-6 flex-grow pt-16">
         {children}
       </main>
+      <PWAInstallPrompt />
       <footer className="w-full flex items-center justify-center py-3">
         <Link
           isExternal

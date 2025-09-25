@@ -16,6 +16,7 @@ import { Input } from "@heroui/input";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@heroui/modal";
 import { Tabs, Tab } from "@heroui/tabs";
 import { Tooltip } from "@heroui/tooltip";
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/dropdown";
 import { link as linkStyles } from "@heroui/theme";
 import NextLink from "next/link";
 import clsx from "clsx";
@@ -46,6 +47,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
   const { user, loading } = useAuth(); // <-- live auth state
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const router = useRouter();
 
   // form state
@@ -66,6 +69,12 @@ export const Navbar: React.FC<NavbarProps> = () => {
   };
 
   const [loggingOut, setLoggingOut] = useState(false);
+
+  // Handle mobile navigation - close menu after navigation
+  const handleMobileNavigation = (href: string) => {
+    setIsMenuOpen(false);
+    router.push(href);
+  };
 
 
   const handlePrimary = useCallback(async () => {
@@ -153,21 +162,21 @@ export const Navbar: React.FC<NavbarProps> = () => {
   );
 
   return (
-    <HeroUINavbar maxWidth="xl" position="sticky">
+    <HeroUINavbar maxWidth="xl" position="sticky" isMenuOpen={isMenuOpen} onMenuOpenChange={setIsMenuOpen}>
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
         <NavbarBrand className="gap-3 max-w-fit">
-          <NextLink className="flex justify-start items-center gap-1" href="/">
+          <NextLink className="flex justify-start items-center gap-2" href="/">
             <Logo />
-            <p className="font-bold text-inherit">HealthTrackerAI</p>
+            <span className="font-extrabold text-lg tracking-tight text-primary">HealthTrackerAI</span>
           </NextLink>
         </NavbarBrand>
-        <div className="hidden lg:flex gap-4 justify-start ml-2">
+        <div className="hidden lg:flex gap-6 justify-start ml-4 items-center">
           {siteConfig.navItems.map((item) => (
             <NavbarItem key={item.href}>
               <NextLink
                 className={clsx(
                   linkStyles({ color: "foreground" }),
-                  "data-[active=true]:text-primary data-[active=true]:font-medium",
+                  "hover:text-primary transition-colors font-semibold text-base px-2 py-1 rounded-md"
                 )}
                 color="foreground"
                 href={item.href}
@@ -176,19 +185,79 @@ export const Navbar: React.FC<NavbarProps> = () => {
               </NextLink>
             </NavbarItem>
           ))}
-          {/* Admin link - only visible to admin user */}
+          {/* Admin dropdown - only visible to admin user */}
           {user && user.email === "new.roeepalmon@gmail.com" && (
-            <NavbarItem>
-              <NextLink
-                className={clsx(
-                  linkStyles({ color: "foreground" }),
-                  "data-[active=true]:text-primary data-[active=true]:font-medium",
-                )}
-                color="foreground"
-                href="/admin"
+            <NavbarItem className="flex gap-2 items-center">
+              <Button
+                color="primary"
+                variant="solid"
+                className="font-bold text-base px-4 py-2 rounded-md shadow-sm hover:bg-primary/80 transition-colors"
+                startContent={
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                }
+                onPress={() => router.push("/admin")}
               >
-                Admin
-              </NextLink>
+                Admin Panel
+              </Button>
+              <div
+                onMouseEnter={() => setIsDropdownOpen(true)}
+                onMouseLeave={() => setIsDropdownOpen(false)}
+                className="relative"
+              >
+                <Dropdown 
+                  showArrow 
+                  isOpen={isDropdownOpen}
+                  onOpenChange={setIsDropdownOpen}
+                  placement="bottom-start"
+                  className="min-w-[220px] shadow-lg rounded-lg border border-default-200 bg-background"
+                >
+                  <DropdownTrigger>
+                    <Button
+                      variant="light"
+                      className={clsx(
+                        linkStyles({ color: "foreground" }),
+                        "flex items-center gap-2 px-4 py-2 h-auto min-w-0 font-bold text-base rounded-md hover:bg-default-100 transition-colors"
+                      )}
+                      endContent={
+                        <svg 
+                          className={clsx(
+                            "w-5 h-5 transition-transform duration-200",
+                            isDropdownOpen && "rotate-180"
+                          )}
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      }
+                    >
+                      More
+                    </Button>
+                  </DropdownTrigger>
+                  <DropdownMenu 
+                    aria-label="Admin actions"
+                    className="w-[220px]"
+                    itemClasses={{
+                      base: "gap-2 text-base font-medium",
+                    }}
+                  >
+                    <DropdownItem 
+                      key="tickets" 
+                      onPress={() => router.push("/admin/tickets")}
+                      startContent={
+                        <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                        </svg>
+                      }
+                    >
+                      Support Tickets
+                    </DropdownItem>
+                  </DropdownMenu>
+                </Dropdown>
+              </div>
             </NavbarItem>
           )}
         </div>
@@ -214,29 +283,32 @@ export const Navbar: React.FC<NavbarProps> = () => {
             {user && (
               <Tooltip
                 content={
-                  <div className="flex flex-col gap-2 p-2">
-                    <div className="text-center">
-                      <p className="font-semibold">
+                  <div className="flex flex-col gap-3 p-3 min-w-[180px] text-center">
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="font-bold text-base text-primary">
                         {user.displayName || "User"}
-                      </p>
-                      <p className="text-sm text-default-500">{user.email}</p>
+                      </span>
+                      <span className="text-xs text-default-500 break-all">
+                        {user.email}
+                      </span>
                     </div>
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-2 mt-2">
                       <Button
-                        className="justify-start"
+                        className="justify-center font-semibold"
                         size="sm"
-                        variant="light"
+                        variant="flat"
+                        color="primary"
                         onPress={() => router.push("/profile")}
                       >
                         Edit Profile
                       </Button>
                       <Button
-                        className="justify-start"
+                        className="justify-center font-semibold"
                         color="danger"
                         isDisabled={loggingOut}
                         isLoading={loggingOut}
                         size="sm"
-                        variant="light"
+                        variant="flat"
                         onPress={handleLogout}
                       >
                         {loggingOut ? "Logging out..." : "Logout"}
@@ -247,7 +319,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                 placement="bottom"
               >
                 <div
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-white font-semibold cursor-pointer hover:opacity-80 transition-opacity"
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-primary text-white font-extrabold text-lg cursor-pointer hover:opacity-80 transition-opacity border-2 border-primary/30 shadow-sm"
                   role="button"
                   tabIndex={0}
                   onClick={() => router.push("/profile")}
@@ -263,7 +335,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                     aria-label={`${(user.displayName || user.email || "U")
                       .charAt(0)
                       .toUpperCase()} avatar`}
-                    className="text-sm font-semibold"
+                    className="text-lg font-extrabold"
                     role="img"
                   >
                     {(user.displayName || user.email || "U")
@@ -290,32 +362,92 @@ export const Navbar: React.FC<NavbarProps> = () => {
         <div className="mx-4 mt-2 flex flex-col gap-2">
           {siteConfig.navItems.map((item, index) => (
             <NavbarMenuItem key={`${item}-${index}`}>
-              <Link
-                color={
-                  index === 2
-                    ? "primary"
-                    : index === siteConfig.navItems.length - 1
-                    ? "danger"
-                    : "foreground"
-                }
-                href={item.href}
-                size="lg"
+              <button
+                className={clsx(
+                  linkStyles({
+                    color: index === 2
+                      ? "primary"
+                      : index === siteConfig.navItems.length - 1
+                      ? "danger"
+                      : "foreground"
+                  }),
+                  "text-lg w-full text-left",
+                )}
+                onClick={() => handleMobileNavigation(item.href)}
               >
                 {item.label}
-              </Link>
+              </button>
             </NavbarMenuItem>
           ))}
-          {/* Admin link - only visible to admin user in mobile menu */}
+          {/* Admin menu items - only visible to admin user in mobile menu */}
           {user && user.email === "new.roeepalmon@gmail.com" && (
-            <NavbarMenuItem>
-              <Link
-                color="foreground"
-                href="/admin"
-                size="lg"
-              >
-                Admin
-              </Link>
-            </NavbarMenuItem>
+            <>
+              <NavbarMenuItem>
+                <div className="flex items-center gap-2 px-2 py-1 text-sm font-semibold text-default-600">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  Admin Panel
+                </div>
+              </NavbarMenuItem>
+              <NavbarMenuItem>
+                <button
+                  className={clsx(
+                    linkStyles({ color: "foreground" }),
+                    "text-lg w-full text-left flex items-center gap-3 pl-6",
+                  )}
+                  onClick={() => handleMobileNavigation("/admin/tickets")}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                  </svg>
+                  Support Tickets
+                </button>
+              </NavbarMenuItem>
+              <NavbarMenuItem>
+                <button
+                  className={clsx(
+                    linkStyles({ color: "foreground" }),
+                    "text-lg w-full text-left flex items-center gap-3 pl-6",
+                  )}
+                  onClick={() => handleMobileNavigation("/admin/users")}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                  </svg>
+                  Manage Users
+                </button>
+              </NavbarMenuItem>
+              <NavbarMenuItem>
+                <button
+                  className={clsx(
+                    linkStyles({ color: "foreground" }),
+                    "text-lg w-full text-left flex items-center gap-3 pl-6",
+                  )}
+                  onClick={() => handleMobileNavigation("/admin/analytics")}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  Analytics
+                </button>
+              </NavbarMenuItem>
+              <NavbarMenuItem>
+                <button
+                  className={clsx(
+                    linkStyles({ color: "foreground" }),
+                    "text-lg w-full text-left flex items-center gap-3 pl-6",
+                  )}
+                  onClick={() => handleMobileNavigation("/admin/settings")}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Settings
+                </button>
+              </NavbarMenuItem>
+            </>
           )}
           
           {/* Mobile Auth Controls */}
@@ -364,7 +496,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                     color="primary"
                     variant="flat"
                     className="w-full"
-                    onPress={() => router.push("/profile")}
+                    onPress={() => handleMobileNavigation("/profile")}
                   >
                     View Profile
                   </Button>

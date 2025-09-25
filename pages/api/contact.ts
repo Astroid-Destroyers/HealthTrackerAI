@@ -55,14 +55,14 @@ export default async function handler(
       timestamp: new Date().toISOString(),
       footer: {
         text: "HealthTrackerAI Contact Form",
-        icon_url: "https://health-tracker-ai-sigma.vercel.app/favicon.ico"
+        icon_url: "https://health-tracker-ai-sigma.vercel.app/icon-512x512.png"
       }
     };
 
     const webhookPayload = {
       embeds: [discordEmbed],
       username: "HealthTrackerAI Bot",
-      avatar_url: "https://health-tracker-ai-sigma.vercel.app/favicon.ico"
+      avatar_url: "https://health-tracker-ai-sigma.vercel.app/icon-512x512.png"
     };
 
     // Send webhook to Discord

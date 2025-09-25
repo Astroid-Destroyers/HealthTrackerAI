@@ -8,17 +8,20 @@ import { useRouter } from "next/router";
 import { fontSans, fontMono } from "@/config/fonts";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { registerServiceWorker } from "@/utils/swRegistration";
 import "@/styles/globals.css";
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
 
   useEffect(() => {
-    // Service worker registration temporarily disabled to fix HMR issues
-    // TODO: Re-enable for production
-    // if (process.env.NODE_ENV === "production") {
-    //   registerServiceWorker();
-    // }
+    // Register service worker for push notifications
+    // Only register in production or when explicitly enabled
+    if (process.env.NODE_ENV === "production" || process.env.NEXT_PUBLIC_ENABLE_SW === "true") {
+      registerServiceWorker().catch((error) => {
+        console.error("Failed to register service worker:", error);
+      });
+    }
   }, []);
 
   return (
