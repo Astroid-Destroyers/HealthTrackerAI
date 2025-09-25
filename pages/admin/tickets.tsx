@@ -1,33 +1,46 @@
 import { useState, useEffect } from "react";
 import { Button } from "@heroui/button";
-import { Card, CardHeader, CardBody } from "@heroui/card";
+import { Card, CardBody } from "@heroui/card";
 import { Input } from "@heroui/input";
 import { Select, SelectItem } from "@heroui/select";
 import { Chip } from "@heroui/chip";
-import { Badge } from "@heroui/badge";
 import { ScrollShadow } from "@heroui/scroll-shadow";
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/table";
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@heroui/modal";
+import {
+  Table,
+  TableHeader,
+  TableColumn,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "@heroui/table";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
+} from "@heroui/modal";
 
 import { useAuth } from "@/providers/AuthProvider";
 import DefaultLayout from "@/layouts/default";
-import { 
-  getAllTickets, 
+import {
+  getAllTickets,
   subscribeToAllTickets,
   addTicketReply,
   updateTicket,
   markTicketAsRead,
   getTicketStats,
-  isAuthorizedAdmin
+  isAuthorizedAdmin,
 } from "@/utils/tickets";
-import { 
-  Ticket, 
-  TicketPriority, 
-  TicketStatus, 
+import {
+  Ticket,
+  TicketPriority,
+  TicketStatus,
   TicketFilter,
   TicketStats,
   CreateReplyData,
-  UpdateTicketData
+  UpdateTicketData,
 } from "@/types/tickets";
 
 export default function AdminTicketsPage() {
@@ -41,7 +54,7 @@ export default function AdminTicketsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isReplying, setIsReplying] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-  
+
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   // Check if user is authorized admin
@@ -71,10 +84,12 @@ export default function AdminTicketsPage() {
     // Subscribe to real-time updates
     const unsubscribe = subscribeToAllTickets((updatedTickets) => {
       setTickets(updatedTickets);
-      
+
       // Update selected ticket if it exists in the updated list
       if (selectedTicket) {
-        const updatedSelectedTicket = updatedTickets.find(t => t.id === selectedTicket.id);
+        const updatedSelectedTicket = updatedTickets.find(
+          (t) => t.id === selectedTicket.id,
+        );
         if (updatedSelectedTicket) {
           setSelectedTicket(updatedSelectedTicket);
         }
@@ -89,10 +104,11 @@ export default function AdminTicketsPage() {
     if (!searchQuery) {
       setFilteredTickets(tickets);
     } else {
-      const filtered = tickets.filter(ticket => 
-        ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ticket.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ticket.id.toLowerCase().includes(searchQuery.toLowerCase())
+      const filtered = tickets.filter(
+        (ticket) =>
+          ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          ticket.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          ticket.id.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setFilteredTickets(filtered);
     }
@@ -310,27 +326,32 @@ export default function AdminTicketsPage() {
               setFilter(prev => ({ ...prev, status: status || undefined }));
             }}
           >
-            <SelectItem key="" value="">All Status</SelectItem>
-            <SelectItem key={TicketStatus.OPEN} value={TicketStatus.OPEN}>Open</SelectItem>
-            <SelectItem key={TicketStatus.IN_PROGRESS} value={TicketStatus.IN_PROGRESS}>In Progress</SelectItem>
-            <SelectItem key={TicketStatus.WAITING_FOR_RESPONSE} value={TicketStatus.WAITING_FOR_RESPONSE}>Waiting for Response</SelectItem>
-            <SelectItem key={TicketStatus.RESOLVED} value={TicketStatus.RESOLVED}>Resolved</SelectItem>
-            <SelectItem key={TicketStatus.CLOSED} value={TicketStatus.CLOSED}>Closed</SelectItem>
+            <SelectItem key="">All Status</SelectItem>
+            <SelectItem key={TicketStatus.OPEN}>Open</SelectItem>
+            <SelectItem key={TicketStatus.IN_PROGRESS}>In Progress</SelectItem>
+            <SelectItem key={TicketStatus.WAITING_FOR_RESPONSE}>
+              Waiting for Response
+            </SelectItem>
+            <SelectItem key={TicketStatus.RESOLVED}>Resolved</SelectItem>
+            <SelectItem key={TicketStatus.CLOSED}>Closed</SelectItem>
           </Select>
 
           <Select
-            placeholder="Filter by priority"
             className="md:w-1/4"
+            placeholder="Filter by priority"
             onSelectionChange={(keys) => {
               const priority = Array.from(keys)[0] as TicketPriority;
-              setFilter(prev => ({ ...prev, priority: priority || undefined }));
+              setFilter((prev) => ({
+                ...prev,
+                priority: priority || undefined,
+              }));
             }}
           >
-            <SelectItem key="" value="">All Priority</SelectItem>
-            <SelectItem key={TicketPriority.LOW} value={TicketPriority.LOW}>Low</SelectItem>
-            <SelectItem key={TicketPriority.NORMAL} value={TicketPriority.NORMAL}>Normal</SelectItem>
-            <SelectItem key={TicketPriority.HIGH} value={TicketPriority.HIGH}>High</SelectItem>
-            <SelectItem key={TicketPriority.URGENT} value={TicketPriority.URGENT}>Urgent</SelectItem>
+            <SelectItem key="">All Priority</SelectItem>
+            <SelectItem key={TicketPriority.LOW}>Low</SelectItem>
+            <SelectItem key={TicketPriority.NORMAL}>Normal</SelectItem>
+            <SelectItem key={TicketPriority.HIGH}>High</SelectItem>
+            <SelectItem key={TicketPriority.URGENT}>Urgent</SelectItem>
           </Select>
         </div>
 
