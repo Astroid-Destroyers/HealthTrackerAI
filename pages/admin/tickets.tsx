@@ -235,7 +235,7 @@ export default function AdminTicketsPage() {
         <div className="container mx-auto max-w-4xl px-6 py-8">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-danger mb-4">Access Denied</h1>
-            <p className="text-default-600 mb-4">You don't have permission to access this page.</p>
+              <p className="text-default-600 mb-4">You don&apos;t have permission to access this page.</p>
             <p className="text-sm text-default-500">Only authorized administrators can access this area.</p>
           </div>
         </div>

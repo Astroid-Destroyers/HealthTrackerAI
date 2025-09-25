@@ -25,6 +25,24 @@ import {
 
 export default function ContactPage() {
   const { user } = useAuth();
+
+  // Permission check: Only allow logged-in users
+  if (!user) {
+    return (
+      <DefaultLayout>
+        <div className="container mx-auto max-w-2xl px-6 py-16">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-danger mb-4">
+              Access Denied
+            </h1>
+            <p className="text-default-600 mb-4">
+              You don&apos;t have permission to access this page.
+            </p>
+          </div>
+        </div>
+      </DefaultLayout>
+    );
+  }
   const [formData, setFormData] = useState({
     subject: "",
     message: "",
