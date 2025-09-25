@@ -24,7 +24,8 @@ export default async function handler(
 
   try {
     // Send Discord webhook
-    const discordWebhookUrl = "https://discord.com/api/webhooks/1418405770810232832/MfyyREbxnBYp8_0otGam7Uc5CHLz674MEEmjN8G2nlF4gPlEFgyRQqzhq6SPLP3Dhnw2";
+    const discordWebhookUrl =
+      "https://discord.com/api/webhooks/1418405770810232832/MfyyREbxnBYp8_0otGam7Uc5CHLz674MEEmjN8G2nlF4gPlEFgyRQqzhq6SPLP3Dhnw2";
 
     const discordEmbed = {
       title: "📬 New Contact Form Submission",
@@ -34,35 +35,38 @@ export default async function handler(
         {
           name: "👤 Name",
           value: name,
-          inline: true
+          inline: true,
         },
         {
           name: "📧 Email",
           value: email,
-          inline: true
+          inline: true,
         },
         {
           name: "📝 Subject",
           value: subject,
-          inline: false
+          inline: false,
         },
         {
           name: "💬 Message",
-          value: message.length > 1024 ? message.substring(0, 1021) + "..." : message,
-          inline: false
-        }
+          value:
+            message.length > 1024
+              ? message.substring(0, 1021) + "..."
+              : message,
+          inline: false,
+        },
       ],
       timestamp: new Date().toISOString(),
       footer: {
         text: "HealthTrackerAI Contact Form",
-        icon_url: "https://health-tracker-ai-sigma.vercel.app/favicon.ico"
-      }
+        icon_url: "https://health-tracker-ai-sigma.vercel.app/favicon.ico",
+      },
     };
 
     const webhookPayload = {
       embeds: [discordEmbed],
       username: "HealthTrackerAI Bot",
-      avatar_url: "https://health-tracker-ai-sigma.vercel.app/favicon.ico"
+      avatar_url: "https://health-tracker-ai-sigma.vercel.app/favicon.ico",
     };
 
     // Send webhook to Discord
@@ -75,13 +79,22 @@ export default async function handler(
     });
 
     if (!webhookResponse.ok) {
-      console.error("Discord webhook failed:", webhookResponse.status, webhookResponse.statusText);
-      return res.status(500).json({ message: "Failed to send message. Please try again." });
+      console.error(
+        "Discord webhook failed:",
+        webhookResponse.status,
+        webhookResponse.statusText,
+      );
+
+      return res
+        .status(500)
+        .json({ message: "Failed to send message. Please try again." });
     }
 
     res.status(200).json({ message: "Message sent successfully" });
   } catch (error) {
     console.error("Error sending message:", error);
-    res.status(500).json({ message: "Failed to send message. Please try again." });
+    res
+      .status(500)
+      .json({ message: "Failed to send message. Please try again." });
   }
 }

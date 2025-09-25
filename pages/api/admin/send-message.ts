@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
@@ -6,7 +7,10 @@ import { getMessaging } from "firebase-admin/messaging";
 
 const ADMIN_EMAIL = "new.roeepalmon@gmail.com";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse,
+) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -19,11 +23,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const privateKey = process.env.FB_PRIVATE_KEY;
 
       if (!projectId || !clientEmail || !privateKey) {
-        return res.status(500).json({ error: "Firebase Admin environment variables not configured" });
+        return res.status(500).json({
+          error: "Firebase Admin environment variables not configured",
+        });
       }
 
       // Clean the private key
-      const cleanPrivateKey = privateKey.replace(/\\n/g, '\n').replace(/^"|"$/g, '');
+      const cleanPrivateKey = privateKey
+        .replace(/\\n/g, "\n")
+        .replace(/^"|"$/g, "");
 
       const app = initializeApp({
         credential: cert({
@@ -39,7 +47,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       var messaging = getMessaging(app);
     } catch (error) {
       console.error("Failed to initialize Firebase Admin SDK:", error);
-      return res.status(500).json({ error: "Failed to initialize Firebase Admin SDK" });
+
+      return res
+        .status(500)
+        .json({ error: "Failed to initialize Firebase Admin SDK" });
     }
   } else {
     // Use existing app
@@ -52,6 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     // Verify admin authentication
     const authHeader = req.headers.authorization;
+
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -60,17 +72,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const decodedToken = await auth.verifyIdToken(idToken);
 
     if (decodedToken.email !== ADMIN_EMAIL) {
-      return res.status(403).json({ error: "Forbidden: Admin access required" });
+      return res
+        .status(403)
+        .json({ error: "Forbidden: Admin access required" });
     }
 
     const { userId, deviceId, message } = req.body;
 
     if (!userId || !deviceId || !message || !message.trim()) {
-      return res.status(400).json({ error: "Missing required fields: userId, deviceId, message" });
+      return res
+        .status(400)
+        .json({ error: "Missing required fields: userId, deviceId, message" });
     }
 
     // Get device FCM token
-    const deviceRef = db.collection("users").doc(userId).collection("devices").doc(deviceId);
+    const deviceRef = db
+      .collection("users")
+      .doc(userId)
+      .collection("devices")
+      .doc(deviceId);
     const deviceDoc = await deviceRef.get();
 
     if (!deviceDoc.exists) {

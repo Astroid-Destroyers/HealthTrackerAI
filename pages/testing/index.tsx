@@ -1,18 +1,24 @@
-import { title } from "@/components/primitives";
-import DefaultLayout from "@/layouts/default";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Card } from "@heroui/card";
 import { Switch } from "@heroui/switch";
 import { useState, useEffect } from "react";
+import {
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  doc,
+  deleteDoc,
+} from "firebase/firestore";
 
-import { collection, addDoc, query, orderBy, onSnapshot, doc, deleteDoc } from "firebase/firestore";
-import { auth } from "../../lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
 import { useAuth } from "../../providers/AuthProvider";
-
 import { db } from "../../lib/firebase";
 import { OpenAPIClient } from "../../components/openapi";
+
+import DefaultLayout from "@/layouts/default";
+import { title } from "@/components/primitives";
 
 function TestingPage() {
   const [question, setQuestion] = useState("");
@@ -50,12 +56,15 @@ function TestingPage() {
     setDisplay("");
 
     let input = question.trim();
+
     if (jsonOutput) {
-      input += " Respond ONLY with valid, readable JSON (no code fences), using clear keys and values.";
+      input +=
+        " Respond ONLY with valid, readable JSON (no code fences), using clear keys and values.";
     }
 
     try {
       const result = await OpenAPIClient.ask(input);
+
       console.log(result);
       if (result.json !== undefined) {
         setDisplay(JSON.stringify(result.json, null, 2));
@@ -71,7 +80,7 @@ function TestingPage() {
 
   const saveResponse = async () => {
     if (!user || !display) return;
-    
+
     setSaving(true);
     try {
       await addDoc(collection(db, "user_responses"), {
@@ -79,7 +88,7 @@ function TestingPage() {
         question: question,
         response: display,
         timestamp: new Date(),
-        jsonOutput: jsonOutput
+        jsonOutput: jsonOutput,
       });
       alert("Response saved successfully!");
     } catch (error) {
@@ -92,11 +101,15 @@ function TestingPage() {
 
   const loadSavedResponses = async () => {
     if (!user) return;
-    
+
     try {
-      const q = query(collection(db, "user_responses"), orderBy("timestamp", "desc"));
+      const q = query(
+        collection(db, "user_responses"),
+        orderBy("timestamp", "desc"),
+      );
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const responses: any[] = [];
+
         querySnapshot.forEach((doc) => {
           if (doc.data().userId === user.uid) {
             responses.push({ id: doc.id, ...doc.data() });
@@ -105,7 +118,7 @@ function TestingPage() {
         setSavedResponses(responses);
         setShowSaved(responses.length > 0);
       });
-      
+
       return unsubscribe;
     } catch (error) {
       console.error("Error loading responses:", error);
@@ -117,7 +130,10 @@ function TestingPage() {
     try {
       await deleteDoc(doc(db, "user_responses", responseId));
       // Update showSaved state if no responses remain
-      const updatedResponses = savedResponses.filter(r => r.id !== responseId);
+      const updatedResponses = savedResponses.filter(
+        (r) => r.id !== responseId,
+      );
+
       setSavedResponses(updatedResponses);
       setShowSaved(updatedResponses.length > 0);
     } catch (error) {
@@ -131,13 +147,16 @@ function TestingPage() {
         <Card className="p-6 w-full max-w-2xl">
           <h1 className={title()}>Ask a Question</h1>
 
-          <form onSubmit={handleSubmit} className="w-full flex flex-col items-center gap-4">
+          <form
+            className="w-full flex flex-col items-center gap-4"
+            onSubmit={handleSubmit}
+          >
             <Input
+              required
+              className="w-full"
               label="Your Question"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
-              required
-              className="w-full"
             />
 
             <div className="flex items-center gap-2 w-full justify-start">
@@ -146,10 +165,17 @@ function TestingPage() {
                 id="json-output-toggle"
                 onChange={(e) => setJsonOutput(e.target.checked)}
               />
-              <label htmlFor="json-output-toggle" className="text-sm">JSON output</label>
+              <label className="text-sm" htmlFor="json-output-toggle">
+                JSON output
+              </label>
             </div>
 
-            <Button type="submit" variant="solid" className="mt-2 w-full" isLoading={loading}>
+            <Button
+              className="mt-2 w-full"
+              isLoading={loading}
+              type="submit"
+              variant="solid"
+            >
               {loading ? "Asking..." : "Ask"}
             </Button>
           </form>
@@ -158,24 +184,26 @@ function TestingPage() {
             <div className="mt-4 w-full">
               <div className="flex gap-2 mb-2">
                 {user && (
-                  <Button 
-                    onPress={saveResponse} 
-                    variant="flat" 
+                  <Button
+                    className="text-sm"
                     color="success"
                     isLoading={saving}
-                    className="text-sm"
+                    variant="flat"
+                    onPress={saveResponse}
                   >
                     {saving ? "Saving..." : "Save Response"}
                   </Button>
                 )}
                 {user && savedResponses.length > 0 && (
-                  <Button 
-                    onPress={() => setShowSaved(!showSaved)} 
-                    variant="flat" 
-                    color="secondary"
+                  <Button
                     className="text-sm"
+                    color="secondary"
+                    variant="flat"
+                    onPress={() => setShowSaved(!showSaved)}
                   >
-                    {showSaved ? "Hide Saved Responses" : "Show Saved Responses"}
+                    {showSaved
+                      ? "Hide Saved Responses"
+                      : "Show Saved Responses"}
                   </Button>
                 )}
               </div>
@@ -193,11 +221,13 @@ function TestingPage() {
                   <Card key={response.id} className="p-4">
                     <div className="flex justify-between items-start mb-2">
                       <div className="text-sm text-gray-600">
-                        {new Date(response.timestamp?.toDate?.() || response.timestamp).toLocaleString()}
+                        {new Date(
+                          response.timestamp?.toDate?.() || response.timestamp,
+                        ).toLocaleString()}
                       </div>
-                      <Button 
-                        size="sm" 
-                        color="danger" 
+                      <Button
+                        color="danger"
+                        size="sm"
                         variant="light"
                         onPress={() => deleteResponse(response.id)}
                       >

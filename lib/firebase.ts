@@ -4,7 +4,7 @@ import { getAnalytics, Analytics } from "firebase/analytics";
 import {
   getAuth,
   setPersistence,
-  browserLocalPersistence
+  browserLocalPersistence,
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
@@ -19,7 +19,7 @@ const firebaseConfig = {
   storageBucket: "healthtrackerai-e5819.firebasestorage.app",
   messagingSenderId: "1068877472768",
   appId: "1:1068877472768:web:a877e4b1c922e5a10c64e5",
-  measurementId: "G-QGL0P7NDCC"
+  measurementId: "G-QGL0P7NDCC",
 };
 
 export const app = getApps().length
@@ -37,6 +37,7 @@ export const getAnalyticsInstance = (): Analytics | null => {
     return getAnalytics(app);
   } catch (error) {
     console.warn("Analytics not available:", error);
+
     return null;
   }
 };
@@ -45,6 +46,7 @@ export const getAnalyticsInstance = (): Analytics | null => {
 export const getMessagingInstance = async () => {
   if (typeof window === "undefined") return null;
   const supported = await isSupported();
+
   return supported ? getMessaging(app) : null;
 };
 
