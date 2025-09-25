@@ -665,7 +665,8 @@ export default function MultiStepSignup({
                       initial={{ opacity: 0, height: 0 }}
                     >
                       <div className="text-center text-sm text-white">
-                        ✨ Perfect! We'll create a personalized plan for you
+                        ✨ Perfect! We&apos;ll create a personalized plan for
+                        you
                       </div>
                     </motion.div>
                   )}
@@ -925,7 +926,7 @@ export default function MultiStepSignup({
                 initial={{ opacity: 0, scale: 0.8 }}
               >
                 <div className="text-green-300 font-bold text-lg mb-2">
-                  🎉 You're all set!
+                  🎉 You&apos;re all set!
                 </div>
                 <div className="text-green-300 text-sm">
                   Ready to launch your personalized AI health journey?
