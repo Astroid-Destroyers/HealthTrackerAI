@@ -24,7 +24,7 @@ import { Tooltip } from "@heroui/tooltip";
 import NextLink from "next/link";
 import clsx from "clsx";
 import { useCallback, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -454,23 +454,23 @@ export const Navbar: React.FC<NavbarProps> = () => {
         <div className="mx-4 flex flex-col gap-1">
           {siteConfig.navItems.map((item, index) => (
             <NavbarMenuItem key={`${item}-${index}`}>
-              <Link
+              <NextLink
                 className="text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-300 text-base font-medium py-3 px-4 rounded-xl w-full block"
                 href={item.href}
               >
                 {item.label}
-              </Link>
+              </NextLink>
             </NavbarMenuItem>
           ))}
           {/* Admin link - only visible to admin user in mobile menu */}
           {user && user.email === "new.roeepalmon@gmail.com" && (
             <NavbarMenuItem>
-              <Link
+              <NextLink
                 className="text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-300 text-base font-medium py-3 px-4 rounded-xl w-full block"
                 href="/admin"
               >
                 Admin
-              </Link>
+              </NextLink>
             </NavbarMenuItem>
           )}
         </div>
