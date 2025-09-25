@@ -91,15 +91,15 @@ export default function IndexPage() {
               initial={{ opacity: 0, y: 50 }}
               transition={{ duration: 0.8 }}
             >
-              <h1 className="text-6xl md:text-8xl font-bold mb-6">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold mb-6">
                 <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                   Welcome Back
                 </span>
               </h1>
-              <h2 className="text-3xl md:text-4xl font-semibold text-white mb-4">
+              <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold text-white mb-4">
                 {user.displayName || user.email?.split("@")[0] || "User"}! 👋
               </h2>
-              <p className="text-xl text-gray-300 font-light leading-relaxed">
+              <p className="text-lg sm:text-xl text-gray-300 font-light leading-relaxed max-w-2xl mx-auto px-4">
                 Ready to continue your AI-powered health journey?
               </p>
             </motion.div>
@@ -219,7 +219,7 @@ export default function IndexPage() {
               🚀 Next-Gen AI Health Platform
             </Chip>
 
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-bold mb-6 leading-tight px-4">
               <span
                 className="bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-600 bg-clip-text text-transparent animate-pulse"
                 style={{
@@ -232,7 +232,7 @@ export default function IndexPage() {
               <span className="text-white">AI</span>
             </h1>
 
-            <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg sm:text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed px-6">
               Revolutionize your wellness journey with AI-powered health
               insights. Get personalized recommendations, predictive analytics,
               and real-time monitoring that adapts to your unique health
@@ -262,12 +262,12 @@ export default function IndexPage() {
 
           <motion.div
             animate={isVisible ? { opacity: 1, y: 0 } : {}}
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12"
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 px-6"
             initial={{ opacity: 0, y: 30 }}
             transition={{ duration: 0.6, delay: 0.6 }}
           >
             <Button
-              className="px-8 py-6 text-lg font-semibold text-white rounded-xl relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+              className="w-full sm:w-auto px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg font-semibold text-white rounded-xl relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl min-h-[56px]"
               size="lg"
               style={{
                 background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
@@ -280,7 +280,7 @@ export default function IndexPage() {
             <Button
               isExternal
               as={Link}
-              className="backdrop-blur-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 text-lg px-8 py-6 transition-all duration-300"
+              className="w-full sm:w-auto backdrop-blur-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 transition-all duration-300 min-h-[56px]"
               href={siteConfig.links.docs}
               size="lg"
               variant="bordered"
@@ -292,16 +292,21 @@ export default function IndexPage() {
           {/* Stats */}
           <motion.div
             animate={isVisible ? { opacity: 1, y: 0 } : {}}
-            className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto"
+            className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 max-w-4xl mx-auto px-6"
             initial={{ opacity: 0, y: 30 }}
             transition={{ duration: 0.6, delay: 0.8 }}
           >
             {stats.map((stat, index) => (
-              <div key={index} className="glass rounded-xl p-4">
-                <div className="text-2xl md:text-3xl font-bold gradient-text mb-1">
+              <div
+                key={index}
+                className="glass rounded-xl p-3 sm:p-4 text-center"
+              >
+                <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold gradient-text mb-1">
                   {stat.value}
                 </div>
-                <div className="text-gray-400 text-sm">{stat.label}</div>
+                <div className="text-gray-400 text-xs sm:text-sm leading-tight">
+                  {stat.label}
+                </div>
               </div>
             ))}
           </motion.div>
@@ -320,27 +325,27 @@ export default function IndexPage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-6">
+      <section className="py-12 sm:py-16 md:py-20 px-4 sm:px-6">
         <div className="container mx-auto max-w-7xl">
           <motion.div
-            className="text-center mb-16"
+            className="text-center mb-12 sm:mb-16"
             initial={{ opacity: 0, y: 30 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
             whileInView={{ opacity: 1, y: 0 }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 px-4">
               <span className="gradient-text">AI-Powered</span> Health
               Intelligence
             </h2>
-            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+            <p className="text-lg sm:text-xl text-gray-400 max-w-3xl mx-auto px-4">
               Experience the future of healthcare with cutting-edge artificial
               intelligence that understands your unique health patterns and
               provides actionable insights.
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {features.map((feature, index) => (
               <motion.div
                 key={index}

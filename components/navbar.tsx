@@ -4,7 +4,6 @@ import {
   Navbar as HeroUINavbar,
   NavbarContent,
   NavbarMenu,
-  NavbarMenuToggle,
   NavbarBrand,
   NavbarItem,
   NavbarMenuItem,
@@ -39,7 +38,13 @@ import { useAuth } from "../providers/AuthProvider";
 
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
-import { GithubIcon, SearchIcon, Logo } from "@/components/icons";
+import {
+  GithubIcon,
+  SearchIcon,
+  Logo,
+  MenuIcon,
+  CloseIcon,
+} from "@/components/icons";
 import MultiStepSignup from "@/components/MultiStepSignup";
 
 interface NavbarProps {
@@ -53,13 +58,13 @@ export const Navbar: React.FC<NavbarProps> = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [showMultiStepSignup, setShowMultiStepSignup] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
 
   // form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [fullName, setFullName] = useState("");
 
   // ui state
   const [submitting, setSubmitting] = useState(false);
@@ -69,7 +74,6 @@ export const Navbar: React.FC<NavbarProps> = () => {
     setEmail("");
     setPassword("");
     setConfirmPassword("");
-    setFullName("");
     setErr(null);
     setSubmitting(false);
   };
@@ -161,7 +165,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
       setLoggingOut(true);
       await signOut(auth); // end Firebase session
       router.refresh(); // force re-render of server/components using auth
-    } catch (e) {
+    } catch {
       // optional: toast or console.error(e);
     } finally {
       setLoggingOut(false);
@@ -191,22 +195,54 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
   return (
     <HeroUINavbar
-      className="backdrop-blur-xl bg-white/5 border-b border-white/10 fixed top-0 z-50"
-      maxWidth="xl"
-      position="static"
+      isBordered
+      className={clsx(
+        "backdrop-blur-xl bg-white/5 border-b border-white/10 transition-all duration-300 z-50 fixed top-0 left-0 right-0",
+      )}
+      classNames={{
+        item: [
+          "flex",
+          "relative",
+          "h-full",
+          "items-center",
+          "data-[active=true]:after:content-['']",
+          "data-[active=true]:after:absolute",
+          "data-[active=true]:after:bottom-0",
+          "data-[active=true]:after:left-0",
+          "data-[active=true]:after:right-0",
+          "data-[active=true]:after:h-[2px]",
+          "data-[active=true]:after:rounded-[2px]",
+          "data-[active=true]:after:bg-primary",
+        ],
+        menu: [
+          "fixed",
+          "inset-0",
+          "z-[60]",
+          "w-screen",
+          "h-screen",
+          "backdrop-blur-xl",
+          "bg-black/40",
+        ],
+        menuItem: ["w-full"],
+      }}
+      height="64px"
+      isMenuOpen={isMenuOpen}
+      maxWidth="full"
+      position="sticky"
+      onMenuOpenChange={setIsMenuOpen}
     >
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
-        <NavbarBrand className="gap-3 max-w-fit">
+        <NavbarBrand className="gap-2 sm:gap-3 max-w-fit">
           <NextLink
             className="flex justify-start items-center gap-2 group"
             href="/"
           >
             <div className="relative">
-              <Logo />
+              <Logo className="w-6 h-6 sm:w-8 sm:h-8" />
               <div className="absolute inset-0 bg-ai-gradient rounded-full blur-lg opacity-30 group-hover:opacity-60 transition-opacity" />
             </div>
             <div className="flex flex-col">
-              <p className="font-bold text-white text-lg gradient-text">
+              <p className="font-bold text-white text-sm sm:text-lg gradient-text">
                 HealthTrackerAI
               </p>
               <p className="text-xs text-gray-400 hidden sm:block">
@@ -215,13 +251,15 @@ export const Navbar: React.FC<NavbarProps> = () => {
             </div>
           </NextLink>
         </NavbarBrand>
+        
+        {/* Desktop Navigation */}
         <div className="hidden lg:flex gap-6 justify-start ml-8">
           {siteConfig.navItems.map((item) => (
             <NavbarItem key={item.href}>
               <NextLink
                 className={clsx(
                   "text-gray-300 hover:text-white transition-all duration-300 font-medium relative group",
-                  "hover:scale-105",
+                  "hover:scale-105 px-2 py-1 rounded-lg hover:bg-white/10",
                 )}
                 href={item.href}
               >
@@ -236,7 +274,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
               <NextLink
                 className={clsx(
                   "text-gray-300 hover:text-white transition-all duration-300 font-medium relative group",
-                  "hover:scale-105",
+                  "hover:scale-105 px-2 py-1 rounded-lg hover:bg-white/10",
                 )}
                 href="/admin"
               >
@@ -252,10 +290,10 @@ export const Navbar: React.FC<NavbarProps> = () => {
         className="hidden sm:flex basis-1/5 sm:basis-full"
         justify="end"
       >
-        <NavbarItem className="hidden sm:flex gap-3">
+        <NavbarItem className="hidden md:flex gap-3">
           <Link
             isExternal
-            className="text-gray-400 hover:text-white transition-all duration-300 hover:scale-110"
+            className="text-gray-400 hover:text-white transition-all duration-300 hover:scale-110 p-2 rounded-lg hover:bg-white/10"
             href={siteConfig.links.github}
             title="GitHub"
           >
@@ -268,10 +306,12 @@ export const Navbar: React.FC<NavbarProps> = () => {
         {!loading && !user ? (
           <NavbarItem>
             <Button
-              className="btn-ai-primary text-sm px-6 py-2 font-medium"
+              className="btn-ai-primary text-sm px-4 sm:px-6 py-2 font-medium min-h-[36px] sm:min-h-[40px]"
+              size="sm"
               onPress={() => setIsLoginOpen(true)}
             >
-              Login / Signup
+              <span className="hidden sm:inline">Login / Signup</span>
+              <span className="sm:hidden">Login</span>
             </Button>
           </NavbarItem>
         ) : (
@@ -344,21 +384,79 @@ export const Navbar: React.FC<NavbarProps> = () => {
       </NavbarContent>
 
       <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <ThemeSwitch />
-          <NavbarMenuToggle className="text-white" />
+          <button
+            aria-label={
+              isMenuOpen ? "Close navigation menu" : "Open navigation menu"
+            }
+            className="text-white hover:bg-white/10 rounded-lg p-2 transition-colors w-10 h-10 flex items-center justify-center"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? <CloseIcon size={20} /> : <MenuIcon size={20} />}
+          </button>
         </div>
       </NavbarContent>
 
-      <NavbarMenu className="backdrop-blur-xl bg-white/5 border-r border-white/10 pt-6">
-        <div className="hidden md:block mb-4">{searchInput}</div>
-        <div className="mx-4 mt-2 flex flex-col gap-3">
+      <NavbarMenu className="fixed inset-0 z-[60] w-screen h-screen backdrop-blur-xl bg-black/80 pt-4 pb-6 overflow-y-auto">
+        {/* Mobile Header with branding */}
+        <div className="flex items-center justify-between mx-4 mb-8 pb-4 border-b border-white/20">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Logo className="w-8 h-8" />
+              <div className="absolute inset-0 bg-ai-gradient rounded-full blur-lg opacity-30" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-white font-bold text-lg gradient-text">
+                HealthTrackerAI
+              </span>
+              <span className="text-gray-400 text-xs">
+                AI-Powered Healthcare
+              </span>
+            </div>
+          </div>
+          <button
+            aria-label="Close navigation menu"
+            className="text-white hover:bg-white/10 rounded-lg p-2 transition-colors w-10 h-10 flex items-center justify-center"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <CloseIcon size={24} />
+          </button>
+        </div>
+
+        {/* Mobile Search */}
+        <div className="mx-4 mb-8">{searchInput}</div>
+
+        {/* Mobile User Profile Section */}
+        {user && (
+          <div className="mx-4 mb-6">
+            <div className="flex items-center gap-3 p-4 backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl">
+              <div className="w-12 h-12 flex items-center justify-center rounded-xl bg-ai-gradient text-white font-bold text-lg">
+                {(
+                  user?.displayName?.[0] ||
+                  user?.email?.[0] ||
+                  "?"
+                ).toUpperCase()}
+              </div>
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-white font-semibold text-sm truncate">
+                  {user?.displayName || "User"}
+                </span>
+                <span className="text-gray-400 text-xs truncate">
+                  {user?.email}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Navigation Items */}
+        <div className="mx-4 flex flex-col gap-1">
           {siteConfig.navItems.map((item, index) => (
             <NavbarMenuItem key={`${item}-${index}`}>
               <Link
-                className="text-gray-300 hover:text-white transition-colors text-lg font-medium"
+                className="text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-300 text-base font-medium py-3 px-4 rounded-xl w-full block"
                 href={item.href}
-                size="lg"
               >
                 {item.label}
               </Link>
@@ -368,81 +466,59 @@ export const Navbar: React.FC<NavbarProps> = () => {
           {user && user.email === "new.roeepalmon@gmail.com" && (
             <NavbarMenuItem>
               <Link
-                className="text-gray-300 hover:text-white transition-colors text-lg font-medium"
+                className="text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-300 text-base font-medium py-3 px-4 rounded-xl w-full block"
                 href="/admin"
-                size="lg"
               >
                 Admin
               </Link>
             </NavbarMenuItem>
           )}
+        </div>
 
-          {/* Mobile Auth Controls */}
-          <div className="border-t border-white/10 mt-6 pt-6">
-            <NavbarMenuItem className="mb-4">
-              <Link
-                isExternal
-                className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors"
-                href={siteConfig.links.github}
-              >
-                <GithubIcon className="w-5 h-5" />
-                <span className="text-lg">GitHub</span>
-              </Link>
-            </NavbarMenuItem>
-
-            {!loading && !user ? (
-              <NavbarMenuItem>
-                <Button
-                  className="btn-ai-primary w-full text-base font-medium py-3"
-                  onPress={() => setIsLoginOpen(true)}
-                >
-                  Login / Signup
-                </Button>
-              </NavbarMenuItem>
-            ) : (
-              <div className="flex flex-col gap-3">
-                <NavbarMenuItem>
-                  <div className="flex items-center gap-3 p-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl">
-                    <div className="w-12 h-12 flex items-center justify-center rounded-xl bg-ai-gradient text-white font-bold text-lg">
-                      {(
-                        user?.displayName?.[0] ||
-                        user?.email?.[0] ||
-                        "?"
-                      ).toUpperCase()}
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-white font-semibold">
-                        {user?.displayName || "User"}
-                      </span>
-                      <span className="text-gray-400 text-sm">
-                        {user?.email}
-                      </span>
-                    </div>
-                  </div>
-                </NavbarMenuItem>
-                <NavbarMenuItem>
-                  <Button
-                    className="backdrop-blur-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 w-full"
-                    variant="bordered"
-                    onPress={() => router.push("/profile")}
-                  >
-                    View Profile
-                  </Button>
-                </NavbarMenuItem>
-                <NavbarMenuItem>
-                  <Button
-                    className="backdrop-blur-xl bg-red-500/10 border border-red-400/30 text-red-400 hover:bg-red-500/20 w-full"
-                    isDisabled={loggingOut}
-                    isLoading={loggingOut}
-                    variant="bordered"
-                    onPress={handleLogout}
-                  >
-                    Logout
-                  </Button>
-                </NavbarMenuItem>
-              </div>
-            )}
+        {/* Action Buttons Section */}
+        <div className="border-t border-white/10 mt-6 pt-6 mx-4">
+          {/* Social Links */}
+          <div className="mb-6">
+            <Link
+              isExternal
+              className="flex items-center gap-3 text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-300 py-3 px-4 rounded-xl"
+              href={siteConfig.links.github}
+            >
+              <GithubIcon className="w-5 h-5" />
+              <span className="text-base font-medium">GitHub</span>
+            </Link>
           </div>
+
+          {/* Auth Buttons */}
+          {!loading && !user ? (
+            <div className="space-y-3">
+              <Button
+                className="btn-ai-primary w-full text-base font-medium py-4 h-12"
+                onPress={() => setIsLoginOpen(true)}
+              >
+                Login / Signup
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <Button
+                className="backdrop-blur-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 w-full h-12 text-base"
+                variant="bordered"
+                onPress={() => router.push("/profile")}
+              >
+                View Profile
+              </Button>
+              <Button
+                className="backdrop-blur-xl bg-red-500/10 border border-red-400/30 text-red-400 hover:bg-red-500/20 w-full h-12 text-base"
+                isDisabled={loggingOut}
+                isLoading={loggingOut}
+                variant="bordered"
+                onPress={handleLogout}
+              >
+                {loggingOut ? "Signing out..." : "Sign Out"}
+              </Button>
+            </div>
+          )}
         </div>
       </NavbarMenu>
 

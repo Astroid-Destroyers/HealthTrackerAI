@@ -60,23 +60,23 @@ export default function ContactPage() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(99,102,241,0.1)_0%,_transparent_50%)]" />
         </div>
 
-        <div className="relative container mx-auto max-w-7xl px-6 py-16">
+        <div className="relative container mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-16">
           {/* Header Section */}
-          <div className="text-center mb-16">
-            <h1 className="text-5xl md:text-6xl font-bold mb-6">
+          <div className="text-center mb-12 sm:mb-16">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 px-4">
               <span className="gradient-text">Get In Touch</span>
             </h1>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed px-4">
               Have questions about HealthTrackerAI? We&apos;d love to hear from
               you. Our team is here to help you on your health journey.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 max-w-6xl mx-auto">
             {/* Contact Information */}
-            <div className="space-y-8">
-              <div className="glass p-8 rounded-2xl">
-                <h2 className="text-2xl font-bold text-white mb-8 flex items-center gap-3">
+            <div className="space-y-6 sm:space-y-8">
+              <div className="glass p-6 sm:p-8 rounded-2xl">
+                <h2 className="text-xl sm:text-2xl font-bold text-white mb-6 sm:mb-8 flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-ai-gradient flex items-center justify-center">
                     <svg
                       className="w-4 h-4 text-white"
@@ -95,9 +95,9 @@ export default function ContactPage() {
                   Contact Information
                 </h2>
 
-                <div className="space-y-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl backdrop-blur-xl bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0">
+                <div className="space-y-4 sm:space-y-6">
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl backdrop-blur-xl bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0">
                       <svg
                         className="w-5 h-5 text-indigo-400"
                         fill="none"
@@ -238,8 +238,8 @@ export default function ContactPage() {
             </div>
 
             {/* Contact Form */}
-            <div className="glass p-8 rounded-2xl">
-              <h2 className="text-2xl font-bold text-white mb-8 flex items-center gap-3">
+            <div className="glass p-6 sm:p-8 rounded-2xl">
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-6 sm:mb-8 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-ai-gradient flex items-center justify-center">
                   <svg
                     className="w-4 h-4 text-white"
@@ -258,18 +258,18 @@ export default function ContactPage() {
                 Send us a Message
               </h2>
 
-              <form className="space-y-6" onSubmit={handleSubmit}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   <div>
                     <label
                       htmlFor="name"
-                      className="block text-sm font-medium text-gray-300 mb-3"
+                      className="block text-sm font-medium text-gray-300 mb-2 sm:mb-3"
                     >
                       Full Name *
                     </label>
                     <input
                       required
-                      className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 backdrop-blur-sm transition-all"
+                      className="w-full px-3 sm:px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 backdrop-blur-sm transition-all text-base"
                       id="name"
                       placeholder="Enter your name"
                       type="text"
@@ -281,13 +281,13 @@ export default function ContactPage() {
                   <div>
                     <label
                       htmlFor="email"
-                      className="block text-sm font-medium text-gray-300 mb-3"
+                      className="block text-sm font-medium text-gray-300 mb-2 sm:mb-3"
                     >
                       Email Address *
                     </label>
                     <input
                       required
-                      className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 backdrop-blur-sm transition-all"
+                      className="w-full px-3 sm:px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 backdrop-blur-sm transition-all text-base"
                       id="email"
                       placeholder="your.email@example.com"
                       type="email"
@@ -300,13 +300,13 @@ export default function ContactPage() {
                 <div>
                   <label
                     htmlFor="subject"
-                    className="block text-sm font-medium text-gray-300 mb-3"
+                    className="block text-sm font-medium text-gray-300 mb-2 sm:mb-3"
                   >
                     Subject *
                   </label>
                   <input
                     required
-                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 backdrop-blur-sm transition-all"
+                    className="w-full px-3 sm:px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 backdrop-blur-sm transition-all text-base"
                     id="subject"
                     placeholder="What's this about?"
                     type="text"
