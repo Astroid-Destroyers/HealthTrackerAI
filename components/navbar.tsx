@@ -164,7 +164,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
     try {
       setLoggingOut(true);
       await signOut(auth); // end Firebase session
-      router.refresh(); // force re-render of server/components using auth
+      // Auth state change will trigger re-render automatically
     } catch {
       // optional: toast or console.error(e);
     } finally {
