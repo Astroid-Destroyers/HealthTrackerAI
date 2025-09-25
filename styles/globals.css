@@ -1,3 +1,393 @@
 @import "tailwindcss";
 
-@config "../tailwind.config.js"
+/* Modern AI-themed global styles */
+:root {
+  /* AI-inspired color palette */
+  --ai-primary: #6366f1;
+  --ai-secondary: #8b5cf6;
+  --ai-accent: #06b6d4;
+  --ai-success: #10b981;
+  --ai-warning: #f59e0b;
+  --ai-error: #ef4444;
+  
+  /* Gradients */
+  --ai-gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --ai-gradient-secondary: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+  --ai-gradient-accent: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+  --ai-gradient-neural: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  
+  /* Neural network patterns */
+  --neural-pattern: radial-gradient(circle at 25% 25%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+}
+
+[data-theme="dark"] {
+  --glass-bg: rgba(15, 23, 42, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Body enhancements */
+body {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  background-attachment: fixed;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Modern scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ai-gradient-primary);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ai-gradient-secondary);
+}
+
+/* Custom selection colors */
+::selection {
+  background: rgba(99, 102, 241, 0.3);
+  color: white;
+}
+
+::-moz-selection {
+  background: rgba(99, 102, 241, 0.3);
+  color: white;
+}
+
+/* Glassmorphism utility classes */
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Modern gradient text */
+.gradient-text {
+  background: var(--ai-gradient-primary);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% 200%;
+  animation: gradientShift 3s ease infinite;
+}
+
+.gradient-text-secondary {
+  background: var(--ai-gradient-secondary);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% 200%;
+  animation: gradientShift 3s ease infinite;
+}
+
+/* Neural network background pattern */
+.neural-bg {
+  background: var(--neural-pattern);
+  position: relative;
+}
+
+.neural-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.05) 1px, transparent 1px),
+    radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.05) 1px, transparent 1px);
+  background-size: 100px 100px, 120px 120px;
+  animation: neuralPulse 8s ease-in-out infinite;
+}
+
+/* Modern card styles */
+.ai-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--glass-shadow);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.ai-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.ai-card-premium {
+  background: var(--ai-gradient-primary);
+  color: white;
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--glass-shadow);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.ai-card-premium:hover {
+  transform: scale(1.02);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Modern button enhancements */
+.btn-ai-primary {
+  padding: 1rem 2rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  background: var(--ai-gradient-primary);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+}
+
+.btn-ai-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
+}
+
+.btn-ai-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-ai-primary:hover::before {
+  left: 100%;
+}
+
+/* Loading states */
+.loading-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+[data-theme="dark"] .loading-shimmer {
+  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+  background-size: 200% 100%;
+}
+
+/* Animation utility classes */
+.animate-neural-pulse {
+  animation: neuralPulse 2s ease-in-out infinite;
+}
+
+.animate-data-flow {
+  animation: dataFlow 3s linear infinite;
+}
+
+.animate-gradient-shift {
+  background-size: 200% 200%;
+  animation: gradientShift 4s ease infinite;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 3s ease-in-out infinite;
+}
+
+/* Animation keyframes */
+@keyframes neuralPulse {
+  0%, 100% { 
+    opacity: 0.4; 
+    transform: scale(1); 
+  }
+  50% { 
+    opacity: 1; 
+    transform: scale(1.05); 
+  }
+}
+
+@keyframes gradient {
+  0% { 
+    background-position: 0% 50%; 
+  }
+  50% { 
+    background-position: 100% 50%; 
+  }
+  100% { 
+    background-position: 0% 50%; 
+  }
+}
+
+@keyframes dataFlow {
+  0% { 
+    transform: translateX(-100%); 
+    opacity: 0; 
+  }
+  50% { 
+    opacity: 1; 
+  }
+  100% { 
+    transform: translateX(100%); 
+    opacity: 0; 
+  }
+}
+
+@keyframes gradientShift {
+  0% { 
+    background-position: 0% 50%; 
+  }
+  50% { 
+    background-position: 100% 50%; 
+  }
+  100% { 
+    background-position: 0% 50%; 
+  }
+}
+
+@keyframes float {
+  0%, 100% { 
+    transform: translateY(0px); 
+  }
+  50% { 
+    transform: translateY(-20px); 
+  }
+}
+
+@keyframes glow {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); 
+  }
+  50% { 
+    box-shadow: 0 0 40px rgba(99, 102, 241, 0.6), 0 0 80px rgba(139, 92, 246, 0.3); 
+  }
+}
+
+/* Modern navbar enhancements */
+.navbar-glow {
+  position: relative;
+}
+
+.navbar-glow::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(99, 102, 241, 0.1) 25%, 
+    rgba(139, 92, 246, 0.1) 50%, 
+    rgba(99, 102, 241, 0.1) 75%, 
+    transparent 100%
+  );
+  animation: navbarShimmer 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Enhanced gradient animations */
+.animate-gradient-x {
+  background-size: 400% 400%;
+  animation: gradientX 15s ease infinite;
+}
+
+@keyframes navbarShimmer {
+  0%, 100% { 
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% { 
+    transform: translateX(100%);
+    opacity: 1;
+  }
+}
+
+@keyframes gradientX {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Enhanced link hover effects */
+.nav-link-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-link-glow::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+.nav-link-glow:hover::after {
+  left: 100%;
+}
+
+@keyframes bounce {
+  0% { 
+    transform: translate(-50%, -50%) scale(0) rotate(0deg); 
+    opacity: 1;
+  }
+  50% { 
+    transform: translate(-50%, -50%) scale(1.2) rotate(180deg); 
+    opacity: 1;
+  }
+  100% { 
+    transform: translate(-50%, -50%) scale(0) rotate(360deg); 
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  0% { 
+    background-position: -200% 0; 
+  }
+  100% { 
+    background-position: 200% 0; 
+  }
+}

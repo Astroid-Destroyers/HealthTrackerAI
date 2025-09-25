@@ -22,14 +22,16 @@ export default function App({ Component, pageProps }: AppProps) {
   }, []);
 
   return (
-    <HeroUIProvider navigate={router.push}>
-      <NextThemesProvider attribute="class" defaultTheme="light">
-        <AuthProvider>
-          <Component {...pageProps} />
-          <InstallPrompt />
-        </AuthProvider>
-      </NextThemesProvider>
-    </HeroUIProvider>
+    <div className={`${fontSans.variable} ${fontMono.variable} font-sans`}>
+      <HeroUIProvider navigate={router.push}>
+        <NextThemesProvider attribute="class" defaultTheme="dark">
+          <AuthProvider>
+            <Component {...pageProps} />
+            <InstallPrompt />
+          </AuthProvider>
+        </NextThemesProvider>
+      </HeroUIProvider>
+    </div>
   );
 }
 
