@@ -35,6 +35,7 @@ import { useAuth } from "../providers/AuthProvider";
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { GithubIcon, SearchIcon, Logo } from "@/components/icons";
+import MultiStepSignup from "@/components/MultiStepSignup";
 
 interface NavbarProps {
   // props are now optional; real auth comes from context
@@ -46,12 +47,14 @@ export const Navbar: React.FC<NavbarProps> = () => {
   const { user, loading } = useAuth(); // <-- live auth state
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+  const [showMultiStepSignup, setShowMultiStepSignup] = useState(false);
   const router = useRouter();
 
   // form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [fullName, setFullName] = useState("");
 
   // ui state
   const [submitting, setSubmitting] = useState(false);
@@ -61,8 +64,25 @@ export const Navbar: React.FC<NavbarProps> = () => {
     setEmail("");
     setPassword("");
     setConfirmPassword("");
+    setFullName("");
     setErr(null);
     setSubmitting(false);
+  };
+
+  const handleMultiStepSuccess = () => {
+    setShowMultiStepSignup(false);
+    setIsLoginOpen(false);
+    resetForm();
+  };
+
+  const openMultiStepSignup = () => {
+    setShowMultiStepSignup(true);
+    setIsLoginOpen(false);
+  };
+
+  const closeMultiStepSignup = () => {
+    setShowMultiStepSignup(false);
+    setIsLoginOpen(true);
   };
 
   const [loggingOut, setLoggingOut] = useState(false);
@@ -153,26 +173,36 @@ export const Navbar: React.FC<NavbarProps> = () => {
   );
 
   return (
-    <HeroUINavbar maxWidth="xl" position="sticky">
+    <HeroUINavbar 
+      className="backdrop-blur-xl bg-white/5 border-b border-white/10 fixed top-0 z-50" 
+      maxWidth="xl" 
+      position="static"
+    >
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
         <NavbarBrand className="gap-3 max-w-fit">
-          <NextLink className="flex justify-start items-center gap-1" href="/">
-            <Logo />
-            <p className="font-bold text-inherit">HealthTrackerAI</p>
+          <NextLink className="flex justify-start items-center gap-2 group" href="/">
+            <div className="relative">
+              <Logo />
+              <div className="absolute inset-0 bg-ai-gradient rounded-full blur-lg opacity-30 group-hover:opacity-60 transition-opacity" />
+            </div>
+            <div className="flex flex-col">
+              <p className="font-bold text-white text-lg gradient-text">HealthTrackerAI</p>
+              <p className="text-xs text-gray-400 hidden sm:block">AI-Powered Healthcare</p>
+            </div>
           </NextLink>
         </NavbarBrand>
-        <div className="hidden lg:flex gap-4 justify-start ml-2">
+        <div className="hidden lg:flex gap-6 justify-start ml-8">
           {siteConfig.navItems.map((item) => (
             <NavbarItem key={item.href}>
               <NextLink
                 className={clsx(
-                  linkStyles({ color: "foreground" }),
-                  "data-[active=true]:text-primary data-[active=true]:font-medium",
+                  "text-gray-300 hover:text-white transition-all duration-300 font-medium relative group",
+                  "hover:scale-105"
                 )}
-                color="foreground"
                 href={item.href}
               >
                 {item.label}
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-ai-gradient transition-all duration-300 group-hover:w-full" />
               </NextLink>
             </NavbarItem>
           ))}
@@ -181,13 +211,13 @@ export const Navbar: React.FC<NavbarProps> = () => {
             <NavbarItem>
               <NextLink
                 className={clsx(
-                  linkStyles({ color: "foreground" }),
-                  "data-[active=true]:text-primary data-[active=true]:font-medium",
+                  "text-gray-300 hover:text-white transition-all duration-300 font-medium relative group",
+                  "hover:scale-105"
                 )}
-                color="foreground"
                 href="/admin"
               >
                 Admin
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-ai-gradient-accent transition-all duration-300 group-hover:w-full" />
               </NextLink>
             </NavbarItem>
           )}
@@ -195,9 +225,14 @@ export const Navbar: React.FC<NavbarProps> = () => {
       </NavbarContent>
 
       <NavbarContent className="hidden sm:flex basis-1/5 sm:basis-full" justify="end">
-        <NavbarItem className="hidden sm:flex gap-2">
-          <Link isExternal href={siteConfig.links.github} title="GitHub">
-            <GithubIcon className="text-default-500" />
+        <NavbarItem className="hidden sm:flex gap-3">
+          <Link 
+            isExternal 
+            href={siteConfig.links.github} 
+            title="GitHub"
+            className="text-gray-400 hover:text-white transition-all duration-300 hover:scale-110"
+          >
+            <GithubIcon className="w-5 h-5" />
           </Link>
           <ThemeSwitch />
         </NavbarItem>
@@ -205,7 +240,10 @@ export const Navbar: React.FC<NavbarProps> = () => {
         {/* Right side auth controls */}
         {!loading && !user ? (
           <NavbarItem>
-            <Button color="primary" variant="flat" onPress={() => setIsLoginOpen(true)}>
+            <Button 
+              className="btn-ai-primary text-sm px-6 py-2 font-medium" 
+              onPress={() => setIsLoginOpen(true)}
+            >
               Login / Signup
             </Button>
           </NavbarItem>
@@ -213,17 +251,18 @@ export const Navbar: React.FC<NavbarProps> = () => {
           <NavbarItem>
             {user && (
               <Tooltip
+                className="backdrop-blur-xl bg-white/10 border border-white/20 p-0 shadow-2xl"
                 content={
-                  <div className="flex flex-col gap-2 p-2">
-                    <div className="text-center">
-                      <p className="font-semibold">
+                  <div className="flex flex-col gap-0 p-4 min-w-[200px]">
+                    <div className="text-center mb-3 pb-3 border-b border-white/10">
+                      <p className="font-semibold text-white text-sm">
                         {user.displayName || "User"}
                       </p>
-                      <p className="text-sm text-default-500">{user.email}</p>
+                      <p className="text-xs text-gray-400 mt-1">{user.email}</p>
                     </div>
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-2">
                       <Button
-                        className="justify-start"
+                        className="justify-start bg-transparent hover:bg-white/10 text-white text-sm h-8"
                         size="sm"
                         variant="light"
                         onPress={() => router.push("/profile")}
@@ -231,7 +270,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                         Edit Profile
                       </Button>
                       <Button
-                        className="justify-start"
+                        className="justify-start bg-transparent hover:bg-red-500/20 text-red-400 text-sm h-8"
                         color="danger"
                         isDisabled={loggingOut}
                         isLoading={loggingOut}
@@ -244,10 +283,10 @@ export const Navbar: React.FC<NavbarProps> = () => {
                     </div>
                   </div>
                 }
-                placement="bottom"
+                placement="bottom-end"
               >
                 <div
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-white font-semibold cursor-pointer hover:opacity-80 transition-opacity"
+                  className="w-9 h-9 flex items-center justify-center rounded-xl bg-ai-gradient text-white font-semibold cursor-pointer hover:scale-105 transition-all duration-300 animate-glow"
                   role="button"
                   tabIndex={0}
                   onClick={() => router.push("/profile")}
@@ -263,7 +302,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                     aria-label={`${(user.displayName || user.email || "U")
                       .charAt(0)
                       .toUpperCase()} avatar`}
-                    className="text-sm font-semibold"
+                    className="text-sm font-bold"
                     role="img"
                   >
                     {(user.displayName || user.email || "U")
@@ -275,29 +314,24 @@ export const Navbar: React.FC<NavbarProps> = () => {
             )}
           </NavbarItem>
         )}
-
       </NavbarContent>
 
       <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
-        <ThemeSwitch />
-        <NavbarMenuToggle />
+        <div className="flex items-center gap-2">
+          <ThemeSwitch />
+          <NavbarMenuToggle className="text-white" />
+        </div>
       </NavbarContent>
 
-      <NavbarMenu>
+      <NavbarMenu className="backdrop-blur-xl bg-white/5 border-r border-white/10 pt-6">
         <div className="hidden md:block mb-4">
           {searchInput}
         </div>
-        <div className="mx-4 mt-2 flex flex-col gap-2">
+        <div className="mx-4 mt-2 flex flex-col gap-3">
           {siteConfig.navItems.map((item, index) => (
             <NavbarMenuItem key={`${item}-${index}`}>
               <Link
-                color={
-                  index === 2
-                    ? "primary"
-                    : index === siteConfig.navItems.length - 1
-                    ? "danger"
-                    : "foreground"
-                }
+                className="text-gray-300 hover:text-white transition-colors text-lg font-medium"
                 href={item.href}
                 size="lg"
               >
@@ -309,7 +343,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
           {user && user.email === "new.roeepalmon@gmail.com" && (
             <NavbarMenuItem>
               <Link
-                color="foreground"
+                className="text-gray-300 hover:text-white transition-colors text-lg font-medium"
                 href="/admin"
                 size="lg"
               >
@@ -319,41 +353,39 @@ export const Navbar: React.FC<NavbarProps> = () => {
           )}
           
           {/* Mobile Auth Controls */}
-          <div className="border-t border-default-200 mt-4 pt-4">
-            <NavbarMenuItem className="mb-2">
+          <div className="border-t border-white/10 mt-6 pt-6">
+            <NavbarMenuItem className="mb-4">
               <Link 
                 isExternal 
                 href={siteConfig.links.github}
-                className="flex items-center gap-2"
+                className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors"
               >
-                <GithubIcon className="text-default-500" />
-                GitHub
+                <GithubIcon className="w-5 h-5" />
+                <span className="text-lg">GitHub</span>
               </Link>
             </NavbarMenuItem>
             
             {!loading && !user ? (
               <NavbarMenuItem>
                 <Button 
-                  color="primary" 
-                  variant="flat" 
-                  className="w-full" 
+                  className="btn-ai-primary w-full text-base font-medium py-3" 
                   onPress={() => setIsLoginOpen(true)}
                 >
                   Login / Signup
                 </Button>
               </NavbarMenuItem>
             ) : (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3">
                 <NavbarMenuItem>
-                  <div className="flex items-center gap-3 p-2">
-                    <div className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white font-semibold">
+                  <div className="flex items-center gap-3 p-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl">
+                    <div className="w-12 h-12 flex items-center justify-center rounded-xl bg-ai-gradient text-white font-bold text-lg">
                       {(user?.displayName?.[0] || user?.email?.[0] || "?").toUpperCase()}
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium">
+                      <span className="text-white font-semibold">
                         {user?.displayName || "User"}
                       </span>
-                      <span className="text-xs text-default-500">
+                      <span className="text-gray-400 text-sm">
                         {user?.email}
                       </span>
                     </div>
@@ -361,9 +393,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
                 </NavbarMenuItem>
                 <NavbarMenuItem>
                   <Button
-                    color="primary"
-                    variant="flat"
-                    className="w-full"
+                    className="backdrop-blur-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 w-full"
+                    variant="bordered"
                     onPress={() => router.push("/profile")}
                   >
                     View Profile
@@ -371,9 +402,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
                 </NavbarMenuItem>
                 <NavbarMenuItem>
                   <Button
-                    color="danger"
-                    variant="flat"
-                    className="w-full"
+                    className="backdrop-blur-xl bg-red-500/10 border border-red-400/30 text-red-400 hover:bg-red-500/20 w-full"
+                    variant="bordered"
                     isDisabled={loggingOut}
                     isLoading={loggingOut}
                     onPress={handleLogout}
@@ -388,26 +418,62 @@ export const Navbar: React.FC<NavbarProps> = () => {
       </NavbarMenu>
 
       {/* Auth modal */}
-      <Modal isOpen={isLoginOpen} onOpenChange={(o) => { setIsLoginOpen(o); if (!o) resetForm(); }}>
-        <ModalContent>
+      <Modal 
+        classNames={{
+          base: "backdrop-blur-2xl bg-slate-900/95 border border-white/20 shadow-2xl",
+          body: "py-8 px-6",
+          header: "border-b border-white/10 pb-6 px-6",
+          footer: "border-t border-white/10 pt-6 px-6",
+          backdrop: "bg-black/60 backdrop-blur-sm"
+        }}
+        isOpen={isLoginOpen} 
+        onOpenChange={(o) => { setIsLoginOpen(o); if (!o) resetForm(); }}
+        size="lg"
+        placement="center"
+      >
+        <ModalContent className="text-white">
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col gap-1">
-                {activeTab === "login" ? "Log in" : "Sign up"}
+              <ModalHeader className="flex flex-col gap-3 text-center">
+                <div className="flex items-center justify-center mb-2">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center mb-4">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                </div>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-600 bg-clip-text text-transparent">
+                  {activeTab === "login" ? "Welcome Back" : "Join HealthTrackerAI"}
+                </h2>
+                <p className="text-gray-400 font-normal leading-relaxed">
+                  {activeTab === "login" 
+                    ? "Sign in to access your personalized AI health dashboard and continue your wellness journey" 
+                    : "Create your account to unlock AI-powered health insights and personalized recommendations"
+                  }
+                </p>
               </ModalHeader>
               <ModalBody>
                 <Tabs
                   aria-label="Login/Signup tabs"
-                  className="flex justify-center"
+                  classNames={{
+                    tabList: "backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-3 w-full shadow-lg relative overflow-hidden",
+                    cursor: "bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 shadow-2xl rounded-xl border-2 border-white/30 transition-all duration-500 ease-out transform",
+                    tab: "text-gray-400 hover:text-gray-200 transition-all duration-300 px-8 py-4 rounded-xl font-medium relative z-10 border-2 border-transparent hover:border-white/20",
+                    tabContent: "group-data-[selected=true]:text-white group-data-[selected=true]:font-bold group-data-[selected=true]:drop-shadow-lg group-data-[selected=true]:scale-105 transition-all duration-500 ease-out relative z-20"
+                  }}
                   selectedKey={activeTab}
                   onSelectionChange={(key) => setActiveTab(key as "login" | "signup")}
                   variant="solid"
                 >
-                  <Tab key="login" title="Login">
-                    <div className="flex flex-col gap-4">
+                  <Tab key="login" title="Sign In">
+                    <div className="flex flex-col gap-6 mt-6">
                       <Input
-                        label="Email"
-                        placeholder="Enter your email"
+                        classNames={{
+                          base: "text-white",
+                          input: "text-white placeholder:text-gray-400 text-base px-4",
+                          inputWrapper: "backdrop-blur-xl bg-white/5 border border-white/20 hover:border-indigo-400/50 group-data-[focused=true]:border-indigo-500 transition-all duration-200 h-12"
+                        }}
+                        placeholder="Enter your email address"
                         value={email}
                         variant="bordered"
                         onChange={(e) => setEmail(e.target.value)}
@@ -415,7 +481,11 @@ export const Navbar: React.FC<NavbarProps> = () => {
                         isRequired
                       />
                       <Input
-                        label="Password"
+                        classNames={{
+                          base: "text-white",
+                          input: "text-white placeholder:text-gray-400 text-base px-4",
+                          inputWrapper: "backdrop-blur-xl bg-white/5 border border-white/20 hover:border-indigo-400/50 group-data-[focused=true]:border-indigo-500 transition-all duration-200 h-12"
+                        }}
                         placeholder="Enter your password"
                         type="password"
                         value={password}
@@ -425,97 +495,123 @@ export const Navbar: React.FC<NavbarProps> = () => {
                       />
                     </div>
                   </Tab>
-                  <Tab key="signup" title="Sign Up">
-                    <div className="flex flex-col gap-4">
-                      <Input
-                        label="Email"
-                        placeholder="Enter your email"
-                        value={email}
-                        variant="bordered"
-                        onChange={(e) => setEmail(e.target.value)}
-                        type="email"
-                        isRequired
-                      />
-                      <Input
-                        label="Password"
-                        placeholder="Enter your password (min 6 chars)"
-                        type="password"
-                        value={password}
-                        variant="bordered"
-                        onChange={(e) => setPassword(e.target.value)}
-                        isRequired
-                      />
-                      <Input
-                        label="Confirm Password"
-                        placeholder="Confirm your password"
-                        type="password"
-                        value={confirmPassword}
-                        variant="bordered"
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        isRequired
-                      />
+                  <Tab key="signup" title="Create Account">
+                    <div className="flex flex-col gap-6 mt-6 text-center">
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-semibold text-white">
+                          Get Personalized Health Insights
+                        </h3>
+                        <p className="text-gray-400 text-sm leading-relaxed">
+                          Create your profile with health metrics to unlock AI-powered recommendations tailored just for you.
+                        </p>
+                      </div>
+                      
+                      <Button
+                        className="btn-ai-primary h-14 text-lg font-semibold"
+                        size="lg"
+                        onPress={openMultiStepSignup}
+                      >
+                        Create Your Health Profile
+                      </Button>
+                      
+                      <div className="text-xs text-gray-500">
+                        Takes less than 2 minutes • Secure & Private
+                      </div>
                     </div>
                   </Tab>
                 </Tabs>
 
-                <div className="flex flex-col gap-3 mt-4">
+                <div className="flex flex-col gap-4 mt-6">
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
+                      <span className="w-full border-t border-white/20" />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                      <span className="bg-transparent px-2 text-gray-400">Or continue with</span>
                     </div>
                   </div>
                   <Button
+                    className="backdrop-blur-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium h-14 rounded-xl transition-all duration-200 hover:scale-[1.02] shadow-lg"
                     variant="bordered"
                     onPress={handleGoogleSignIn}
                     isDisabled={submitting}
                     isLoading={submitting}
-                    className="w-full"
+                    size="lg"
                     startContent={
-                      <svg className="w-4 h-4" viewBox="0 0 24 24">
-                        <path
-                          fill="currentColor"
-                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        />
-                        <path
-                          fill="currentColor"
-                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        />
-                        <path
-                          fill="currentColor"
-                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                        />
-                        <path
-                          fill="currentColor"
-                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                        />
-                      </svg>
+                      <div className="bg-white rounded-full p-1">
+                        <svg className="w-5 h-5 text-gray-700" viewBox="0 0 24 24">
+                          <path
+                            fill="#4285F4"
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                          />
+                          <path
+                            fill="#34A853"
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                          />
+                          <path
+                            fill="#FBBC05"
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                          />
+                          <path
+                            fill="#EA4335"
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                          />
+                        </svg>
+                      </div>
                     }
                   >
-                    Continue with Google
+                    <span className="text-base">Continue with Google</span>
                   </Button>
                 </div>
 
-                {err && <p className="text-danger text-sm mt-2">{err}</p>}
+                {err && (
+                  <div className="glass-strong border-red-400/30 bg-red-500/10 p-3 rounded-xl mt-4">
+                    <p className="text-red-400 text-sm">{err}</p>
+                  </div>
+                )}
               </ModalBody>
 
-              <ModalFooter>
-                <Button color="default" variant="flat" onPress={() => { onClose(); resetForm(); }}>
-                  Close
+              <ModalFooter className="px-8 pb-8 pt-4">
+                <Button 
+                  className="backdrop-blur-xl bg-white/5 hover:bg-white/10 border border-white/20 text-white font-medium h-12 rounded-xl transition-all duration-200 hover:scale-[1.02]"
+                  variant="bordered"
+                  onPress={() => { onClose(); resetForm(); }}
+                  size="lg"
+                >
+                  Cancel
                 </Button>
                 <Button
-                  color="primary"
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold h-12 rounded-xl shadow-xl transition-all duration-200 hover:scale-[1.02] border-0"
                   isDisabled={submitting}
                   isLoading={submitting}
                   onPress={handlePrimary}
+                  size="lg"
                 >
-                  {activeTab === "login" ? "Sign in" : "Register"}
+                  {activeTab === "login" ? "Sign In" : "Create Account"}
                 </Button>
               </ModalFooter>
             </>
           )}
+        </ModalContent>
+      </Modal>
+
+      {/* Multi-Step Signup Modal */}
+      <Modal
+        isOpen={showMultiStepSignup}
+        onOpenChange={setShowMultiStepSignup}
+        placement="center"
+        backdrop="blur"
+        classNames={{
+          backdrop: "bg-black/50 backdrop-blur-sm",
+          wrapper: "items-center justify-center p-4",
+        }}
+        hideCloseButton
+      >
+        <ModalContent className="bg-transparent shadow-none border-0 max-w-lg w-full">
+          <MultiStepSignup
+            onClose={closeMultiStepSignup}
+            onSuccess={handleMultiStepSuccess}
+          />
         </ModalContent>
       </Modal>
     </HeroUINavbar>
