@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
 import { Input } from "@heroui/input";
@@ -22,8 +21,10 @@ import {
   useDisclosure,
 } from "@heroui/modal";
 
+import { useState, useEffect } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import DefaultLayout from "@/layouts/default";
+
 import {
   getAllTickets,
   subscribeToAllTickets,
@@ -42,7 +43,6 @@ import {
   CreateReplyData,
   UpdateTicketData,
 } from "@/types/tickets";
-
 export default function AdminTicketsPage() {
   const { user } = useAuth();
   const [tickets, setTickets] = useState<Ticket[]>([]);
