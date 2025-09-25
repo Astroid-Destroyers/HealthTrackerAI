@@ -63,7 +63,7 @@ function TestingPage() {
     try {
       const result = await OpenAPIClient.ask(input);
 
-      console.log(result);
+      // Testing API call result
       if (result.json !== undefined) {
         setDisplay(JSON.stringify(result.json, null, 2));
       } else {
@@ -89,8 +89,8 @@ function TestingPage() {
         jsonOutput: jsonOutput,
       });
       alert("Response saved successfully!");
-    } catch (error) {
-      console.error("Error saving response:", error);
+    } catch {
+      // Error saving response
       alert("Failed to save response");
     } finally {
       setSaving(false);
@@ -118,8 +118,8 @@ function TestingPage() {
       });
 
       return unsubscribe;
-    } catch (error) {
-      console.error("Error loading responses:", error);
+    } catch {
+      // Error loading responses
       setShowSaved(false);
     }
   };
@@ -134,8 +134,8 @@ function TestingPage() {
 
       setSavedResponses(updatedResponses);
       setShowSaved(updatedResponses.length > 0);
-    } catch (error) {
-      console.error("Error deleting response:", error);
+    } catch {
+      // Error deleting response
     }
   };
 

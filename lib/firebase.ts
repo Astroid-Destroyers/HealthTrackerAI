@@ -35,8 +35,8 @@ export const getAnalyticsInstance = (): Analytics | null => {
   if (typeof window === "undefined") return null;
   try {
     return getAnalytics(app);
-  } catch (error) {
-    console.warn("Analytics not available:", error);
+  } catch {
+    // Analytics not available
 
     return null;
   }

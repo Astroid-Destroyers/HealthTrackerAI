@@ -220,13 +220,7 @@ export default function IndexPage() {
             </Chip>
 
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-bold mb-6 leading-tight px-4">
-              <span
-                className="bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-600 bg-clip-text text-transparent animate-pulse"
-                style={{
-                  backgroundSize: "200% 200%",
-                  animation: "gradient 3s ease infinite",
-                }}
-              >
+              <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-600 bg-clip-text text-transparent animate-pulse health-tracker-gradient">
                 HealthTracker
               </span>
               <span className="text-white">AI</span>

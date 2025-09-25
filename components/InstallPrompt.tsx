@@ -6,8 +6,6 @@ export const InstallPrompt = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [isChrome, setIsChrome] = useState(false);
-  const [installAttempts, setInstallAttempts] = useState(0);
 
   useEffect(() => {
     // Check if mobile device and Chrome
@@ -19,7 +17,6 @@ export const InstallPrompt = () => {
       /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
 
     setIsMobile(mobileCheck);
-    setIsChrome(chromeCheck);
 
     // Check if already installed
     const isStandalone = window.matchMedia(

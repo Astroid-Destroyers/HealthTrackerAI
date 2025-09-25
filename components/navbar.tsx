@@ -200,6 +200,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
         "backdrop-blur-xl bg-white/5 border-b border-white/10 transition-all duration-300 z-50 fixed top-0 left-0 right-0",
       )}
       classNames={{
+        base: ["navbar-fixed-height"],
+        wrapper: ["max-w-full", "px-0", "h-16"],
         item: [
           "flex",
           "relative",
@@ -231,7 +233,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
       position="sticky"
       onMenuOpenChange={setIsMenuOpen}
     >
-      <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
+      <NavbarContent className="basis-1/3 md:basis-1/2" justify="start">
         <NavbarBrand className="gap-2 sm:gap-3 max-w-fit">
           <NextLink
             className="flex justify-start items-center gap-2 group"
@@ -242,7 +244,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
               <div className="absolute inset-0 bg-ai-gradient rounded-full blur-lg opacity-30 group-hover:opacity-60 transition-opacity" />
             </div>
             <div className="flex flex-col">
-              <p className="font-bold text-white text-sm sm:text-lg gradient-text">
+              <p className="font-bold text-white text-sm sm:text-lg gradient-text fallback-text">
                 HealthTrackerAI
               </p>
               <p className="text-xs text-gray-400 hidden sm:block">
@@ -252,8 +254,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
           </NextLink>
         </NavbarBrand>
         
-        {/* Desktop Navigation */}
-        <div className="hidden lg:flex gap-6 justify-start ml-8">
+        {/* Desktop Navigation - Fixed responsive breakpoint */}
+        <div className="hidden md:flex gap-6 justify-start ml-8">
           {siteConfig.navItems.map((item) => (
             <NavbarItem key={item.href}>
               <NextLink
@@ -287,7 +289,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
       </NavbarContent>
 
       <NavbarContent
-        className="hidden sm:flex basis-1/5 sm:basis-full"
+        className="hidden sm:flex basis-2/3 md:basis-1/2"
         justify="end"
       >
         <NavbarItem className="hidden md:flex gap-3">

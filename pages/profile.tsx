@@ -2,7 +2,6 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { motion } from "framer-motion";
-
 // Firebase imports for profile updates
 import { updateProfile } from "firebase/auth";
 import { Button } from "@heroui/button";
@@ -37,13 +36,13 @@ interface UserProfile {
 export default function ProfilePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [isEditing, setIsEditing] = useState(false);
-  const [displayName, setDisplayName] = useState("");
-  const [updating, setUpdating] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [notificationLoading, setNotificationLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isChrome, setIsChrome] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+  const [updating, setUpdating] = useState(false);
 
   // New state for user profile data
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -84,10 +83,10 @@ export default function ProfilePage() {
         if (userDoc.exists()) {
           setUserProfile(userDoc.data() as UserProfile);
         } else {
-          console.log("No profile data found for user");
+          // No profile data found for user
         }
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
+      } catch {
+        // Error fetching user profile
       } finally {
         setProfileLoading(false);
       }
@@ -163,10 +162,10 @@ export default function ProfilePage() {
             });
 
             if (!response.ok) {
-              console.error("Failed to update device info on backend");
+              // Failed to update device info on backend
             }
-          } catch (apiError) {
-            console.error("Error calling toggle-notifications API:", apiError);
+          } catch {
+            // Error calling toggle-notifications API
           }
 
           // Send test notification after 3 seconds
@@ -179,8 +178,8 @@ export default function ProfilePage() {
                 tag: "welcome-notification",
                 requireInteraction: false,
               });
-            } catch (error) {
-              console.error("Failed to send test notification:", error);
+            } catch {
+              // Failed to send test notification
             }
           }, 3000);
         } else {
@@ -212,14 +211,14 @@ export default function ProfilePage() {
           });
 
           if (!response.ok) {
-            console.error("Failed to update device info on backend");
+            // Failed to update device info on backend
           }
-        } catch (apiError) {
-          console.error("Error calling toggle-notifications API:", apiError);
+        } catch {
+          // Error calling toggle-notifications API
         }
       }
-    } catch (error) {
-      console.error("Error toggling notifications:", error);
+    } catch {
+      // Error toggling notifications
       alert("Failed to update notification settings. Please try again.");
     } finally {
       setNotificationLoading(false);
@@ -236,8 +235,8 @@ export default function ProfilePage() {
       });
       setIsEditing(false);
       alert("Profile updated successfully!");
-    } catch (error) {
-      console.error("Error updating profile:", error);
+    } catch {
+      // Error updating profile
       alert("Failed to update profile. Please try again.");
     } finally {
       setUpdating(false);
@@ -346,16 +345,12 @@ export default function ProfilePage() {
               transition={{ duration: 0.8 }}
             >
               <div className="relative inline-block mb-6">
-                <div
-                  className="w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 flex items-center justify-center text-4xl font-bold text-white shadow-2xl mx-auto"
-                  style={{
-                    boxShadow:
-                      "0 0 50px rgba(99, 102, 241, 0.3), 0 0 100px rgba(139, 92, 246, 0.2)",
-                  }}
-                >
-                  {(userProfile?.name || user.displayName || user.email || "U")
-                    .charAt(0)
-                    .toUpperCase()}
+                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 flex items-center justify-center text-4xl font-bold text-white shadow-2xl mx-auto profile-avatar-glow">
+                  {(
+                    user?.displayName?.[0] ||
+                    user?.email?.[0] ||
+                    "?"
+                  ).toUpperCase()}
                 </div>
                 {userProfile && (
                   <motion.div

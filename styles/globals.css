@@ -391,3 +391,70 @@ body {
     background-position: 200% 0; 
   }
 }
+
+/* Profile avatar glow effect */
+.profile-avatar-glow {
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.3), 0 0 60px rgba(99, 102, 241, 0.2);
+}
+
+/* Health tracker gradient animation */
+.health-tracker-gradient {
+  background-size: 200% 200%;
+  animation: gradient 3s ease infinite;
+}
+
+/* Navbar text fix for overlapping issues */
+.gradient-text {
+  background: var(--ai-gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% 200%;
+  animation: gradientShift 3s ease infinite;
+  position: relative;
+  z-index: 1;
+  will-change: background-position;
+}
+
+/* Fallback for browsers with rendering issues */
+.fallback-text {
+  color: white;
+}
+
+/* Webkit-specific fix */
+@supports not (-webkit-background-clip: text) {
+  .gradient-text {
+    color: #6366f1;
+    background: none;
+    -webkit-text-fill-color: unset;
+  }
+}
+
+/* Fix navbar height consistency across all pages */
+.navbar-fixed-height {
+  height: 64px !important;
+  min-height: 64px !important;
+  max-height: 64px !important;
+}
+
+/* Ensure navbar wrapper maintains consistent height */
+.navbar-fixed-height .navbar-wrapper,
+.navbar-fixed-height [data-slot="wrapper"] {
+  height: 64px !important;
+  min-height: 64px !important;
+  max-height: 64px !important;
+}
+
+/* Fix navbar content distribution and visibility */
+.navbar-fixed-height [data-slot="content"] {
+  flex-shrink: 0;
+  display: flex !important;
+  align-items: center;
+}
+
+/* Ensure navigation links are always visible on desktop */
+@media (min-width: 768px) {
+  .navbar-fixed-height .hidden.md\\:flex {
+    display: flex !important;
+  }
+}

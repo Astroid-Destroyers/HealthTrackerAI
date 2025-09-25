@@ -16,7 +16,7 @@ export default function DefaultLayout({
     <div className="relative flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <Head />
       <Navbar loggedIn={loggedIn} setLoggedIn={setLoggedIn} />
-      <main className="flex-grow">{children}</main>
+      <main className="flex-grow pt-16">{children}</main>
       <footer className="backdrop-blur-xl bg-white/5 border-t border-white/10">
         <div className="container mx-auto max-w-7xl px-6 py-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">

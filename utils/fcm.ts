@@ -44,15 +44,14 @@ export const getFCMToken = async (): Promise<string | null> => {
     const messaging = await getMessagingInstance();
 
     if (!messaging) {
-      console.warn("Firebase messaging is not supported in this browser");
-
+      // Firebase messaging is not supported in this browser
       return null;
     }
 
     const permission = await requestNotificationPermission();
 
     if (permission !== "granted") {
-      console.warn("Notification permission not granted");
+      // Notification permission not granted
 
       return null;
     }
@@ -62,14 +61,14 @@ export const getFCMToken = async (): Promise<string | null> => {
     });
 
     if (!token) {
-      console.warn("Failed to get FCM token - VAPID key may be invalid");
+      // Failed to get FCM token - VAPID key may be invalid
 
       return null;
     }
 
     return token;
-  } catch (error) {
-    console.error("Error getting FCM token:", error);
+  } catch {
+    // Error getting FCM token
 
     return null;
   }
