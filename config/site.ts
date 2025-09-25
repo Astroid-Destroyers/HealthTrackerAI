@@ -67,6 +67,5 @@ export const siteConfig = {
     github: "https://github.com/Astroid-Destroyers/",
     twitter: "https://twitter.com/hero_ui",
     docs: "https://heroui.com",
-
   },
 };

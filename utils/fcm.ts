@@ -17,22 +17,24 @@ export interface NotificationPayload {
 /**
  * Request permission for push notifications
  */
-export const requestNotificationPermission = async (): Promise<NotificationPermission> => {
-  if (!('Notification' in window)) {
-    throw new Error('This browser does not support notifications');
-  }
+export const requestNotificationPermission =
+  async (): Promise<NotificationPermission> => {
+    if (!("Notification" in window)) {
+      throw new Error("This browser does not support notifications");
+    }
 
-  if (Notification.permission === 'granted') {
-    return 'granted';
-  }
+    if (Notification.permission === "granted") {
+      return "granted";
+    }
 
-  if (Notification.permission === 'denied') {
-    return 'denied';
-  }
+    if (Notification.permission === "denied") {
+      return "denied";
+    }
 
-  const permission = await Notification.requestPermission();
-  return permission;
-};
+    const permission = await Notification.requestPermission();
+
+    return permission;
+  };
 
 /**
  * Get FCM registration token
@@ -40,14 +42,18 @@ export const requestNotificationPermission = async (): Promise<NotificationPermi
 export const getFCMToken = async (): Promise<string | null> => {
   try {
     const messaging = await getMessagingInstance();
+
     if (!messaging) {
-      console.warn('Firebase messaging is not supported in this browser');
+      console.warn("Firebase messaging is not supported in this browser");
+
       return null;
     }
 
     const permission = await requestNotificationPermission();
-    if (permission !== 'granted') {
-      console.warn('Notification permission not granted');
+
+    if (permission !== "granted") {
+      console.warn("Notification permission not granted");
+
       return null;
     }
 
@@ -56,13 +62,15 @@ export const getFCMToken = async (): Promise<string | null> => {
     });
 
     if (!token) {
-      console.warn('Failed to get FCM token - VAPID key may be invalid');
+      console.warn("Failed to get FCM token - VAPID key may be invalid");
+
       return null;
     }
 
     return token;
   } catch (error) {
-    console.error('Error getting FCM token:', error);
+    console.error("Error getting FCM token:", error);
+
     return null;
   }
 };
@@ -74,7 +82,7 @@ export const onForegroundMessage = (callback: (payload: any) => void) => {
   getMessagingInstance().then((messaging) => {
     if (messaging) {
       onMessage(messaging, (payload) => {
-        console.log('Received foreground message:', payload);
+        console.log("Received foreground message:", payload);
         callback(payload);
       });
     }
@@ -85,38 +93,44 @@ export const onForegroundMessage = (callback: (payload: any) => void) => {
  * Send a test notification (for development)
  */
 export const sendTestNotification = async (payload: NotificationPayload) => {
-  if (Notification.permission === 'granted') {
+  if (Notification.permission === "granted") {
     // Detect if we're on a mobile device and Chrome
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+    const isMobile =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent,
+      );
+    const isChrome =
+      /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
 
     const notification = new Notification(payload.title, {
       body: payload.body,
-      icon: payload.icon || '/favicon.ico',
-      badge: payload.badge || '/favicon.ico',
-      tag: payload.tag || 'test-notification',
+      icon: payload.icon || "/favicon.ico",
+      badge: payload.badge || "/favicon.ico",
+      tag: payload.tag || "test-notification",
       requireInteraction: payload.requireInteraction || false,
       silent: payload.silent || false,
       data: payload.data,
       // Chrome mobile-specific enhancements
-      ...(isMobile && isChrome && {
-        vibrate: [200, 100, 200, 100, 200], // Enhanced vibration pattern for Chrome
-        actions: [
-          { action: 'view', title: 'Open App' },
-          { action: 'dismiss', title: 'Dismiss' }
-        ],
-        // Chrome-specific options
-        renotify: false,
-        noscreen: false,
-      }),
+      ...(isMobile &&
+        isChrome && {
+          vibrate: [200, 100, 200, 100, 200], // Enhanced vibration pattern for Chrome
+          actions: [
+            { action: "view", title: "Open App" },
+            { action: "dismiss", title: "Dismiss" },
+          ],
+          // Chrome-specific options
+          renotify: false,
+          noscreen: false,
+        }),
       // Standard mobile enhancements for other browsers
-      ...((isMobile && !isChrome) && {
-        vibrate: [200, 100, 200],
-        actions: [
-          { action: 'view', title: 'View' },
-          { action: 'dismiss', title: 'Dismiss' }
-        ]
-      })
+      ...(isMobile &&
+        !isChrome && {
+          vibrate: [200, 100, 200],
+          actions: [
+            { action: "view", title: "View" },
+            { action: "dismiss", title: "Dismiss" },
+          ],
+        }),
     });
 
     // Chrome-specific: Add click handler for better UX
@@ -125,8 +139,8 @@ export const sendTestNotification = async (payload: NotificationPayload) => {
         notification.close();
         window.focus();
         // Navigate to app
-        if (window.location.pathname !== '/') {
-          window.location.href = '/';
+        if (window.location.pathname !== "/") {
+          window.location.href = "/";
         }
       };
     }
@@ -140,7 +154,8 @@ export const sendTestNotification = async (payload: NotificationPayload) => {
 
     return notification;
   } else {
-    console.warn('Notification permission not granted');
+    console.warn("Notification permission not granted");
+
     return null;
   }
 };
@@ -150,63 +165,75 @@ export const sendTestNotification = async (payload: NotificationPayload) => {
  */
 export const isPushNotificationSupported = (): boolean => {
   return (
-    'serviceWorker' in navigator &&
-    'PushManager' in window &&
-    'Notification' in window
+    "serviceWorker" in navigator &&
+    "PushManager" in window &&
+    "Notification" in window
   );
 };
 
 /**
  * Register the service worker
  */
-export const registerServiceWorker = async (): Promise<ServiceWorkerRegistration | null> => {
-  if (!('serviceWorker' in navigator)) {
-    console.warn('Service workers are not supported in this browser');
-    return null;
-  }
+export const registerServiceWorker =
+  async (): Promise<ServiceWorkerRegistration | null> => {
+    if (!("serviceWorker" in navigator)) {
+      console.warn("Service workers are not supported in this browser");
 
-  try {
-    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
-      scope: '/',
-    });
+      return null;
+    }
 
-    console.log('Service worker registered successfully:', registration);
+    try {
+      const registration = await navigator.serviceWorker.register(
+        "/firebase-messaging-sw.js",
+        {
+          scope: "/",
+        },
+      );
 
-    // Send Firebase config to service worker
-    const firebaseConfig = {
-      apiKey: process.env.NEXT_PUBLIC_FB_API_KEY,
-      authDomain: process.env.NEXT_PUBLIC_FB_AUTH_DOMAIN,
-      projectId: process.env.NEXT_PUBLIC_FB_PROJECT_ID,
-      storageBucket: "healthtrackerai-e5819.firebasestorage.app",
-      messagingSenderId: process.env.NEXT_PUBLIC_FB_MESSAGING_SENDER_ID,
-      appId: process.env.NEXT_PUBLIC_FB_APP_ID,
-    };
+      console.log("Service worker registered successfully:", registration);
 
-    // Wait for service worker to be ready
-    await navigator.serviceWorker.ready;
+      // Send Firebase config to service worker
+      const firebaseConfig = {
+        apiKey: process.env.NEXT_PUBLIC_FB_API_KEY,
+        authDomain: process.env.NEXT_PUBLIC_FB_AUTH_DOMAIN,
+        projectId: process.env.NEXT_PUBLIC_FB_PROJECT_ID,
+        storageBucket: "healthtrackerai-e5819.firebasestorage.app",
+        messagingSenderId: process.env.NEXT_PUBLIC_FB_MESSAGING_SENDER_ID,
+        appId: process.env.NEXT_PUBLIC_FB_APP_ID,
+      };
 
-    // Send config to service worker
-    registration.active?.postMessage({
-      type: 'FIREBASE_CONFIG',
-      config: firebaseConfig,
-    });
+      // Wait for service worker to be ready
+      await navigator.serviceWorker.ready;
 
-    // Handle updates
-    registration.addEventListener('updatefound', () => {
-      const newWorker = registration.installing;
-      if (newWorker) {
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // New content is available, notify user
-            console.log('New service worker available, consider refreshing the page');
-          }
-        });
-      }
-    });
+      // Send config to service worker
+      registration.active?.postMessage({
+        type: "FIREBASE_CONFIG",
+        config: firebaseConfig,
+      });
 
-    return registration;
-  } catch (error) {
-    console.error('Service worker registration failed:', error);
-    return null;
-  }
-};
+      // Handle updates
+      registration.addEventListener("updatefound", () => {
+        const newWorker = registration.installing;
+
+        if (newWorker) {
+          newWorker.addEventListener("statechange", () => {
+            if (
+              newWorker.state === "installed" &&
+              navigator.serviceWorker.controller
+            ) {
+              // New content is available, notify user
+              console.log(
+                "New service worker available, consider refreshing the page",
+              );
+            }
+          });
+        }
+      });
+
+      return registration;
+    } catch (error) {
+      console.error("Service worker registration failed:", error);
+
+      return null;
+    }
+  };

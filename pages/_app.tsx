@@ -1,6 +1,6 @@
 import type { AppProps } from "next/app";
-import { useEffect } from "react";
 
+import { useEffect } from "react";
 import { HeroUIProvider } from "@heroui/system";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { useRouter } from "next/router";

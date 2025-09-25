@@ -18,19 +18,22 @@ export interface UseNotificationsReturn {
   error: string | null;
   requestPermission: () => Promise<NotificationPermission>;
   getToken: () => Promise<string | null>;
-  sendTestNotification: (payload: NotificationPayload) => Promise<Notification | null>;
+  sendTestNotification: (
+    payload: NotificationPayload,
+  ) => Promise<Notification | null>;
 }
 
 export const useNotifications = (): UseNotificationsReturn => {
   const [token, setToken] = useState<string | null>(null);
-  const [permission, setPermission] = useState<NotificationPermission>('default');
+  const [permission, setPermission] =
+    useState<NotificationPermission>("default");
   const [isSupported] = useState(() => isPushNotificationSupported());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Check current permission status
   useEffect(() => {
-    if (isSupported && 'Notification' in window) {
+    if (isSupported && "Notification" in window) {
       setPermission(Notification.permission);
     }
   }, [isSupported]);
@@ -41,7 +44,7 @@ export const useNotifications = (): UseNotificationsReturn => {
 
     const unsubscribe = onForegroundMessage((payload) => {
       // Handle foreground message - you can customize this behavior
-      console.log('Foreground message received:', payload);
+      console.log("Foreground message received:", payload);
 
       // For example, show a toast notification or update app state
       // You could dispatch to a global state management solution here
@@ -50,33 +53,41 @@ export const useNotifications = (): UseNotificationsReturn => {
     return unsubscribe;
   }, [isSupported]);
 
-  const requestPermission = useCallback(async (): Promise<NotificationPermission> => {
-    if (!isSupported) {
-      const errorMsg = 'Push notifications are not supported in this browser';
-      setError(errorMsg);
-      throw new Error(errorMsg);
-    }
+  const requestPermission =
+    useCallback(async (): Promise<NotificationPermission> => {
+      if (!isSupported) {
+        const errorMsg = "Push notifications are not supported in this browser";
 
-    setIsLoading(true);
-    setError(null);
+        setError(errorMsg);
+        throw new Error(errorMsg);
+      }
 
-    try {
-      const newPermission = await requestNotificationPermission();
-      setPermission(newPermission);
-      return newPermission;
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to request permission';
-      setError(errorMsg);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isSupported]);
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const newPermission = await requestNotificationPermission();
+
+        setPermission(newPermission);
+
+        return newPermission;
+      } catch (err) {
+        const errorMsg =
+          err instanceof Error ? err.message : "Failed to request permission";
+
+        setError(errorMsg);
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    }, [isSupported]);
 
   const getTokenHandler = useCallback(async (): Promise<string | null> => {
     if (!isSupported) {
-      const errorMsg = 'Push notifications are not supported in this browser';
+      const errorMsg = "Push notifications are not supported in this browser";
+
       setError(errorMsg);
+
       return null;
     }
 
@@ -85,38 +96,54 @@ export const useNotifications = (): UseNotificationsReturn => {
 
     try {
       const fcmToken = await getFCMToken();
+
       setToken(fcmToken);
+
       return fcmToken;
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to get FCM token';
+      const errorMsg =
+        err instanceof Error ? err.message : "Failed to get FCM token";
+
       setError(errorMsg);
+
       return null;
     } finally {
       setIsLoading(false);
     }
   }, [isSupported]);
 
-  const sendTestNotificationHandler = useCallback(async (payload: NotificationPayload): Promise<Notification | null> => {
-    if (!isSupported) {
-      const errorMsg = 'Push notifications are not supported in this browser';
-      setError(errorMsg);
-      return null;
-    }
+  const sendTestNotificationHandler = useCallback(
+    async (payload: NotificationPayload): Promise<Notification | null> => {
+      if (!isSupported) {
+        const errorMsg = "Push notifications are not supported in this browser";
 
-    setIsLoading(true);
-    setError(null);
+        setError(errorMsg);
 
-    try {
-      const notification = await sendTestNotification(payload);
-      return notification;
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to send test notification';
-      setError(errorMsg);
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isSupported]);
+        return null;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const notification = await sendTestNotification(payload);
+
+        return notification;
+      } catch (err) {
+        const errorMsg =
+          err instanceof Error
+            ? err.message
+            : "Failed to send test notification";
+
+        setError(errorMsg);
+
+        return null;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [isSupported],
+  );
 
   return {
     token,

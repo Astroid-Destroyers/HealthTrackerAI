@@ -8,10 +8,10 @@ export const Logo: React.FC<IconSvgProps> = ({
   ...props
 }) => (
   <svg
-    xmlns="http://www.w3.org/2000/svg"
+    height={size || height}
     viewBox="0 0 512 512"
     width={size || height}
-    height={size || height}
+    xmlns="http://www.w3.org/2000/svg"
     {...props}
   >
     <defs>
@@ -23,8 +23,8 @@ export const Logo: React.FC<IconSvgProps> = ({
         `}
       </style>
     </defs>
-  
-    <g id="Layer_1" data-name="Layer 1">
+
+    <g data-name="Layer 1" id="Layer_1">
       <g>
         <polygon
           className="cls-4"
@@ -44,16 +44,15 @@ export const Logo: React.FC<IconSvgProps> = ({
         />
         <rect
           className="cls-2"
+          height="63.8"
+          width="154.23"
           x="178.89"
           y="224.1"
-          width="154.23"
-          height="63.8"
         />
       </g>
     </g>
   </svg>
 );
-
 
 export const DiscordIcon: React.FC<IconSvgProps> = ({
   size = 24,

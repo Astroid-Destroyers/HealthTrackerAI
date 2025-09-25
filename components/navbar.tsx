@@ -13,15 +13,19 @@ import { Button } from "@heroui/button";
 import { Kbd } from "@heroui/kbd";
 import { Link } from "@heroui/link";
 import { Input } from "@heroui/input";
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@heroui/modal";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+} from "@heroui/modal";
 import { Tabs, Tab } from "@heroui/tabs";
 import { Tooltip } from "@heroui/tooltip";
-import { link as linkStyles } from "@heroui/theme";
 import NextLink from "next/link";
 import clsx from "clsx";
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -29,6 +33,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
+
 import { auth } from "../lib/firebase";
 import { useAuth } from "../providers/AuthProvider";
 
@@ -87,18 +92,21 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
   const [loggingOut, setLoggingOut] = useState(false);
 
-
   const handlePrimary = useCallback(async () => {
     setErr(null);
     setSubmitting(true);
     try {
       if (activeTab === "login") {
-        if (!email || !password) throw new Error("Please enter email and password.");
+        if (!email || !password)
+          throw new Error("Please enter email and password.");
         await signInWithEmailAndPassword(auth, email, password);
       } else {
-        if (!email || !password) throw new Error("Please enter email and password.");
-        if (password.length < 6) throw new Error("Password must be at least 6 characters.");
-        if (password !== confirmPassword) throw new Error("Passwords do not match.");
+        if (!email || !password)
+          throw new Error("Please enter email and password.");
+        if (password.length < 6)
+          throw new Error("Password must be at least 6 characters.");
+        if (password !== confirmPassword)
+          throw new Error("Passwords do not match.");
         await createUserWithEmailAndPassword(auth, email, password);
       }
       setIsLoginOpen(false);
@@ -114,7 +122,10 @@ export const Navbar: React.FC<NavbarProps> = () => {
         "auth/email-already-in-use": "Email already in use.",
         "auth/weak-password": "Password is too weak.",
       };
-      setErr(map[code] || e?.message || "Something went wrong. Please try again.");
+
+      setErr(
+        map[code] || e?.message || "Something went wrong. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -125,6 +136,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
     setSubmitting(true);
     try {
       const provider = new GoogleAuthProvider();
+
       await signInWithPopup(auth, provider);
       setIsLoginOpen(false);
       resetForm();
@@ -135,7 +147,10 @@ export const Navbar: React.FC<NavbarProps> = () => {
         "auth/popup-blocked": "Popup blocked by browser.",
         "auth/cancelled-popup-request": "Sign-in was cancelled.",
       };
-      setErr(map[code] || e?.message || "Google sign-in failed. Please try again.");
+
+      setErr(
+        map[code] || e?.message || "Google sign-in failed. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -144,8 +159,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
   const handleLogout = async () => {
     try {
       setLoggingOut(true);
-      await signOut(auth);        // end Firebase session
-      router.refresh();           // force re-render of server/components using auth
+      await signOut(auth); // end Firebase session
+      router.refresh(); // force re-render of server/components using auth
     } catch (e) {
       // optional: toast or console.error(e);
     } finally {
@@ -167,27 +182,36 @@ export const Navbar: React.FC<NavbarProps> = () => {
       }
       labelPlacement="outside"
       placeholder="Search..."
-      startContent={<SearchIcon className="text-base text-default-400 pointer-events-none flex-shrink-0" />}
+      startContent={
+        <SearchIcon className="text-base text-default-400 pointer-events-none flex-shrink-0" />
+      }
       type="search"
     />
   );
 
   return (
-    <HeroUINavbar 
-      className="backdrop-blur-xl bg-white/5 border-b border-white/10 fixed top-0 z-50" 
-      maxWidth="xl" 
+    <HeroUINavbar
+      className="backdrop-blur-xl bg-white/5 border-b border-white/10 fixed top-0 z-50"
+      maxWidth="xl"
       position="static"
     >
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
         <NavbarBrand className="gap-3 max-w-fit">
-          <NextLink className="flex justify-start items-center gap-2 group" href="/">
+          <NextLink
+            className="flex justify-start items-center gap-2 group"
+            href="/"
+          >
             <div className="relative">
               <Logo />
               <div className="absolute inset-0 bg-ai-gradient rounded-full blur-lg opacity-30 group-hover:opacity-60 transition-opacity" />
             </div>
             <div className="flex flex-col">
-              <p className="font-bold text-white text-lg gradient-text">HealthTrackerAI</p>
-              <p className="text-xs text-gray-400 hidden sm:block">AI-Powered Healthcare</p>
+              <p className="font-bold text-white text-lg gradient-text">
+                HealthTrackerAI
+              </p>
+              <p className="text-xs text-gray-400 hidden sm:block">
+                AI-Powered Healthcare
+              </p>
             </div>
           </NextLink>
         </NavbarBrand>
@@ -197,7 +221,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
               <NextLink
                 className={clsx(
                   "text-gray-300 hover:text-white transition-all duration-300 font-medium relative group",
-                  "hover:scale-105"
+                  "hover:scale-105",
                 )}
                 href={item.href}
               >
@@ -212,7 +236,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
               <NextLink
                 className={clsx(
                   "text-gray-300 hover:text-white transition-all duration-300 font-medium relative group",
-                  "hover:scale-105"
+                  "hover:scale-105",
                 )}
                 href="/admin"
               >
@@ -224,13 +248,16 @@ export const Navbar: React.FC<NavbarProps> = () => {
         </div>
       </NavbarContent>
 
-      <NavbarContent className="hidden sm:flex basis-1/5 sm:basis-full" justify="end">
+      <NavbarContent
+        className="hidden sm:flex basis-1/5 sm:basis-full"
+        justify="end"
+      >
         <NavbarItem className="hidden sm:flex gap-3">
-          <Link 
-            isExternal 
-            href={siteConfig.links.github} 
-            title="GitHub"
+          <Link
+            isExternal
             className="text-gray-400 hover:text-white transition-all duration-300 hover:scale-110"
+            href={siteConfig.links.github}
+            title="GitHub"
           >
             <GithubIcon className="w-5 h-5" />
           </Link>
@@ -240,8 +267,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
         {/* Right side auth controls */}
         {!loading && !user ? (
           <NavbarItem>
-            <Button 
-              className="btn-ai-primary text-sm px-6 py-2 font-medium" 
+            <Button
+              className="btn-ai-primary text-sm px-6 py-2 font-medium"
               onPress={() => setIsLoginOpen(true)}
             >
               Login / Signup
@@ -324,9 +351,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
       </NavbarContent>
 
       <NavbarMenu className="backdrop-blur-xl bg-white/5 border-r border-white/10 pt-6">
-        <div className="hidden md:block mb-4">
-          {searchInput}
-        </div>
+        <div className="hidden md:block mb-4">{searchInput}</div>
         <div className="mx-4 mt-2 flex flex-col gap-3">
           {siteConfig.navItems.map((item, index) => (
             <NavbarMenuItem key={`${item}-${index}`}>
@@ -351,24 +376,24 @@ export const Navbar: React.FC<NavbarProps> = () => {
               </Link>
             </NavbarMenuItem>
           )}
-          
+
           {/* Mobile Auth Controls */}
           <div className="border-t border-white/10 mt-6 pt-6">
             <NavbarMenuItem className="mb-4">
-              <Link 
-                isExternal 
-                href={siteConfig.links.github}
+              <Link
+                isExternal
                 className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors"
+                href={siteConfig.links.github}
               >
                 <GithubIcon className="w-5 h-5" />
                 <span className="text-lg">GitHub</span>
               </Link>
             </NavbarMenuItem>
-            
+
             {!loading && !user ? (
               <NavbarMenuItem>
-                <Button 
-                  className="btn-ai-primary w-full text-base font-medium py-3" 
+                <Button
+                  className="btn-ai-primary w-full text-base font-medium py-3"
                   onPress={() => setIsLoginOpen(true)}
                 >
                   Login / Signup
@@ -379,7 +404,11 @@ export const Navbar: React.FC<NavbarProps> = () => {
                 <NavbarMenuItem>
                   <div className="flex items-center gap-3 p-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl">
                     <div className="w-12 h-12 flex items-center justify-center rounded-xl bg-ai-gradient text-white font-bold text-lg">
-                      {(user?.displayName?.[0] || user?.email?.[0] || "?").toUpperCase()}
+                      {(
+                        user?.displayName?.[0] ||
+                        user?.email?.[0] ||
+                        "?"
+                      ).toUpperCase()}
                     </div>
                     <div className="flex flex-col">
                       <span className="text-white font-semibold">
@@ -403,9 +432,9 @@ export const Navbar: React.FC<NavbarProps> = () => {
                 <NavbarMenuItem>
                   <Button
                     className="backdrop-blur-xl bg-red-500/10 border border-red-400/30 text-red-400 hover:bg-red-500/20 w-full"
-                    variant="bordered"
                     isDisabled={loggingOut}
                     isLoading={loggingOut}
+                    variant="bordered"
                     onPress={handleLogout}
                   >
                     Logout
@@ -418,18 +447,21 @@ export const Navbar: React.FC<NavbarProps> = () => {
       </NavbarMenu>
 
       {/* Auth modal */}
-      <Modal 
+      <Modal
         classNames={{
           base: "backdrop-blur-2xl bg-slate-900/95 border border-white/20 shadow-2xl",
           body: "py-8 px-6",
           header: "border-b border-white/10 pb-6 px-6",
           footer: "border-t border-white/10 pt-6 px-6",
-          backdrop: "bg-black/60 backdrop-blur-sm"
+          backdrop: "bg-black/60 backdrop-blur-sm",
         }}
-        isOpen={isLoginOpen} 
-        onOpenChange={(o) => { setIsLoginOpen(o); if (!o) resetForm(); }}
-        size="lg"
+        isOpen={isLoginOpen}
         placement="center"
+        size="lg"
+        onOpenChange={(o) => {
+          setIsLoginOpen(o);
+          if (!o) resetForm();
+        }}
       >
         <ModalContent className="text-white">
           {(onClose) => (
@@ -437,61 +469,81 @@ export const Navbar: React.FC<NavbarProps> = () => {
               <ModalHeader className="flex flex-col gap-3 text-center">
                 <div className="flex items-center justify-center mb-2">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center mb-4">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    <svg
+                      className="w-6 h-6 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                      />
                     </svg>
                   </div>
                 </div>
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-600 bg-clip-text text-transparent">
-                  {activeTab === "login" ? "Welcome Back" : "Join HealthTrackerAI"}
+                  {activeTab === "login"
+                    ? "Welcome Back"
+                    : "Join HealthTrackerAI"}
                 </h2>
                 <p className="text-gray-400 font-normal leading-relaxed">
-                  {activeTab === "login" 
-                    ? "Sign in to access your personalized AI health dashboard and continue your wellness journey" 
-                    : "Create your account to unlock AI-powered health insights and personalized recommendations"
-                  }
+                  {activeTab === "login"
+                    ? "Sign in to access your personalized AI health dashboard and continue your wellness journey"
+                    : "Create your account to unlock AI-powered health insights and personalized recommendations"}
                 </p>
               </ModalHeader>
               <ModalBody>
                 <Tabs
                   aria-label="Login/Signup tabs"
                   classNames={{
-                    tabList: "backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-3 w-full shadow-lg relative overflow-hidden",
-                    cursor: "bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 shadow-2xl rounded-xl border-2 border-white/30 transition-all duration-500 ease-out transform",
+                    tabList:
+                      "backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-3 w-full shadow-lg relative overflow-hidden",
+                    cursor:
+                      "bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 shadow-2xl rounded-xl border-2 border-white/30 transition-all duration-500 ease-out transform",
                     tab: "text-gray-400 hover:text-gray-200 transition-all duration-300 px-8 py-4 rounded-xl font-medium relative z-10 border-2 border-transparent hover:border-white/20",
-                    tabContent: "group-data-[selected=true]:text-white group-data-[selected=true]:font-bold group-data-[selected=true]:drop-shadow-lg group-data-[selected=true]:scale-105 transition-all duration-500 ease-out relative z-20"
+                    tabContent:
+                      "group-data-[selected=true]:text-white group-data-[selected=true]:font-bold group-data-[selected=true]:drop-shadow-lg group-data-[selected=true]:scale-105 transition-all duration-500 ease-out relative z-20",
                   }}
                   selectedKey={activeTab}
-                  onSelectionChange={(key) => setActiveTab(key as "login" | "signup")}
                   variant="solid"
+                  onSelectionChange={(key) =>
+                    setActiveTab(key as "login" | "signup")
+                  }
                 >
                   <Tab key="login" title="Sign In">
                     <div className="flex flex-col gap-6 mt-6">
                       <Input
+                        isRequired
                         classNames={{
                           base: "text-white",
-                          input: "text-white placeholder:text-gray-400 text-base px-4",
-                          inputWrapper: "backdrop-blur-xl bg-white/5 border border-white/20 hover:border-indigo-400/50 group-data-[focused=true]:border-indigo-500 transition-all duration-200 h-12"
+                          input:
+                            "text-white placeholder:text-gray-400 text-base px-4",
+                          inputWrapper:
+                            "backdrop-blur-xl bg-white/5 border border-white/20 hover:border-indigo-400/50 group-data-[focused=true]:border-indigo-500 transition-all duration-200 h-12",
                         }}
                         placeholder="Enter your email address"
+                        type="email"
                         value={email}
                         variant="bordered"
                         onChange={(e) => setEmail(e.target.value)}
-                        type="email"
-                        isRequired
                       />
                       <Input
+                        isRequired
                         classNames={{
                           base: "text-white",
-                          input: "text-white placeholder:text-gray-400 text-base px-4",
-                          inputWrapper: "backdrop-blur-xl bg-white/5 border border-white/20 hover:border-indigo-400/50 group-data-[focused=true]:border-indigo-500 transition-all duration-200 h-12"
+                          input:
+                            "text-white placeholder:text-gray-400 text-base px-4",
+                          inputWrapper:
+                            "backdrop-blur-xl bg-white/5 border border-white/20 hover:border-indigo-400/50 group-data-[focused=true]:border-indigo-500 transition-all duration-200 h-12",
                         }}
                         placeholder="Enter your password"
                         type="password"
                         value={password}
                         variant="bordered"
                         onChange={(e) => setPassword(e.target.value)}
-                        isRequired
                       />
                     </div>
                   </Tab>
@@ -502,10 +554,11 @@ export const Navbar: React.FC<NavbarProps> = () => {
                           Get Personalized Health Insights
                         </h3>
                         <p className="text-gray-400 text-sm leading-relaxed">
-                          Create your profile with health metrics to unlock AI-powered recommendations tailored just for you.
+                          Create your profile with health metrics to unlock
+                          AI-powered recommendations tailored just for you.
                         </p>
                       </div>
-                      
+
                       <Button
                         className="btn-ai-primary h-14 text-lg font-semibold"
                         size="lg"
@@ -513,7 +566,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                       >
                         Create Your Health Profile
                       </Button>
-                      
+
                       <div className="text-xs text-gray-500">
                         Takes less than 2 minutes • Secure & Private
                       </div>
@@ -527,38 +580,43 @@ export const Navbar: React.FC<NavbarProps> = () => {
                       <span className="w-full border-t border-white/20" />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-transparent px-2 text-gray-400">Or continue with</span>
+                      <span className="bg-transparent px-2 text-gray-400">
+                        Or continue with
+                      </span>
                     </div>
                   </div>
                   <Button
                     className="backdrop-blur-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium h-14 rounded-xl transition-all duration-200 hover:scale-[1.02] shadow-lg"
-                    variant="bordered"
-                    onPress={handleGoogleSignIn}
                     isDisabled={submitting}
                     isLoading={submitting}
                     size="lg"
                     startContent={
                       <div className="bg-white rounded-full p-1">
-                        <svg className="w-5 h-5 text-gray-700" viewBox="0 0 24 24">
+                        <svg
+                          className="w-5 h-5 text-gray-700"
+                          viewBox="0 0 24 24"
+                        >
                           <path
-                            fill="#4285F4"
                             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                            fill="#4285F4"
                           />
                           <path
-                            fill="#34A853"
                             d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                            fill="#34A853"
                           />
                           <path
-                            fill="#FBBC05"
                             d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                            fill="#FBBC05"
                           />
                           <path
-                            fill="#EA4335"
                             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                            fill="#EA4335"
                           />
                         </svg>
                       </div>
                     }
+                    variant="bordered"
+                    onPress={handleGoogleSignIn}
                   >
                     <span className="text-base">Continue with Google</span>
                   </Button>
@@ -572,11 +630,14 @@ export const Navbar: React.FC<NavbarProps> = () => {
               </ModalBody>
 
               <ModalFooter className="px-8 pb-8 pt-4">
-                <Button 
+                <Button
                   className="backdrop-blur-xl bg-white/5 hover:bg-white/10 border border-white/20 text-white font-medium h-12 rounded-xl transition-all duration-200 hover:scale-[1.02]"
-                  variant="bordered"
-                  onPress={() => { onClose(); resetForm(); }}
                   size="lg"
+                  variant="bordered"
+                  onPress={() => {
+                    onClose();
+                    resetForm();
+                  }}
                 >
                   Cancel
                 </Button>
@@ -584,8 +645,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
                   className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold h-12 rounded-xl shadow-xl transition-all duration-200 hover:scale-[1.02] border-0"
                   isDisabled={submitting}
                   isLoading={submitting}
-                  onPress={handlePrimary}
                   size="lg"
+                  onPress={handlePrimary}
                 >
                   {activeTab === "login" ? "Sign In" : "Create Account"}
                 </Button>
@@ -597,15 +658,15 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
       {/* Multi-Step Signup Modal */}
       <Modal
-        isOpen={showMultiStepSignup}
-        onOpenChange={setShowMultiStepSignup}
-        placement="center"
+        hideCloseButton
         backdrop="blur"
         classNames={{
           backdrop: "bg-black/50 backdrop-blur-sm",
           wrapper: "items-center justify-center p-4",
         }}
-        hideCloseButton
+        isOpen={showMultiStepSignup}
+        placement="center"
+        onOpenChange={setShowMultiStepSignup}
       >
         <ModalContent className="bg-transparent shadow-none border-0 max-w-lg w-full">
           <MultiStepSignup

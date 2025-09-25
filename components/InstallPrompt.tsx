@@ -11,15 +11,24 @@ export const InstallPrompt = () => {
 
   useEffect(() => {
     // Check if mobile device and Chrome
-    const mobileCheck = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const chromeCheck = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+    const mobileCheck =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent,
+      );
+    const chromeCheck =
+      /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+
     setIsMobile(mobileCheck);
     setIsChrome(chromeCheck);
 
     // Check if already installed
-    const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
+    const isStandalone = window.matchMedia(
+      "(display-mode: standalone)",
+    ).matches;
     const isInstalled = localStorage.getItem("pwa-installed") === "true";
-    const dismissedCount = parseInt(localStorage.getItem("pwa-dismiss-count") || "0");
+    const dismissedCount = parseInt(
+      localStorage.getItem("pwa-dismiss-count") || "0",
+    );
 
     if (isStandalone || isInstalled || dismissedCount >= 3) {
       return;
@@ -30,12 +39,12 @@ export const InstallPrompt = () => {
 
     const handleUserInteraction = () => {
       userInteracted = true;
-      document.removeEventListener('click', handleUserInteraction);
-      document.removeEventListener('touchstart', handleUserInteraction);
+      document.removeEventListener("click", handleUserInteraction);
+      document.removeEventListener("touchstart", handleUserInteraction);
     };
 
-    document.addEventListener('click', handleUserInteraction);
-    document.addEventListener('touchstart', handleUserInteraction);
+    document.addEventListener("click", handleUserInteraction);
+    document.addEventListener("touchstart", handleUserInteraction);
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
@@ -47,24 +56,30 @@ export const InstallPrompt = () => {
         const showPromptAfterInteraction = () => {
           if (userInteracted) {
             setShowPrompt(true);
-            document.removeEventListener('click', showPromptAfterInteraction);
-            document.removeEventListener('touchstart', showPromptAfterInteraction);
+            document.removeEventListener("click", showPromptAfterInteraction);
+            document.removeEventListener(
+              "touchstart",
+              showPromptAfterInteraction,
+            );
           }
         };
 
-        document.addEventListener('click', showPromptAfterInteraction);
-        document.addEventListener('touchstart', showPromptAfterInteraction);
+        document.addEventListener("click", showPromptAfterInteraction);
+        document.addEventListener("touchstart", showPromptAfterInteraction);
       } else {
         setShowPrompt(true);
       }
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      document.removeEventListener('click', handleUserInteraction);
-      document.removeEventListener('touchstart', handleUserInteraction);
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt,
+      );
+      document.removeEventListener("click", handleUserInteraction);
+      document.removeEventListener("touchstart", handleUserInteraction);
     };
   }, []);
 
@@ -74,8 +89,8 @@ export const InstallPrompt = () => {
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
 
-    if (outcome === 'accepted') {
-      localStorage.setItem('pwa-installed', 'true');
+    if (outcome === "accepted") {
+      localStorage.setItem("pwa-installed", "true");
     }
 
     setDeferredPrompt(null);
@@ -84,13 +99,20 @@ export const InstallPrompt = () => {
 
   const handleDismiss = () => {
     setShowPrompt(false);
-    const currentCount = parseInt(localStorage.getItem("pwa-dismiss-count") || "0");
+    const currentCount = parseInt(
+      localStorage.getItem("pwa-dismiss-count") || "0",
+    );
+
     localStorage.setItem("pwa-dismiss-count", (currentCount + 1).toString());
     localStorage.setItem("pwa-install-dismissed", "true");
   };
 
   // Only show on mobile devices and if not dismissed before
-  if (!isMobile || !showPrompt || localStorage.getItem('pwa-install-dismissed') === 'true') {
+  if (
+    !isMobile ||
+    !showPrompt ||
+    localStorage.getItem("pwa-install-dismissed") === "true"
+  ) {
     return null;
   }
 
@@ -102,24 +124,25 @@ export const InstallPrompt = () => {
             <div className="flex-1">
               <h3 className="font-semibold text-sm">Install HealthTrackerAI</h3>
               <p className="text-xs opacity-90 mt-1">
-                Add to home screen for better mobile experience with notifications
+                Add to home screen for better mobile experience with
+                notifications
               </p>
             </div>
             <div className="flex gap-2 ml-4">
               <Button
+                className="text-xs"
                 size="sm"
                 variant="flat"
                 onPress={handleInstall}
-                className="text-xs"
               >
                 Install
               </Button>
               <Button
+                isIconOnly
+                className="text-primary-foreground/70 hover:text-primary-foreground"
                 size="sm"
                 variant="ghost"
-                isIconOnly
                 onPress={handleDismiss}
-                className="text-primary-foreground/70 hover:text-primary-foreground"
               >
                 ✕
               </Button>

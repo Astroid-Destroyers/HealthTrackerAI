@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+
 import * as admin from "firebase-admin";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -10,6 +11,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     res.status(200).json({ message: "Firebase Admin import test successful" });
   } catch (error) {
     console.error("Error:", error);
-    res.status(500).json({ error: error instanceof Error ? error.message : "Unknown error" });
+    res.status(500).json({
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
   }
 }

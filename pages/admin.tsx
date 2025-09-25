@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-
 import { Button } from "@heroui/button";
 import { Card, CardHeader, CardBody } from "@heroui/card";
 import { Input } from "@heroui/input";
 import { Switch } from "@heroui/switch";
-import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from "@heroui/table";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableColumn,
+  TableRow,
+  TableCell,
+} from "@heroui/table";
 
 import { useAuth } from "@/providers/AuthProvider";
 import DefaultLayout from "@/layouts/default";
@@ -70,8 +76,10 @@ export default function AdminPanel() {
           Authorization: `Bearer ${idToken}`,
         },
       });
+
       if (response.ok) {
         const data = await response.json();
+
         setUsers(data.users);
       }
     } catch (error) {
@@ -81,7 +89,11 @@ export default function AdminPanel() {
     }
   };
 
-  const toggleDeviceNotifications = async (userId: string, deviceId: string, enabled: boolean) => {
+  const toggleDeviceNotifications = async (
+    userId: string,
+    deviceId: string,
+    enabled: boolean,
+  ) => {
     if (!user) return;
 
     try {
@@ -105,7 +117,8 @@ export default function AdminPanel() {
   };
 
   const sendCustomMessage = async () => {
-    if (!selectedUser || !selectedDevice || !customMessage.trim() || !user) return;
+    if (!selectedUser || !selectedDevice || !customMessage.trim() || !user)
+      return;
 
     setSendingMessage(true);
     try {
@@ -138,9 +151,14 @@ export default function AdminPanel() {
   };
 
   const getDeviceType = (userAgent: string) => {
-    if (userAgent.includes("Mobile") || userAgent.includes("Android") || userAgent.includes("iPhone")) {
+    if (
+      userAgent.includes("Mobile") ||
+      userAgent.includes("Android") ||
+      userAgent.includes("iPhone")
+    ) {
       return "Mobile";
     }
+
     return "Desktop";
   };
 
@@ -149,7 +167,7 @@ export default function AdminPanel() {
       <DefaultLayout>
         <div className="flex justify-center items-center min-h-[50vh]">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
             <p>Loading admin panel...</p>
           </div>
         </div>
@@ -166,7 +184,9 @@ export default function AdminPanel() {
       <div className="container mx-auto max-w-7xl px-6 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-center mb-2">Admin Panel</h1>
-          <p className="text-center text-default-600">Manage users and their devices</p>
+          <p className="text-center text-default-600">
+            Manage users and their devices
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -174,12 +194,14 @@ export default function AdminPanel() {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <h3 className="text-xl font-semibold">All Users ({users.length})</h3>
+                <h3 className="text-xl font-semibold">
+                  All Users ({users.length})
+                </h3>
               </CardHeader>
               <CardBody>
                 {loadingUsers ? (
                   <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
                     <p>Loading users...</p>
                   </div>
                 ) : (
@@ -232,14 +254,19 @@ export default function AdminPanel() {
                             {getDeviceType(device.userAgent)} Device
                           </p>
                           <p className="text-xs text-default-500">
-                            Last login: {new Date(device.lastLogin).toLocaleString()}
+                            Last login:{" "}
+                            {new Date(device.lastLogin).toLocaleString()}
                           </p>
                         </div>
                         <Switch
-                          size="sm"
                           isSelected={device.notificationsEnabled}
+                          size="sm"
                           onValueChange={(enabled) =>
-                            toggleDeviceNotifications(selectedUser.uid, device.id, enabled)
+                            toggleDeviceNotifications(
+                              selectedUser.uid,
+                              device.id,
+                              enabled,
+                            )
                           }
                         />
                       </div>
@@ -249,9 +276,9 @@ export default function AdminPanel() {
                       </div>
 
                       <Button
+                        className="w-full"
                         size="sm"
                         variant="flat"
-                        className="w-full"
                         onPress={() => setSelectedDevice(device)}
                       >
                         Send Message
@@ -260,9 +287,9 @@ export default function AdminPanel() {
                   ))}
 
                   <Button
+                    className="w-full"
                     size="sm"
                     variant="ghost"
-                    className="w-full"
                     onPress={() => setSelectedUser(null)}
                   >
                     Close
@@ -272,7 +299,9 @@ export default function AdminPanel() {
             ) : (
               <Card>
                 <CardBody className="text-center py-8">
-                  <p className="text-default-500">Select a user to manage their devices</p>
+                  <p className="text-default-500">
+                    Select a user to manage their devices
+                  </p>
                 </CardBody>
               </Card>
             )}
@@ -286,24 +315,25 @@ export default function AdminPanel() {
               <CardHeader>
                 <h3 className="text-lg font-semibold">Send Custom Message</h3>
                 <p className="text-sm text-default-600">
-                  To {selectedUser.email} on {getDeviceType(selectedDevice.userAgent)} device
+                  To {selectedUser.email} on{" "}
+                  {getDeviceType(selectedDevice.userAgent)} device
                 </p>
               </CardHeader>
               <CardBody className="space-y-4">
                 <Input
                   label="Message"
+                  maxLength={200}
                   placeholder="Enter your custom message..."
                   value={customMessage}
                   onChange={(e) => setCustomMessage(e.target.value)}
-                  maxLength={200}
                 />
 
                 <div className="flex gap-2">
                   <Button
                     className="flex-1"
-                    onPress={sendCustomMessage}
-                    isLoading={sendingMessage}
                     isDisabled={!customMessage.trim()}
+                    isLoading={sendingMessage}
+                    onPress={sendCustomMessage}
                   >
                     Send Message
                   </Button>

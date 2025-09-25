@@ -2,6 +2,7 @@ export class OpenAPIClient {
   static async ask(input: string): Promise<{ json?: any; text?: string }> {
     try {
       const res = await fetch(`/api/hello?input=${encodeURIComponent(input)}`);
+
       if (!res.ok) throw new Error(`API error: ${res.status}`);
 
       const data = await res.json();

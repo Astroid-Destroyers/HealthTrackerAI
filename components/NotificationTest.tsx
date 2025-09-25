@@ -1,5 +1,5 @@
 // Example usage of the FCM hook
-import { useNotifications } from '@/hooks/useNotifications';
+import { useNotifications } from "@/hooks/useNotifications";
 
 export default function NotificationTest() {
   const {
@@ -9,28 +9,30 @@ export default function NotificationTest() {
     error,
     requestPermission,
     getToken,
-    sendTestNotification
+    sendTestNotification,
   } = useNotifications();
 
   const handleEnableNotifications = async () => {
     try {
       const perm = await requestPermission();
-      if (perm === 'granted') {
+
+      if (perm === "granted") {
         const token = await getToken();
-        console.log('FCM Token:', token);
+
+        console.log("FCM Token:", token);
         // Send this token to your backend to send push notifications
       }
     } catch (err) {
-      console.error('Failed to enable notifications:', err);
+      console.error("Failed to enable notifications:", err);
     }
   };
 
   const handleTestNotification = () => {
     sendTestNotification({
-      title: 'Test Notification',
-      body: 'This is a test push notification!',
-      icon: '/favicon.ico',
-      tag: 'test-notification'
+      title: "Test Notification",
+      body: "This is a test push notification!",
+      icon: "/favicon.ico",
+      tag: "test-notification",
     });
   };
 
@@ -43,24 +45,22 @@ export default function NotificationTest() {
       <h2>Push Notifications</h2>
       <p>Permission: {permission}</p>
 
-      {permission === 'default' && (
-        <button onClick={handleEnableNotifications} disabled={isLoading}>
-          {isLoading ? 'Requesting...' : 'Enable Notifications'}
+      {permission === "default" && (
+        <button disabled={isLoading} onClick={handleEnableNotifications}>
+          {isLoading ? "Requesting..." : "Enable Notifications"}
         </button>
       )}
 
-      {permission === 'granted' && (
+      {permission === "granted" && (
         <div>
           <button onClick={handleTestNotification}>
             Send Test Notification
           </button>
-          <button onClick={getToken}>
-            Get FCM Token
-          </button>
+          <button onClick={getToken}>Get FCM Token</button>
         </div>
       )}
 
-      {error && <p style={{color: 'red'}}>Error: {error}</p>}
+      {error && <p style={{ color: "red" }}>Error: {error}</p>}
     </div>
   );
 }
