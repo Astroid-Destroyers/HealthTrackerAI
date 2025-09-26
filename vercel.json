@@ -7,14 +7,6 @@
       "dest": "/$1"
     }
   ],
-  "env": {
-    "FB_PROJECT_ID": "@fb_project_id",
-    "FB_CLIENT_EMAIL": "@fb_client_email", 
-    "FB_PRIVATE_KEY": "@fb_private_key",
-    "TWILIO_ACCOUNT_SID": "@twilio_account_sid",
-    "TWILIO_AUTH_TOKEN": "@twilio_auth_token",
-    "TWILIO_PHONE_NUMBER": "@twilio_phone_number"
-  },
   "functions": {
     "pages/api/**/*.ts": {
       "maxDuration": 30
