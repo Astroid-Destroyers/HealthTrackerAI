@@ -19,6 +19,7 @@ import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/providers/AuthProvider";
 import { useNotifications } from "@/hooks/useNotifications";
 import DefaultLayout from "@/layouts/default";
+import HealthProfileSetup from "@/components/HealthProfileSetup";
 
 interface UserProfile {
   name: string;
@@ -66,6 +67,9 @@ export default function ProfilePage() {
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const [recaptchaVerifier, setRecaptchaVerifier] = useState<any>(null);
 
+  // Health profile setup modal state
+  const [isHealthProfileModalOpen, setIsHealthProfileModalOpen] = useState(false);
+
   useEffect(() => {
     // Detect mobile devices and Chrome
     const mobileCheck =
@@ -81,6 +85,46 @@ export default function ProfilePage() {
 
   const { isSupported, requestPermission, getToken, sendTestNotification } =
     useNotifications();
+
+  // Add debugging state for mobile issues
+  const [debugInfo, setDebugInfo] = useState({
+    hasServiceWorker: false,
+    hasPushManager: false,
+    hasNotification: false,
+    firebaseSupported: null as boolean | null,
+    userAgent: '',
+    isHTTPS: false,
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setDebugInfo({
+        hasServiceWorker: 'serviceWorker' in navigator,
+        hasPushManager: 'PushManager' in window,
+        hasNotification: 'Notification' in window,
+        firebaseSupported: null, // Will be set async
+        userAgent: navigator.userAgent,
+        isHTTPS: location.protocol === 'https:',
+      });
+
+      // Check Firebase messaging support
+      import('@/lib/firebase').then(async ({ getMessagingInstance }) => {
+        try {
+          const messaging = await getMessagingInstance();
+          setDebugInfo(prev => ({
+            ...prev,
+            firebaseSupported: !!messaging
+          }));
+        } catch (error) {
+          console.error('Firebase messaging support check failed:', error);
+          setDebugInfo(prev => ({
+            ...prev,
+            firebaseSupported: false
+          }));
+        }
+      });
+    }
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -173,14 +217,13 @@ export default function ProfilePage() {
 
           // Call backend API to store device info
           try {
-            const response = await fetch("/api/admin/toggle-notifications", {
+            const response = await fetch("/api/user/notification-preferences", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${await user.getIdToken()}`,
               },
               body: JSON.stringify({
-                userId: user.uid,
                 deviceId: deviceId,
                 enabled: true,
                 fcmToken: fcmToken,
@@ -196,10 +239,12 @@ export default function ProfilePage() {
             });
 
             if (!response.ok) {
-              // Failed to update device info on backend
+              console.warn("Failed to update notification preferences on backend");
+            } else {
+              console.log("✅ Notification preferences saved to database");
             }
-          } catch {
-            // Error calling toggle-notifications API
+          } catch (error) {
+            console.error("Error saving notification preferences:", error);
           }
 
           // Send test notification after 3 seconds
@@ -231,24 +276,25 @@ export default function ProfilePage() {
 
         // Call backend API to disable notifications
         try {
-          const response = await fetch("/api/admin/toggle-notifications", {
+          const response = await fetch("/api/user/notification-preferences", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${await user.getIdToken()}`,
             },
             body: JSON.stringify({
-              userId: user.uid,
               deviceId: deviceId,
               enabled: false,
             }),
           });
 
           if (!response.ok) {
-            // Failed to update device info on backend
+            console.warn("Failed to update notification preferences on backend");
+          } else {
+            console.log("✅ Notifications disabled in database");
           }
-        } catch {
-          // Error calling toggle-notifications API
+        } catch (error) {
+          console.error("Error disabling notification preferences:", error);
         }
       }
     } catch {
@@ -428,6 +474,18 @@ export default function ProfilePage() {
     return value;
   };
 
+  // Health profile setup modal handlers
+  const handleHealthProfileSuccess = () => {
+    setIsHealthProfileModalOpen(false);
+    // Reload profile data by triggering useEffect
+    setProfileLoading(true);
+    // The useEffect will refetch the data automatically
+  };
+
+  const handleCloseHealthProfileModal = () => {
+    setIsHealthProfileModalOpen(false);
+  };
+
   if (loading || profileLoading) {
     return (
       <DefaultLayout>
@@ -454,7 +512,9 @@ export default function ProfilePage() {
             <div className="container mx-auto max-w-4xl">
               <div className="text-center mb-12">
                 <h1 className="text-4xl font-bold text-white mb-4">Profile Setup</h1>
-                <p className="text-gray-400">Complete your profile to get started</p>
+                <p className="text-gray-400">
+                  Complete your profile to get started
+                </p>
               </div>
               
               {/* Phone Verification Card */}
@@ -545,6 +605,65 @@ export default function ProfilePage() {
                       
                       {/* reCAPTCHA container */}
                       <div id="recaptcha-container" />
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
+
+              {/* Health Profile Setup Card */}
+              <Card className="backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl">
+                <CardBody className="p-8">
+                  <div className="text-center space-y-6">
+                    <div className="space-y-2">
+                      <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+                        Complete Your Health Profile
+                      </h3>
+                      <p className="text-gray-400 text-lg">
+                        Set up your health profile to start tracking your
+                        wellness journey with AI-powered insights.
+                      </p>
+                    </div>
+
+                    <div className="flex justify-center">
+                      <Button
+                        className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold px-8 py-3 text-lg"
+                        size="lg"
+                        startContent={
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                            />
+                          </svg>
+                        }
+                        onClick={() => {
+                          setIsHealthProfileModalOpen(true);
+                        }}
+                      >
+                        Start Health Profile Setup
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 text-sm text-gray-400">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-emerald-400 rounded-full" />
+                        <span>Basic Health Info</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-400 rounded-full" />
+                        <span>Fitness Goals</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-purple-400 rounded-full" />
+                        <span>AI Insights</span>
+                      </div>
                     </div>
                   </div>
                 </CardBody>
@@ -810,7 +929,7 @@ export default function ProfilePage() {
                                 variant="ghost"
                                 onClick={() => {
                                   setCodeSent(false);
-                                  setVerificationCode('');
+                                  setVerificationCode("");
                                   setConfirmationResult(null);
                                 }}
                               >
@@ -822,6 +941,110 @@ export default function ProfilePage() {
                           {/* reCAPTCHA container */}
                           <div id="recaptcha-container" />
                         </div>
+                      </div>
+                    </CardBody>
+                  </Card>
+
+                  {/* Notification Preferences */}
+                  <Card className="backdrop-blur-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/10">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+                          <span className="text-white text-xl">🔔</span>
+                        </div>
+                        <h3 className="text-xl font-bold text-white">
+                          Notification Preferences
+                        </h3>
+                      </div>
+                    </CardHeader>
+                    <CardBody className="space-y-6">
+                      <div className="group">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="w-2 h-2 rounded-full bg-purple-400" />
+                              <span className="text-sm font-medium text-gray-400 uppercase tracking-wider">
+                                Push Notifications
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-300 pl-4">
+                              Receive health reminders and updates from our support team
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            {isSupported ? (
+                              <>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                  <input
+                                    checked={notificationsEnabled}
+                                    className="sr-only"
+                                    disabled={notificationLoading}
+                                    type="checkbox"
+                                    onChange={(e) => handleNotificationToggle(e.target.checked)}
+                                  />
+                                  <div className={`w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-purple-300/20 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-indigo-600 ${notificationLoading ? 'opacity-50 cursor-not-allowed' : ''}`} />
+                                </label>
+                                {notificationLoading && (
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-400" />
+                                )}
+                              </>
+                            ) : debugInfo.hasServiceWorker && debugInfo.hasPushManager && debugInfo.hasNotification && debugInfo.isHTTPS ? (
+                              <div className="text-xs text-orange-400">
+                                <div>⚠️ Firebase not supported</div>
+                                <div>Basic browser support available</div>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-red-400">
+                                Not supported in this browser
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {notificationsEnabled && (
+                          <div className="pl-4 p-3 rounded-lg bg-purple-500/10 border border-purple-400/20">
+                            <div className="flex items-center gap-2 text-purple-300 text-sm">
+                              <span>✓</span>
+                              <span>Notifications are enabled for this device</span>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">
+                              You&apos;ll receive health reminders, tips, and important updates from the admin team.
+                            </p>
+                          </div>
+                        )}
+                        {!notificationsEnabled && isSupported && (
+                          <div className="pl-4 p-3 rounded-lg bg-gray-600/10 border border-gray-500/20">
+                            <div className="flex items-center gap-2 text-gray-400 text-sm">
+                              <span>○</span>
+                              <span>Enable notifications to receive health updates</span>
+                            </div>
+                          </div>
+                        )}
+                        {!isSupported && (
+                          <div className="pl-4 p-3 rounded-lg bg-red-500/10 border border-red-400/20">
+                            <div className="text-red-400 text-sm mb-2">
+                              <span>⚠️</span>
+                              <span className="ml-1">Push notifications not supported</span>
+                            </div>
+                            <details className="text-xs text-gray-400">
+                              <summary className="cursor-pointer hover:text-gray-300">
+                                Debug Information (tap to expand)
+                              </summary>
+                              <div className="mt-2 space-y-1">
+                                <div>Service Worker: {debugInfo.hasServiceWorker ? '✓' : '✗'}</div>
+                                <div>Push Manager: {debugInfo.hasPushManager ? '✓' : '✗'}</div>
+                                <div>Notifications API: {debugInfo.hasNotification ? '✓' : '✗'}</div>
+                                <div>Firebase Support: {
+                                  debugInfo.firebaseSupported === null ? '⏳ Checking...' :
+                                  debugInfo.firebaseSupported ? '✓' : '✗'
+                                }</div>
+                                <div>HTTPS: {debugInfo.isHTTPS ? '✓' : '✗'}</div>
+                                <div className="text-xs break-all">
+                                  Browser: {debugInfo.userAgent.substring(0, 60)}...
+                                </div>
+                              </div>
+                            </details>
+                          </div>
+                        )}
                       </div>
                     </CardBody>
                   </Card>
@@ -992,6 +1215,13 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Health Profile Setup Modal */}
+      <HealthProfileSetup
+        isOpen={isHealthProfileModalOpen}
+        onClose={handleCloseHealthProfileModal}
+        onSuccess={handleHealthProfileSuccess}
+      />
     </DefaultLayout>
   );
 }

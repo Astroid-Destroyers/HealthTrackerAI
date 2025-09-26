@@ -20,7 +20,12 @@ interface User {
   uid: string;
   email: string;
   displayName: string | null;
+  phoneNumber?: string;
+  phoneVerified?: boolean;
   devices: Device[];
+  notificationPreferences?: Record<string, any>;
+  notificationEnabledDevices?: number;
+  hasValidFcmTokens?: boolean;
 }
 
 interface Device {
@@ -33,6 +38,16 @@ interface Device {
 
 const ADMIN_EMAIL = "new.roeepalmon@gmail.com";
 
+// Helper function to format phone numbers
+const formatPhoneNumber = (phoneNumber: string) => {
+  const cleaned = phoneNumber.replace(/\D/g, '');
+  const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
+  if (match) {
+    return `(${match[1]}) ${match[2]}-${match[3]}`;
+  }
+  return phoneNumber;
+};
+
 export default function AdminPanel() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -42,6 +57,17 @@ export default function AdminPanel() {
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [customMessage, setCustomMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
+  
+  // SMS functionality state
+  const [showSmsModal, setShowSmsModal] = useState(false);
+  const [smsMessage, setSmsMessage] = useState("");
+  const [sendingSms, setSendingSms] = useState(false);
+
+  // FCM functionality state
+  const [showFcmModal, setShowFcmModal] = useState(false);
+  const [fcmTitle, setFcmTitle] = useState("");
+  const [fcmMessage, setFcmMessage] = useState("");
+  const [sendingFcm, setSendingFcm] = useState(false);
 
   // Check if user is admin
   useEffect(() => {
@@ -142,6 +168,111 @@ export default function AdminPanel() {
     }
   };
 
+  const sendSmsMessage = async () => {
+    if (
+      !selectedUser ||
+      !selectedUser.phoneNumber ||
+      !smsMessage.trim() ||
+      !user
+    )
+      return;
+
+    setSendingSms(true);
+    try {
+      const idToken = await user.getIdToken();
+      const response = await fetch("/api/admin/send-sms", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          userId: selectedUser.uid,
+          phoneNumber: selectedUser.phoneNumber,
+          message: smsMessage.trim(),
+        }),
+      });
+
+      if (response.ok) {
+        setSmsMessage("");
+        setShowSmsModal(false);
+        alert("SMS sent successfully!");
+      } else {
+        const errorData = await response.json();
+
+        alert(`Failed to send SMS: ${errorData.error || "Unknown error"}`);
+      }
+    } catch {
+      alert("Failed to send SMS");
+    } finally {
+      setSendingSms(false);
+    }
+  };
+
+  const sendFcmMessage = async () => {
+    if (
+      !selectedUser ||
+      !selectedUser.devices ||
+      selectedUser.devices.length === 0 ||
+      !fcmTitle.trim() ||
+      !fcmMessage.trim() ||
+      !user
+    )
+      return;
+
+    setSendingFcm(true);
+    try {
+      const idToken = await user.getIdToken();
+      
+      // Only get tokens from devices that have notifications enabled
+      const enabledDevices = selectedUser.devices.filter((device: any) => 
+        device.notificationsEnabled === true && device.fcmToken
+      );
+      
+      if (enabledDevices.length === 0) {
+        alert("This user has no devices with notifications enabled");
+        setSendingFcm(false);
+        return;
+      }
+      
+      const deviceTokens = enabledDevices.map((device: any) => device.fcmToken);
+
+      const response = await fetch("/api/admin/send-fcm", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          userId: selectedUser.uid,
+          deviceTokens,
+          title: fcmTitle.trim(),
+          message: fcmMessage.trim(),
+          data: {
+            type: "admin_notification",
+            timestamp: Date.now().toString(),
+          },
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setFcmTitle("");
+        setFcmMessage("");
+        setShowFcmModal(false);
+        alert(`FCM notification sent! Success: ${result.successCount}, Failed: ${result.failureCount}`);
+      } else {
+        const errorData = await response.json();
+
+        alert(`Failed to send FCM notification: ${errorData.error || "Unknown error"}`);
+      }
+    } catch {
+      alert("Failed to send FCM notification");
+    } finally {
+      setSendingFcm(false);
+    }
+  };
+
   const getDeviceType = (userAgent: string) => {
     if (
       userAgent.includes("Mobile") ||
@@ -213,7 +344,9 @@ export default function AdminPanel() {
                     <TableHeader>
                       <TableColumn>Email</TableColumn>
                       <TableColumn>Name</TableColumn>
+                      <TableColumn>Phone</TableColumn>
                       <TableColumn>Devices</TableColumn>
+                      <TableColumn>Notifications</TableColumn>
                       <TableColumn>Actions</TableColumn>
                     </TableHeader>
                     <TableBody>
@@ -221,15 +354,78 @@ export default function AdminPanel() {
                         <TableRow key={user.uid}>
                           <TableCell>{user.email}</TableCell>
                           <TableCell>{user.displayName || "N/A"}</TableCell>
+                          <TableCell>
+                            {user.phoneNumber ? (
+                              <div className="flex items-center gap-2">
+                                <span className="text-emerald-400">
+                                  {formatPhoneNumber(user.phoneNumber)}
+                                </span>
+                                {user.phoneVerified && (
+                                  <span className="text-emerald-300 text-xs">
+                                    ✓
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-gray-500">No phone</span>
+                            )}
+                          </TableCell>
                           <TableCell>{user.devices.length}</TableCell>
                           <TableCell>
-                            <Button
-                              size="sm"
-                              variant="flat"
-                              onPress={() => setSelectedUser(user)}
-                            >
-                              Manage
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              {user.hasValidFcmTokens ? (
+                                <>
+                                  <div className="w-2 h-2 bg-green-400 rounded-full" />
+                                  <span className="text-green-400 text-sm">
+                                    Enabled ({user.notificationEnabledDevices})
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="w-2 h-2 bg-gray-500 rounded-full" />
+                                  <span className="text-gray-500 text-sm">
+                                    Disabled
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="flat"
+                                onPress={() => setSelectedUser(user)}
+                              >
+                                Manage
+                              </Button>
+                              {user.phoneNumber && (
+                                <Button
+                                  color="secondary"
+                                  size="sm"
+                                  variant="flat"
+                                  onPress={() => {
+                                    setSelectedUser(user);
+                                    setShowSmsModal(true);
+                                  }}
+                                >
+                                  SMS
+                                </Button>
+                              )}
+                              {user.hasValidFcmTokens && (
+                                <Button
+                                  color="primary"
+                                  size="sm"
+                                  variant="flat"
+                                  onPress={() => {
+                                    setSelectedUser(user);
+                                    setShowFcmModal(true);
+                                  }}
+                                >
+                                  Push
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -245,9 +441,24 @@ export default function AdminPanel() {
             {selectedUser ? (
               <Card className="backdrop-blur-xl bg-white/5 border border-white/10">
                 <CardHeader className="border-b border-white/10">
-                  <h3 className="text-lg font-semibold text-white">
-                    {selectedUser.email}&apos;s Devices
-                  </h3>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">
+                      {selectedUser.email}&apos;s Devices
+                    </h3>
+                    {selectedUser.phoneNumber && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-sm text-gray-400">Phone:</span>
+                        <span className="text-emerald-400 text-sm">
+                          {formatPhoneNumber(selectedUser.phoneNumber)}
+                        </span>
+                        {selectedUser.phoneVerified && (
+                          <span className="text-emerald-300 text-xs bg-emerald-500/20 px-1.5 py-0.5 rounded">
+                            ✓ Verified
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardBody className="space-y-4">
                   {selectedUser.devices.map((device) => (
@@ -350,6 +561,234 @@ export default function AdminPanel() {
                   <Button
                     variant="flat"
                     onPress={() => setSelectedDevice(null)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </CardBody>
+            </Card>
+          </div>
+        )}
+
+        {/* Send SMS Modal */}
+        {showSmsModal && selectedUser && selectedUser.phoneNumber && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-md backdrop-blur-xl bg-slate-900/95 border border-white/20 shadow-2xl">
+              <CardHeader className="border-b border-white/10">
+                <div>
+                  <h3 className="text-lg font-semibold text-white">
+                    Send SMS Message
+                  </h3>
+                  <p className="text-sm text-gray-400">
+                    To {selectedUser.email} at{" "}
+                    <span className="font-mono">
+                      {formatPhoneNumber(selectedUser.phoneNumber)}
+                    </span>
+                  </p>
+                </div>
+              </CardHeader>
+              <CardBody className="space-y-4">
+                <div className="space-y-2">
+                  <label
+                    className="text-sm font-medium text-gray-200"
+                    htmlFor="sms-message"
+                  >
+                    SMS Message
+                  </label>
+                  
+                  {/* Quick Templates */}
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    <button
+                      className="px-2 py-1 text-xs bg-white/10 hover:bg-white/20 rounded border border-white/20 text-gray-300"
+                      type="button"
+                      onClick={() =>
+                        setSmsMessage(
+                          "Hi! This is a message from HealthTrackerAI. Please confirm you received this notification.",
+                        )
+                      }
+                    >
+                      Confirmation
+                    </button>
+                    <button
+                      className="px-2 py-1 text-xs bg-white/10 hover:bg-white/20 rounded border border-white/20 text-gray-300"
+                      type="button"
+                      onClick={() =>
+                        setSmsMessage(
+                          "Reminder: Please log your health metrics in the HealthTrackerAI app today.",
+                        )
+                      }
+                    >
+                      Reminder
+                    </button>
+                    <button
+                      className="px-2 py-1 text-xs bg-white/10 hover:bg-white/20 rounded border border-white/20 text-gray-300"
+                      type="button"
+                      onClick={() =>
+                        setSmsMessage(
+                          "Welcome to HealthTrackerAI! Your account has been successfully set up.",
+                        )
+                      }
+                    >
+                      Welcome
+                    </button>
+                  </div>
+
+                  <textarea
+                    className="w-full min-h-[100px] p-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    id="sms-message"
+                    maxLength={160}
+                    placeholder="Enter your SMS message... Tip: Use natural, complete sentences to avoid carrier filtering."
+                    value={smsMessage}
+                    onChange={(e) => setSmsMessage(e.target.value)}
+                  />
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-gray-400">
+                      {smsMessage.length}/160 characters
+                    </p>
+                    {smsMessage.length > 160 && (
+                      <p className="text-xs text-red-400">Message too long</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                    isDisabled={!smsMessage.trim() || smsMessage.length > 160}
+                    isLoading={sendingSms}
+                    onPress={sendSmsMessage}
+                  >
+                    {sendingSms ? "Sending..." : "Send SMS"}
+                  </Button>
+                  <Button
+                    className="px-6"
+                    variant="flat"
+                    onPress={() => {
+                      setShowSmsModal(false);
+                      setSmsMessage("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </CardBody>
+            </Card>
+          </div>
+        )}
+
+        {/* Send FCM Modal */}
+        {showFcmModal && selectedUser && selectedUser.hasValidFcmTokens && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-md backdrop-blur-xl bg-slate-900/95 border border-white/20 shadow-2xl">
+              <CardHeader className="border-b border-white/10">
+                <div>
+                  <h3 className="text-lg font-semibold text-white">
+                    Send Push Notification
+                  </h3>
+                  <p className="text-sm text-gray-400">
+                    To {selectedUser.email} on {selectedUser.devices.length} device(s)
+                  </p>
+                </div>
+              </CardHeader>
+              <CardBody className="space-y-4">
+                <div className="space-y-4">
+                  {/* Title Input */}
+                  <div className="space-y-2">
+                    <label
+                      className="text-sm font-medium text-gray-200"
+                      htmlFor="fcm-title"
+                    >
+                      Notification Title
+                    </label>
+                    <input
+                      className="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      id="fcm-title"
+                      maxLength={50}
+                      placeholder="Enter notification title..."
+                      value={fcmTitle}
+                      onChange={(e) => setFcmTitle(e.target.value)}
+                    />
+                    <p className="text-xs text-gray-400">
+                      {fcmTitle.length}/50 characters
+                    </p>
+                  </div>
+
+                  {/* Message Input */}
+                  <div className="space-y-2">
+                    <label
+                      className="text-sm font-medium text-gray-200"
+                      htmlFor="fcm-message"
+                    >
+                      Notification Message
+                    </label>
+                    <textarea
+                      className="w-full min-h-[100px] p-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      id="fcm-message"
+                      maxLength={200}
+                      placeholder="Enter your notification message..."
+                      value={fcmMessage}
+                      onChange={(e) => setFcmMessage(e.target.value)}
+                    />
+                    <p className="text-xs text-gray-400">
+                      {fcmMessage.length}/200 characters
+                    </p>
+                  </div>
+
+                  {/* Quick Templates */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-200">Quick Templates:</p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        className="px-2 py-1 text-xs bg-white/10 hover:bg-white/20 rounded border border-white/20 text-gray-300"
+                        type="button"
+                        onClick={() => {
+                          setFcmTitle("Health Reminder");
+                          setFcmMessage("Don't forget to log your daily health metrics!");
+                        }}
+                      >
+                        Health Reminder
+                      </button>
+                      <button
+                        className="px-2 py-1 text-xs bg-white/10 hover:bg-white/20 rounded border border-white/20 text-gray-300"
+                        type="button"
+                        onClick={() => {
+                          setFcmTitle("Welcome!");
+                          setFcmMessage("Welcome to HealthTrackerAI! Start your health journey today.");
+                        }}
+                      >
+                        Welcome
+                      </button>
+                      <button
+                        className="px-2 py-1 text-xs bg-white/10 hover:bg-white/20 rounded border border-white/20 text-gray-300"
+                        type="button"
+                        onClick={() => {
+                          setFcmTitle("Check-in Time");
+                          setFcmMessage("Time for your daily health check-in. How are you feeling today?");
+                        }}
+                      >
+                        Check-in
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                    isDisabled={!fcmTitle.trim() || !fcmMessage.trim()}
+                    isLoading={sendingFcm}
+                    onPress={sendFcmMessage}
+                  >
+                    {sendingFcm ? "Sending..." : "Send Notification"}
+                  </Button>
+                  <Button
+                    className="px-6"
+                    variant="flat"
+                    onPress={() => {
+                      setShowFcmModal(false);
+                      setFcmTitle("");
+                      setFcmMessage("");
+                    }}
                   >
                     Cancel
                   </Button>

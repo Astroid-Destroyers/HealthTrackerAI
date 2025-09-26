@@ -21,22 +21,48 @@ if (!getApps().length) {
     if (!projectId || !clientEmail || !privateKey) {
       console.error("Missing Firebase Admin environment variables");
     } else {
-      // Clean the private key
-      const cleanPrivateKey = privateKey
-        .replace(/\\n/g, "\n")
-        .replace(/^"|"$/g, "");
+      try {
+        // Clean and properly format the private key
+        let cleanPrivateKey = privateKey;
+        
+        // Remove quotes if present
+        cleanPrivateKey = cleanPrivateKey.replace(/^["']|["']$/g, '');
+        
+        // Replace \\n with actual newlines
+        cleanPrivateKey = cleanPrivateKey.replace(/\\n/g, '\n');
+        
+        // Ensure proper PEM format
+        if (!cleanPrivateKey.startsWith('-----BEGIN PRIVATE KEY-----')) {
+          cleanPrivateKey = '-----BEGIN PRIVATE KEY-----\n' + cleanPrivateKey;
+        }
+        if (!cleanPrivateKey.endsWith('-----END PRIVATE KEY-----')) {
+          cleanPrivateKey = cleanPrivateKey + '\n-----END PRIVATE KEY-----';
+        }
 
-      const app = initializeApp({
-        credential: cert({
+        console.log('Initializing Firebase Admin with:', {
           projectId,
           clientEmail,
-          privateKey: cleanPrivateKey,
-        }),
-        projectId: projectId,
-      });
+          privateKeyLength: cleanPrivateKey.length,
+          privateKeyStart: cleanPrivateKey.substring(0, 50) + '...'
+        });
 
-      db = getFirestore(app);
-      auth = getAuth(app);
+        const app = initializeApp({
+          credential: cert({
+            projectId,
+            clientEmail,
+            privateKey: cleanPrivateKey,
+          }),
+          projectId: projectId,
+        });
+
+        db = getFirestore(app);
+        auth = getAuth(app);
+        
+        console.log('Firebase Admin SDK initialized successfully');
+      } catch (error) {
+        console.error('Failed to initialize Firebase Admin SDK:', error);
+        throw error;
+      }
     }
   } catch (error) {
     console.error("Failed to initialize Firebase Admin SDK:", error);
@@ -86,6 +112,11 @@ export default async function handler(
 
         console.log(`Processing user: ${userId}, email: ${userRecord.email}`);
 
+        // Get user's profile data from Firestore
+        const userDocRef = db.collection("users").doc(userId);
+        const userDoc = await userDocRef.get();
+        const userData = userDoc.exists ? userDoc.data() : null;
+
         // Get user's devices from Firestore
         const devicesSnapshot = await db
           .collection("users")
@@ -104,11 +135,22 @@ export default async function handler(
           }),
         );
 
+        // Count devices with notifications enabled
+        const notificationEnabledDevices = devices.filter(
+          (device: any) => device.notificationsEnabled === true && device.fcmToken
+        ).length;
+
         return {
           uid: userId,
           email: userRecord.email,
           displayName: userRecord.displayName || null,
+          // Check both Firebase Auth and Firestore for phone number 
+          phoneNumber: userRecord.phoneNumber || userData?.phoneNumber || null,
+          phoneVerified: userData?.phoneVerified || false,
           devices: devices,
+          notificationPreferences: userData?.notificationPreferences || {},
+          notificationEnabledDevices: notificationEnabledDevices,
+          hasValidFcmTokens: notificationEnabledDevices > 0,
         };
       }),
     );
