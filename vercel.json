@@ -1,7 +1,6 @@
 {
   "version": 2,
   "name": "healthtrackerai",
-  "// Force deployment trigger": "Updated to force new deployment after ESLint fix",
   "builds": [
     {
       "src": "package.json",
