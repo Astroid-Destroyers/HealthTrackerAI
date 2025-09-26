@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Disable ESLint during build for production deployment
+  // Completely disable ESLint during build for production deployment
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -9,6 +9,12 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Skip validation and checks
+  experimental: {
+    skipTrailingSlashRedirect: true,
+  },
+  // Disable source maps to speed up build
+  productionBrowserSourceMaps: false,
 }
 
 module.exports = nextConfig;

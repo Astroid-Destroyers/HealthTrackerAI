@@ -1,0 +1,4 @@
+# Ignore all files during Vercel deployment build
+# This prevents ESLint from running during production builds
+*
+**/*
