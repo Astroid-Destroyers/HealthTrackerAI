@@ -1,14 +1,21 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { motion } from "framer-motion";
 // Firebase imports for profile updates
 import { updateProfile } from "firebase/auth";
+import { 
+  RecaptchaVerifier, 
+  signInWithPhoneNumber, 
+  PhoneAuthProvider, 
+  linkWithCredential 
+} from "firebase/auth";
 import { Button } from "@heroui/button";
 import { Card, CardHeader, CardBody } from "@heroui/card";
 import { Chip } from "@heroui/chip";
+import { Input } from "@heroui/input";
 
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import { useAuth } from "@/providers/AuthProvider";
 import { useNotifications } from "@/hooks/useNotifications";
 import DefaultLayout from "@/layouts/default";
@@ -29,6 +36,8 @@ interface UserProfile {
   };
   goal: string;
   email: string;
+  phoneNumber?: string;
+  phoneVerified?: boolean;
   createdAt: any;
   updatedAt: any;
 }
@@ -47,6 +56,15 @@ export default function ProfilePage() {
   // New state for user profile data
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
+
+  // Phone verification states
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [phoneLoading, setPhoneLoading] = useState(false);
+  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const [recaptchaVerifier, setRecaptchaVerifier] = useState<any>(null);
 
   useEffect(() => {
     // Detect mobile devices and Chrome
@@ -81,9 +99,16 @@ export default function ProfilePage() {
         const userDoc = await getDoc(userDocRef);
 
         if (userDoc.exists()) {
-          setUserProfile(userDoc.data() as UserProfile);
+          const profileData = userDoc.data() as UserProfile;
+          console.log('Profile data loaded:', profileData); // Debug log
+          setUserProfile(profileData);
+          
+          // Initialize phone number field if user has one
+          if (profileData.phoneNumber) {
+            setPhoneNumber(profileData.phoneNumber);
+          }
         } else {
-          // No profile data found for user
+          console.log('No profile document found for user'); // Debug log
         }
       } catch {
         // Error fetching user profile
@@ -96,6 +121,15 @@ export default function ProfilePage() {
       fetchUserProfile();
     }
   }, [user?.uid]);
+
+  // Cleanup recaptcha on unmount
+  useEffect(() => {
+    return () => {
+      if (recaptchaVerifier) {
+        recaptchaVerifier.clear();
+      }
+    };
+  }, [recaptchaVerifier]);
 
   useEffect(() => {
     if (user?.uid) {
@@ -287,6 +321,113 @@ export default function ProfilePage() {
     return genderMap[gender] || gender;
   };
 
+  // Phone verification functions
+  const initializeRecaptcha = () => {
+    if (!recaptchaVerifier && typeof window !== 'undefined') {
+      const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+        callback: () => {
+          // reCAPTCHA solved, allow signInWithPhoneNumber
+        },
+      });
+      setRecaptchaVerifier(verifier);
+      return verifier;
+    }
+    return recaptchaVerifier;
+  };
+
+  const sendVerificationCode = async () => {
+    if (!phoneNumber.trim() || phoneLoading) return;
+
+    try {
+      setPhoneLoading(true);
+      
+      // Initialize reCAPTCHA
+      const appVerifier = initializeRecaptcha();
+      
+      if (!appVerifier) {
+        alert('Failed to initialize reCAPTCHA. Please refresh and try again.');
+        return;
+      }
+      
+      // Format phone number (add +1 if not present for US numbers)
+      const formattedPhone = phoneNumber.startsWith('+') 
+        ? phoneNumber 
+        : `+1${phoneNumber.replace(/\D/g, '')}`;
+
+      console.log('Attempting to send SMS to:', formattedPhone);
+
+      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+      setConfirmationResult(confirmation);
+      setCodeSent(true);
+      alert('Verification code sent to your phone!');
+    } catch (error: any) {
+      console.error('Error sending verification code:', error);
+      
+      // Provide more specific error messages
+      if (error.code === 'auth/invalid-app-credential') {
+        alert('Phone authentication is not properly configured in Firebase Console. Please enable Phone Authentication and try again.');
+      } else if (error.code === 'auth/too-many-requests') {
+        alert('Too many requests. Please wait before trying again.');
+      } else if (error.code === 'auth/invalid-phone-number') {
+        alert('Invalid phone number format. Please use format: (555) 123-4567');
+      } else {
+        alert(`Failed to send verification code: ${error.message || 'Unknown error'}`);
+      }
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
+
+  const verifyPhoneNumber = async () => {
+    if (!confirmationResult || !verificationCode.trim() || isVerifying) return;
+
+    try {
+      setIsVerifying(true);
+      const credential = PhoneAuthProvider.credential(confirmationResult.verificationId, verificationCode);
+      
+      if (user) {
+        // Link the phone credential to existing user
+        await linkWithCredential(user, credential);
+        
+        // Update user profile in Firestore
+        const userDocRef = doc(db, "users", user.uid);
+        await updateDoc(userDocRef, {
+          phoneNumber: phoneNumber,
+          phoneVerified: true,
+          updatedAt: new Date(),
+        });
+
+        // Update local state
+        if (userProfile) {
+          setUserProfile({
+            ...userProfile,
+            phoneNumber: phoneNumber,
+            phoneVerified: true,
+          });
+        }
+
+        alert('Phone number verified successfully!');
+        setCodeSent(false);
+        setVerificationCode('');
+      }
+    } catch (error) {
+      console.error('Error verifying phone number:', error);
+      alert('Invalid verification code. Please try again.');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const formatPhoneNumber = (value: string) => {
+    const cleaned = value.replace(/\D/g, '');
+    const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
+    if (match) {
+      return `(${match[1]}) ${match[2]}-${match[3]}`;
+    }
+    return value;
+  };
+
   if (loading || profileLoading) {
     return (
       <DefaultLayout>
@@ -302,6 +443,117 @@ export default function ProfilePage() {
 
   if (!user) {
     return null; // Will redirect
+  }
+
+  // If no profile data exists, show a simplified version with just phone verification
+  if (!userProfile) {
+    return (
+      <DefaultLayout>
+        <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden">
+          <div className="relative z-10 pt-24 pb-12 px-6">
+            <div className="container mx-auto max-w-4xl">
+              <div className="text-center mb-12">
+                <h1 className="text-4xl font-bold text-white mb-4">Profile Setup</h1>
+                <p className="text-gray-400">Complete your profile to get started</p>
+              </div>
+              
+              {/* Phone Verification Card */}
+              <Card className="backdrop-blur-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
+                      <span className="text-white text-xl">📱</span>
+                    </div>
+                    <h3 className="text-xl font-bold text-white">Phone Verification</h3>
+                  </div>
+                </CardHeader>
+                <CardBody className="space-y-6">
+                  <div className="group">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                      <span className="text-sm font-medium text-gray-400 uppercase tracking-wider">
+                        Phone Number
+                      </span>
+                    </div>
+                    
+                    <div className="pl-4 space-y-3">
+                      <Input
+                        className="max-w-xs"
+                        classNames={{
+                          input: "text-white placeholder:text-gray-400",
+                          inputWrapper: "backdrop-blur-xl bg-white/5 border-white/20 hover:border-white/30 group-data-[focus=true]:border-white/40",
+                        }}
+                        placeholder="(555) 123-4567"
+                        size="sm"
+                        type="tel"
+                        value={phoneNumber}
+                        onChange={(e) => {
+                          const formatted = formatPhoneNumber(e.target.value);
+                          setPhoneNumber(formatted);
+                        }}
+                      />
+                      
+                      {!codeSent ? (
+                        <Button
+                          className="bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold"
+                          isDisabled={!phoneNumber.trim() || phoneLoading}
+                          isLoading={phoneLoading}
+                          size="sm"
+                          onClick={sendVerificationCode}
+                        >
+                          Send Verification Code
+                        </Button>
+                      ) : (
+                        <div className="space-y-2">
+                          <Input
+                            className="max-w-xs"
+                            classNames={{
+                              input: "text-white placeholder:text-gray-400",
+                              inputWrapper: "backdrop-blur-xl bg-white/5 border-white/20 hover:border-white/30 group-data-[focus=true]:border-white/40",
+                            }}
+                            placeholder="Enter 6-digit code"
+                            size="sm"
+                            type="text"
+                            value={verificationCode}
+                            onChange={(e) => setVerificationCode(e.target.value)}
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold"
+                              isDisabled={!verificationCode.trim() || isVerifying}
+                              isLoading={isVerifying}
+                              size="sm"
+                              onClick={verifyPhoneNumber}
+                            >
+                              Verify Code
+                            </Button>
+                            <Button
+                              className="text-gray-400 hover:text-white"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setCodeSent(false);
+                                setVerificationCode('');
+                                setConfirmationResult(null);
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* reCAPTCHA container */}
+                      <div id="recaptcha-container" />
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </DefaultLayout>
+    );
   }
 
   return (
@@ -481,6 +733,95 @@ export default function ProfilePage() {
                         <p className="text-lg font-semibold text-white pl-4 break-all">
                           {userProfile.email}
                         </p>
+                      </div>
+                      
+                      {/* Phone Number Section */}
+                      <div className="group">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                          <span className="text-sm font-medium text-gray-400 uppercase tracking-wider">
+                            Phone Number
+                          </span>
+                          {userProfile.phoneVerified && (
+                            <Chip
+                              className="bg-emerald-500/20 text-emerald-300 border-emerald-400/20"
+                              size="sm"
+                              variant="bordered"
+                            >
+                              ✓ Verified
+                            </Chip>
+                          )}
+                        </div>
+                        
+                        {/* Always show phone input for now - for debugging */}
+                        <div className="pl-4 space-y-3">
+                          <Input
+                            className="max-w-xs"
+                            classNames={{
+                              input: "text-white placeholder:text-gray-400",
+                              inputWrapper: "backdrop-blur-xl bg-white/5 border-white/20 hover:border-white/30 group-data-[focus=true]:border-white/40",
+                            }}
+                            placeholder="(555) 123-4567"
+                            size="sm"
+                            type="tel"
+                            value={phoneNumber}
+                            onChange={(e) => {
+                              const formatted = formatPhoneNumber(e.target.value);
+                              setPhoneNumber(formatted);
+                            }}
+                          />
+                          
+                          {!codeSent ? (
+                            <Button
+                              className="bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold"
+                              isDisabled={!phoneNumber.trim() || phoneLoading}
+                              isLoading={phoneLoading}
+                              size="sm"
+                              onClick={sendVerificationCode}
+                            >
+                              Send Code
+                            </Button>
+                          ) : (
+                            <div className="space-y-2">
+                              <Input
+                                className="max-w-xs"
+                                classNames={{
+                                  input: "text-white placeholder:text-gray-400",
+                                  inputWrapper: "backdrop-blur-xl bg-white/5 border-white/20 hover:border-white/30 group-data-[focus=true]:border-white/40",
+                                }}
+                                placeholder="Enter 6-digit code"
+                                size="sm"
+                                type="text"
+                                value={verificationCode}
+                                onChange={(e) => setVerificationCode(e.target.value)}
+                              />
+                              <Button
+                                className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold mr-2"
+                                isDisabled={!verificationCode.trim() || isVerifying}
+                                isLoading={isVerifying}
+                                size="sm"
+                                onClick={verifyPhoneNumber}
+                              >
+                                Verify
+                              </Button>
+                              <Button
+                                className="text-gray-400 hover:text-white"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setCodeSent(false);
+                                  setVerificationCode('');
+                                  setConfirmationResult(null);
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          )}
+                          
+                          {/* reCAPTCHA container */}
+                          <div id="recaptcha-container" />
+                        </div>
                       </div>
                     </CardBody>
                   </Card>
