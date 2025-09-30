@@ -48,6 +48,9 @@ export const Head = ({ description, image, title, url }: HeadProps) => {
       {/* Mobile optimization */}
       <meta content="yes" name="mobile-web-app-capable" />
       <meta content="HealthTrackerAI" name="application-name" />
+
+      {/* Google AdSense verification */}
+      <meta name="google-adsense-account" content="ca-pub-9891270784697044" />
     </NextHead>
   );
 };

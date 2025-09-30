@@ -1,15 +1,13 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import twilio from "twilio";
 
 const ADMIN_EMAIL = "new.roeepalmon@gmail.com";
 
-// Initialize Twilio
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
+// Textla SMS configuration
+const TEXTLA_API_KEY = process.env.TEXTLA_API_KEY;
+const TEXTLA_API_URL = process.env.TEXTLA_API_URL || "https://api.textla.com/v1/sms";
+const TEXTLA_SENDER_ID = process.env.TEXTLA_SENDER_ID || "HealthTracker";
 
 // Initialize Firebase Admin SDK
 let auth: any = null;
@@ -80,57 +78,66 @@ export default async function handler(
       return res.status(400).json({ error: "Phone number mismatch" });
     }
 
-    // Send SMS using Twilio
+    // Send SMS using Textla
     try {
-      console.log(`Attempting to send SMS:`);
-      console.log(`- From: ${process.env.TWILIO_PHONE_NUMBER}`);
+      console.log(`Attempting to send SMS via Textla:`);
+      console.log(`- From: ${TEXTLA_SENDER_ID}`);
       console.log(`- To: ${phoneNumber}`);
       console.log(`- Message: "${message}"`);
 
-      const smsResponse = await twilioClient.messages.create({
-        body: message,
-        from: process.env.TWILIO_PHONE_NUMBER,
+      if (!TEXTLA_API_KEY) {
+        throw new Error("Textla API key not configured");
+      }
+
+      const textlaPayload = {
         to: phoneNumber,
+        from: TEXTLA_SENDER_ID,
+        text: message,
+      };
+
+      const response = await fetch(TEXTLA_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${TEXTLA_API_KEY}`,
+        },
+        body: JSON.stringify(textlaPayload),
       });
 
-      console.log(`SMS sent successfully!`);
-      console.log(`- Message SID: ${smsResponse.sid}`);
-      console.log(`- Status: ${smsResponse.status}`);
-      console.log(`- To: ${smsResponse.to}`);
-      console.log(`- From: ${smsResponse.from}`);
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(`Textla API error: ${responseData.message || 'Unknown error'}`);
+      }
+
+      console.log(`SMS sent successfully via Textla!`);
+      console.log(`- Message ID: ${responseData.id || responseData.messageId}`);
+      console.log(`- Status: ${responseData.status}`);
 
       return res.status(200).json({
         success: true,
-        message: "SMS sent successfully!",
-        messageSid: smsResponse.sid,
-        status: smsResponse.status,
+        message: "SMS sent successfully via Textla!",
+        messageId: responseData.id || responseData.messageId,
+        status: responseData.status,
       });
-    } catch (twilioError: any) {
-      console.error("Twilio error:", twilioError);
+    } catch (textlaError: any) {
+      console.error("Textla error:", textlaError);
 
-      // Handle specific Twilio errors
-      if (twilioError.code === 21211) {
-        return res
-          .status(400)
-          .json({ error: "Invalid phone number format" });
-      }
-
-      if (twilioError.code === 21614) {
-        return res.status(400).json({
-          error:
-            "Phone number not verified (required for trial accounts). Please verify this number in your Twilio console.",
-        });
-      }
-
-      if (twilioError.code === 30007) {
-        return res.status(400).json({
-          error:
-            "Message blocked by carrier spam filter. Try using more natural, complete sentences and avoid test messages like 'hello' or 'test'.",
-        });
+      // Handle Textla API errors
+      let errorMessage = "Failed to send SMS";
+      
+      if (textlaError.message?.includes("Invalid phone number")) {
+        errorMessage = "Invalid phone number format. Please use international format (+1234567890)";
+      } else if (textlaError.message?.includes("Insufficient balance")) {
+        errorMessage = "SMS service temporarily unavailable (insufficient balance)";
+      } else if (textlaError.message?.includes("API key")) {
+        errorMessage = "SMS service configuration error";
+      } else {
+        errorMessage = `Failed to send SMS: ${textlaError.message || "Unknown error"}`;
       }
 
       return res.status(500).json({
-        error: `Failed to send SMS: ${twilioError.message || "Unknown error"}`,
+        error: errorMessage,
       });
     }
   } catch (error) {
