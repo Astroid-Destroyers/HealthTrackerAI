@@ -512,7 +512,10 @@ export const Navbar: React.FC<NavbarProps> = () => {
             <div className="space-y-3">
               <Button
                 className="btn-ai-primary w-full text-base font-medium py-4 h-12"
-                onPress={() => setIsLoginOpen(true)}
+                onPress={() => {
+                  setIsLoginOpen(true);
+                  setIsMenuOpen(false);
+                }}
               >
                 Login / Signup
               </Button>
