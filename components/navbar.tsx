@@ -256,7 +256,15 @@ export const Navbar: React.FC<NavbarProps> = () => {
         
         {/* Desktop Navigation - Fixed responsive breakpoint */}
         <div className="hidden md:flex gap-6 justify-start ml-8">
-          {siteConfig.navItems.map((item) => (
+          {siteConfig.navItems
+            .filter((item) => {
+              // Hide "Ad Tests" for non-admin users
+              if (item.href === "/ad-tests") {
+                return user && user.email === "new.roeepalmon@gmail.com";
+              }
+              return true;
+            })
+            .map((item) => (
             <NavbarItem key={item.href}>
               <NextLink
                 className={clsx(
@@ -454,7 +462,15 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
         {/* Navigation Items */}
         <div className="mx-4 flex flex-col gap-1">
-          {siteConfig.navItems.map((item, index) => (
+          {siteConfig.navItems
+            .filter((item) => {
+              // Hide "Ad Tests" for non-admin users
+              if (item.href === "/ad-tests") {
+                return user && user.email === "new.roeepalmon@gmail.com";
+              }
+              return true;
+            })
+            .map((item, index) => (
             <NavbarMenuItem key={`${item}-${index}`}>
               <NextLink
                 className="text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-300 text-base font-medium py-3 px-4 rounded-xl w-full block"

@@ -1,9 +1,13 @@
 import React, { useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { Card } from '@heroui/card';
 import { Button } from '@heroui/button';
 import Script from 'next/script';
 
 import DefaultLayout from '@/layouts/default';
+import { useAuth } from '@/providers/AuthProvider';
+
+const ADMIN_EMAIL = "new.roeepalmon@gmail.com";
 
 declare global {
   interface Window {
@@ -36,6 +40,35 @@ const AdSenseAd = ({ slot, style }: { slot: string; style?: React.CSSProperties 
 };
 
 export default function AdTestsPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  // Check if user is admin
+  useEffect(() => {
+    if (!loading && (!user || user.email !== ADMIN_EMAIL)) {
+      router.push("/");
+    }
+  }, [user, loading, router]);
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <DefaultLayout>
+        <div className="flex justify-center items-center min-h-[50vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
+            <p>Loading...</p>
+          </div>
+        </div>
+      </DefaultLayout>
+    );
+  }
+
+  // Don't render content for non-admin users
+  if (!user || user.email !== ADMIN_EMAIL) {
+    return null;
+  }
+
   return (
     <DefaultLayout>
       {/* Google AdSense Script */}

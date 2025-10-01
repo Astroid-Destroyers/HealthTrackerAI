@@ -192,11 +192,9 @@ function TestingPage() {
             <div className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10">
               <Switch
                 classNames={{
-                  base: "inline-flex flex-row-reverse w-auto bg-transparent hover:bg-transparent items-center justify-center cursor-pointer rounded-lg gap-2 p-1 border-2 border-transparent data-[selected=true]:border-transparent",
-                  wrapper:
-                    "p-0 h-7 w-14 overflow-hidden rounded-full bg-gray-400 data-[selected=true]:bg-gradient-to-r data-[selected=true]:from-purple-500 data-[selected=true]:to-indigo-600",
-                  thumb:
-                    "w-5 h-5 border-0 shadow-lg bg-white rounded-full data-[selected=true]:ml-7 transition-all duration-200 ease-out",
+                  base: "inline-flex flex-row-reverse w-auto items-center justify-center cursor-pointer gap-2 p-0",
+                  wrapper: "p-0 h-6 w-11 overflow-hidden rounded-full bg-gray-600 group-data-[selected=true]:bg-gradient-to-r group-data-[selected=true]:from-purple-500 group-data-[selected=true]:to-indigo-600",
+                  thumb: "w-5 h-5 border-0 shadow-lg bg-white rounded-full group-data-[selected=true]:ml-5 transition-all duration-200 ease-out",
                 }}
                 id="json-output-toggle"
                 isSelected={jsonOutput}
