@@ -161,13 +161,51 @@ export const sendTestNotification = async (payload: NotificationPayload) => {
 
 /**
  * Check if push notifications are supported
+ * Updated with better mobile support
  */
 export const isPushNotificationSupported = (): boolean => {
-  return (
-    "serviceWorker" in navigator &&
-    "PushManager" in window &&
-    "Notification" in window
-  );
+  // Basic browser API checks
+  if (typeof window === "undefined") return false;
+  
+  const hasServiceWorker = "serviceWorker" in navigator;
+  const hasPushManager = "PushManager" in window;
+  const hasNotification = "Notification" in window;
+  
+  // Basic requirements for all browsers
+  if (!hasServiceWorker || !hasPushManager || !hasNotification) {
+    return false;
+  }
+  
+  // HTTPS requirement (except localhost)
+  const isHTTPS =
+    location.protocol === "https:" || location.hostname === "localhost";
+  
+  // For development and testing, be more permissive
+  if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+    return true;
+  }
+  
+  // Mobile-specific checks
+  const isMobile =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent,
+    );
+  const isChrome =
+    /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+  
+  // For mobile Chrome, we require HTTPS
+  if (isMobile && isChrome) {
+    return isHTTPS;
+  }
+  
+  // For iOS devices, be more permissive but still require HTTPS
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if (isIOS) {
+    return isHTTPS;
+  }
+  
+  // For desktop and other browsers, just check basic requirements + HTTPS
+  return isHTTPS;
 };
 
 /**

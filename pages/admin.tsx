@@ -69,6 +69,12 @@ export default function AdminPanel() {
   const [fcmMessage, setFcmMessage] = useState("");
   const [sendingFcm, setSendingFcm] = useState(false);
 
+  // Email functionality state
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
+  const [sendingEmail, setSendingEmail] = useState(false);
+
   // Check if user is admin
   useEffect(() => {
     if (!loading && (!user || user.email !== ADMIN_EMAIL)) {
@@ -273,6 +279,69 @@ export default function AdminPanel() {
     }
   };
 
+  const sendEmail = async () => {
+    if (
+      !selectedUser ||
+      !selectedUser.email ||
+      !emailSubject.trim() ||
+      !emailMessage.trim() ||
+      !user
+    )
+      return;
+
+    setSendingEmail(true);
+    try {
+      const idToken = await user.getIdToken();
+
+      const response = await fetch("/api/admin/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          to: selectedUser.email,
+          subject: emailSubject.trim(),
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center;">
+                <h1 style="margin: 0;">HealthTrackerAI</h1>
+                <p style="margin: 10px 0 0 0; opacity: 0.9;">Health Management Platform</p>
+              </div>
+              <div style="padding: 30px; background: #f9f9f9;">
+                <h2 style="color: #333; margin-bottom: 20px;">${emailSubject}</h2>
+                <div style="color: #555; line-height: 1.6;">
+                  ${emailMessage.replace(/\n/g, '<br>')}
+                </div>
+              </div>
+              <div style="padding: 20px; text-align: center; background: #333; color: #ccc;">
+                <p style="margin: 0; font-size: 14px;">
+                  This email was sent from HealthTrackerAI Admin Panel<br>
+                  <a href="https://healthtrackerai.xyz" style="color: #667eea; text-decoration: none;">healthtrackerai.xyz</a>
+                </p>
+              </div>
+            </div>
+          `,
+          text: `${emailSubject}\n\n${emailMessage}\n\n---\nThis email was sent from HealthTrackerAI Admin Panel\nhealthtrackerai.xyz`,
+        }),
+      });
+
+      if (response.ok) {
+        setEmailSubject("");
+        setEmailMessage("");
+        setShowEmailModal(false);
+        alert("Email sent successfully!");
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to send email: ${errorData.error || "Unknown error"}`);
+      }
+    } catch {
+      alert("Failed to send email");
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   const getDeviceType = (userAgent: string) => {
     if (
       userAgent.includes("Mobile") ||
@@ -423,6 +492,19 @@ export default function AdminPanel() {
                                   }}
                                 >
                                   Push
+                                </Button>
+                              )}
+                              {user.email && (
+                                <Button
+                                  color="success"
+                                  size="sm"
+                                  variant="flat"
+                                  onPress={() => {
+                                    setSelectedUser(user);
+                                    setShowEmailModal(true);
+                                  }}
+                                >
+                                  Email
                                 </Button>
                               )}
                             </div>
@@ -788,6 +870,121 @@ export default function AdminPanel() {
                       setShowFcmModal(false);
                       setFcmTitle("");
                       setFcmMessage("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </CardBody>
+            </Card>
+          </div>
+        )}
+
+        {/* Send Email Modal */}
+        {showEmailModal && selectedUser && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-2xl max-h-[90vh] overflow-auto bg-white/95 backdrop-blur-md shadow-2xl border-0 ring-1 ring-gray-200/50">
+              <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200/30">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Send Email to {selectedUser.displayName || selectedUser.email}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  To: {selectedUser.email}
+                </p>
+              </CardHeader>
+              <CardBody className="space-y-4 bg-white/90">
+                <Input
+                  classNames={{
+                    base: "bg-white",
+                    inputWrapper:
+                      "bg-white border-gray-300 hover:border-blue-400 focus-within:border-blue-500 shadow-sm",
+                    input: "text-gray-900",
+                  }}
+                  label="Subject"
+                  placeholder="Enter email subject"
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                />
+
+                <div>
+                  <label
+                    className="block text-sm font-medium mb-2 text-gray-800"
+                    htmlFor="email-message"
+                  >
+                    Message
+                  </label>
+                  <textarea
+                    id="email-message"
+                    className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400"
+                    placeholder="Enter your email message here..."
+                    value={emailMessage}
+                    onChange={(e) => setEmailMessage(e.target.value)}
+                  />
+                </div>
+
+                <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 p-4 rounded-lg border border-gray-200/50 shadow-sm">
+                  <p className="text-sm font-medium text-gray-800 mb-3">
+                    Quick Templates:
+                  </p>
+                  <div className="space-y-2">
+                    <Button
+                      className="text-left justify-start bg-white/70 hover:bg-white border border-gray-200 text-gray-700 hover:text-gray-900 shadow-sm"
+                      size="sm"
+                      variant="flat"
+                      onPress={() => {
+                        setEmailSubject("Welcome to HealthTrackerAI!");
+                        setEmailMessage(
+                          "Welcome to HealthTrackerAI! We're excited to help you on your health journey. Start tracking your daily metrics and discover personalized insights.",
+                        );
+                      }}
+                    >
+                      Welcome Message
+                    </Button>
+                    <Button
+                      className="text-left justify-start bg-white/70 hover:bg-white border border-gray-200 text-gray-700 hover:text-gray-900 shadow-sm"
+                      size="sm"
+                      variant="flat"
+                      onPress={() => {
+                        setEmailSubject("Health Check-in Reminder");
+                        setEmailMessage(
+                          "Don't forget to log your daily health metrics! Consistent tracking helps us provide better insights and recommendations for your health journey.",
+                        );
+                      }}
+                    >
+                      Health Reminder
+                    </Button>
+                    <Button
+                      className="text-left justify-start bg-white/70 hover:bg-white border border-gray-200 text-gray-700 hover:text-gray-900 shadow-sm"
+                      size="sm"
+                      variant="flat"
+                      onPress={() => {
+                        setEmailSubject("New Features Available");
+                        setEmailMessage(
+                          "We've added new features to help you better track and understand your health data. Check them out in your dashboard!",
+                        );
+                      }}
+                    >
+                      Feature Update
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t border-gray-200/50 bg-gradient-to-r from-gray-50/50 to-white rounded-b-lg -mx-6 px-6 -mb-6 pb-6">
+                  <Button
+                    className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg hover:shadow-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-200"
+                    isDisabled={!emailSubject.trim() || !emailMessage.trim()}
+                    isLoading={sendingEmail}
+                    onPress={sendEmail}
+                  >
+                    {sendingEmail ? "Sending..." : "Send Email"}
+                  </Button>
+                  <Button
+                    className="px-6 bg-white/80 border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 shadow-sm transition-all duration-200"
+                    variant="flat"
+                    onPress={() => {
+                      setShowEmailModal(false);
+                      setEmailSubject("");
+                      setEmailMessage("");
                     }}
                   >
                     Cancel

@@ -25,6 +25,7 @@ export const Head = ({ description, image, title, url }: HeadProps) => {
       <meta content={pageImage} property="og:image" />
       <meta content={pageUrl} property="og:url" />
       <meta content="website" property="og:type" />
+      <meta name="google-adsense-account" content="ca-pub-9891270784697044"></meta>
       <meta
         key="viewport"
         content="viewport-fit=cover, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"

@@ -92,34 +92,63 @@ export default function ProfilePage() {
     hasPushManager: false,
     hasNotification: false,
     firebaseSupported: null as boolean | null,
-    userAgent: '',
+    userAgent: "",
     isHTTPS: false,
+    isMobile: false,
+    isChrome: false,
+    isIOS: false,
+    isStandalone: false,
   });
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
+      const isMobile =
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent,
+        );
+      const isChrome =
+        /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isStandalone =
+        window.matchMedia &&
+        window.matchMedia("(display-mode: standalone)").matches;
+
       setDebugInfo({
-        hasServiceWorker: 'serviceWorker' in navigator,
-        hasPushManager: 'PushManager' in window,
-        hasNotification: 'Notification' in window,
+        hasServiceWorker: "serviceWorker" in navigator,
+        hasPushManager: "PushManager" in window,
+        hasNotification: "Notification" in window,
         firebaseSupported: null, // Will be set async
         userAgent: navigator.userAgent,
-        isHTTPS: location.protocol === 'https:',
+        isHTTPS: location.protocol === "https:" || location.hostname === "localhost",
+        isMobile,
+        isChrome,
+        isIOS,
+        isStandalone,
       });
 
-      // Check Firebase messaging support
-      import('@/lib/firebase').then(async ({ getMessagingInstance }) => {
+      // Check Firebase messaging support and register service worker
+      import("@/lib/firebase").then(async ({ getMessagingInstance }) => {
         try {
+          // Try to register service worker first for mobile
+          if ("serviceWorker" in navigator) {
+            const registration = await navigator.serviceWorker.register(
+              "/firebase-messaging-sw.js",
+              { scope: "/" }
+            );
+            console.log("Service worker registered:", !!registration);
+          }
+
           const messaging = await getMessagingInstance();
-          setDebugInfo(prev => ({
+
+          setDebugInfo((prev) => ({
             ...prev,
-            firebaseSupported: !!messaging
+            firebaseSupported: !!messaging,
           }));
         } catch (error) {
-          console.error('Firebase messaging support check failed:', error);
-          setDebugInfo(prev => ({
+          console.error("Firebase messaging support check failed:", error);
+          setDebugInfo((prev) => ({
             ...prev,
-            firebaseSupported: false
+            firebaseSupported: false,
           }));
         }
       });
@@ -945,110 +974,6 @@ export default function ProfilePage() {
                     </CardBody>
                   </Card>
 
-                  {/* Notification Preferences */}
-                  <Card className="backdrop-blur-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/10">
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
-                          <span className="text-white text-xl">🔔</span>
-                        </div>
-                        <h3 className="text-xl font-bold text-white">
-                          Notification Preferences
-                        </h3>
-                      </div>
-                    </CardHeader>
-                    <CardBody className="space-y-6">
-                      <div className="group">
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <div className="flex items-center gap-2 mb-2">
-                              <div className="w-2 h-2 rounded-full bg-purple-400" />
-                              <span className="text-sm font-medium text-gray-400 uppercase tracking-wider">
-                                Push Notifications
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-300 pl-4">
-                              Receive health reminders and updates from our support team
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            {isSupported ? (
-                              <>
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                  <input
-                                    checked={notificationsEnabled}
-                                    className="sr-only"
-                                    disabled={notificationLoading}
-                                    type="checkbox"
-                                    onChange={(e) => handleNotificationToggle(e.target.checked)}
-                                  />
-                                  <div className={`w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-purple-300/20 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-indigo-600 ${notificationLoading ? 'opacity-50 cursor-not-allowed' : ''}`} />
-                                </label>
-                                {notificationLoading && (
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-400" />
-                                )}
-                              </>
-                            ) : debugInfo.hasServiceWorker && debugInfo.hasPushManager && debugInfo.hasNotification && debugInfo.isHTTPS ? (
-                              <div className="text-xs text-orange-400">
-                                <div>⚠️ Firebase not supported</div>
-                                <div>Basic browser support available</div>
-                              </div>
-                            ) : (
-                              <span className="text-xs text-red-400">
-                                Not supported in this browser
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        {notificationsEnabled && (
-                          <div className="pl-4 p-3 rounded-lg bg-purple-500/10 border border-purple-400/20">
-                            <div className="flex items-center gap-2 text-purple-300 text-sm">
-                              <span>✓</span>
-                              <span>Notifications are enabled for this device</span>
-                            </div>
-                            <p className="text-xs text-gray-400 mt-1">
-                              You&apos;ll receive health reminders, tips, and important updates from the admin team.
-                            </p>
-                          </div>
-                        )}
-                        {!notificationsEnabled && isSupported && (
-                          <div className="pl-4 p-3 rounded-lg bg-gray-600/10 border border-gray-500/20">
-                            <div className="flex items-center gap-2 text-gray-400 text-sm">
-                              <span>○</span>
-                              <span>Enable notifications to receive health updates</span>
-                            </div>
-                          </div>
-                        )}
-                        {!isSupported && (
-                          <div className="pl-4 p-3 rounded-lg bg-red-500/10 border border-red-400/20">
-                            <div className="text-red-400 text-sm mb-2">
-                              <span>⚠️</span>
-                              <span className="ml-1">Push notifications not supported</span>
-                            </div>
-                            <details className="text-xs text-gray-400">
-                              <summary className="cursor-pointer hover:text-gray-300">
-                                Debug Information (tap to expand)
-                              </summary>
-                              <div className="mt-2 space-y-1">
-                                <div>Service Worker: {debugInfo.hasServiceWorker ? '✓' : '✗'}</div>
-                                <div>Push Manager: {debugInfo.hasPushManager ? '✓' : '✗'}</div>
-                                <div>Notifications API: {debugInfo.hasNotification ? '✓' : '✗'}</div>
-                                <div>Firebase Support: {
-                                  debugInfo.firebaseSupported === null ? '⏳ Checking...' :
-                                  debugInfo.firebaseSupported ? '✓' : '✗'
-                                }</div>
-                                <div>HTTPS: {debugInfo.isHTTPS ? '✓' : '✗'}</div>
-                                <div className="text-xs break-all">
-                                  Browser: {debugInfo.userAgent.substring(0, 60)}...
-                                </div>
-                              </div>
-                            </details>
-                          </div>
-                        )}
-                      </div>
-                    </CardBody>
-                  </Card>
-
                   {/* Physical Measurements */}
                   <Card className="backdrop-blur-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-cyan-500/10">
                     <CardHeader className="pb-4">
@@ -1183,6 +1108,169 @@ export default function ProfilePage() {
                 </Card>
               </motion.div>
             )}
+
+            {/* Notification Preferences - Always Available */}
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-12 max-w-2xl mx-auto"
+              initial={{ opacity: 0, y: 30 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
+              <Card className="backdrop-blur-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/10">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+                      <span className="text-white text-xl">🔔</span>
+                    </div>
+                    <h3 className="text-xl font-bold text-white">
+                      Notification Preferences
+                    </h3>
+                  </div>
+                </CardHeader>
+                <CardBody className="space-y-6">
+                  <div className="group">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-2 h-2 rounded-full bg-purple-400" />
+                          <span className="text-sm font-medium text-gray-400 uppercase tracking-wider">
+                            Push Notifications
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-300 pl-4">
+                          Receive health reminders and updates from our support team
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {isSupported ? (
+                          <>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                              <span className="sr-only">Enable push notifications</span>
+                              <input
+                                checked={notificationsEnabled}
+                                className="sr-only"
+                                disabled={notificationLoading}
+                                type="checkbox"
+                                onChange={(e) =>
+                                  handleNotificationToggle(e.target.checked)
+                                }
+                              />
+                              <div
+                                className={`w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-purple-300/20 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-indigo-600 ${
+                                  notificationLoading ? "opacity-50 cursor-not-allowed" : ""
+                                }`}
+                              />
+                            </label>
+                            {notificationLoading && (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-400" />
+                            )}
+                          </>
+                        ) : debugInfo.hasServiceWorker &&
+                          debugInfo.hasPushManager &&
+                          debugInfo.hasNotification &&
+                          debugInfo.isHTTPS ? (
+                          <div className="text-xs text-orange-400">
+                            <div>⚠️ Firebase not supported</div>
+                            <div>Basic browser support available</div>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-red-400">
+                            Not supported in this browser
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {notificationsEnabled && (
+                      <div className="pl-4 p-3 rounded-lg bg-purple-500/10 border border-purple-400/20">
+                        <div className="flex items-center gap-2 text-purple-300 text-sm">
+                          <span>✓</span>
+                          <span>Notifications are enabled for this device</span>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">
+                          You&apos;ll receive health reminders, tips, and important updates from the admin team.
+                        </p>
+                      </div>
+                    )}
+                    {!notificationsEnabled && isSupported && (
+                      <div className="pl-4 p-3 rounded-lg bg-gray-600/10 border border-gray-500/20">
+                        <div className="flex items-center gap-2 text-gray-400 text-sm">
+                          <span>○</span>
+                          <span>Enable notifications to receive health updates</span>
+                        </div>
+                      </div>
+                    )}
+                    {!isSupported && (
+                      <div className="pl-4 p-3 rounded-lg bg-red-500/10 border border-red-400/20">
+                        <div className="text-red-400 text-sm mb-2">
+                          <span>⚠️</span>
+                          <span className="ml-1">Push notifications not supported</span>
+                        </div>
+                        <details className="text-xs text-gray-400">
+                          <summary className="cursor-pointer hover:text-gray-300">
+                            Debug Information (tap to expand)
+                          </summary>
+                          <div className="mt-2 space-y-1">
+                            <div>
+                              Service Worker:{"　"}
+                              {debugInfo.hasServiceWorker ? "✓" : "✗"}
+                            </div>
+                            <div>
+                              Push Manager:{"　"}
+                              {debugInfo.hasPushManager ? "✓" : "✗"}
+                            </div>
+                            <div>
+                              Notifications API:{"　"}
+                              {debugInfo.hasNotification ? "✓" : "✗"}
+                            </div>
+                            <div>
+                              HTTPS:{"　"}
+                              {debugInfo.isHTTPS ? "✓" : "✗"}
+                            </div>
+                            <div>
+                              Mobile Device:{"　"}
+                              {debugInfo.isMobile ? "✓" : "✗"}
+                            </div>
+                            <div>
+                              Chrome Browser:{"　"}
+                              {debugInfo.isChrome ? "✓" : "✗"}
+                            </div>
+                            <div>
+                              iOS Device:{"　"}
+                              {debugInfo.isIOS ? "✓" : "✗"}
+                            </div>
+                            <div>
+                              PWA Mode:{"　"}
+                              {debugInfo.isStandalone ? "✓" : "✗"}
+                            </div>
+                            <div>
+                              Firebase Support:{"　"}
+                              {debugInfo.firebaseSupported === null
+                                ? "⏳ Checking..."
+                                : debugInfo.firebaseSupported
+                                  ? "✓"
+                                  : "✗"}
+                            </div>
+                            <div className="text-xs break-all">
+                              Browser: {debugInfo.userAgent.substring(0, 60)}...
+                            </div>
+                            {debugInfo.isMobile && debugInfo.isChrome && !debugInfo.isHTTPS && (
+                              <div className="mt-2 p-2 bg-yellow-500/10 border border-yellow-400/20 rounded text-yellow-300">
+                                ⚠️ Chrome on mobile requires HTTPS for push notifications
+                              </div>
+                            )}
+                            {debugInfo.isIOS && !debugInfo.isStandalone && (
+                              <div className="mt-2 p-2 bg-blue-500/10 border border-blue-400/20 rounded text-blue-300">
+                                💡 iOS: Add to home screen for better notification support
+                              </div>
+                            )}
+                          </div>
+                        </details>
+                      </div>
+                    )}
+                  </div>
+                </CardBody>
+              </Card>
+            </motion.div>
 
             {/* Action Buttons */}
             <motion.div
