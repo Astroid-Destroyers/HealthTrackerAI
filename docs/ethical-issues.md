@@ -10,5 +10,13 @@ HealthTrackerAI helps users monitor their health, diet, and exercise with AI gen
 - Users can delete their data and close their account at any time. 
 
 ## 2. Avoiding Algorithmic Bias 
-- We collect sensitive data (name, age, weight, heigh, and gender.)
-- These details 
+- While we collect limited deographic information, our algorithms **do not use race, religion, or other unrelated attributes** in any calculations.
+- Gender and age are used **only to improve health and fitness accuracy**, not to treat users differently. 
+- We regulary will test our AI-generated recommendations to identify and correct any potential biases.
+- Our goal is to ensure that **all users receive fair, inclusive, and evidence-based results**, regardless of background.
+
+## 3. Promoting Fair and Ethical Use
+- The software is designed for personal health tracking **not for medical diagnosis** or comparison between users.
+- We discourage misuse that could harm or shame others based on their health data. 
+
+
