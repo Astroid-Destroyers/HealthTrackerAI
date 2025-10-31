@@ -16,5 +16,8 @@ All are used under appropriate licenses and cited in our documentation.
 - Any media, icons, or design assets come from open source or royalty free sources.
 - We ensure that any client or user data remains the property of the user and is not redistributed or sold.
 
+## 3. Preventing Illegal or Unethical Use
+- Users are not permitted to upload or share copyrighted materials through out platform.
+- Our terms of use prohibit harmful or illegal behavior, including data theft or misuse of AI generated content.
 
 
