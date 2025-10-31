@@ -10,4 +10,11 @@ We use open source and third party frameworks responsibly:
 -**OpenAI API** - AI test generation
 All are used under appropriate licenses and cited in our documentation.
 
+## 2. Intellectual Property and Data Ownership
+- All orginial code, UI designs, and documentation for HealthTrackerAI are owned by our development team.
+- No copyrighted datasets are used.
+- Any media, icons, or design assets come from open source or royalty free sources.
+- We ensure that any client or user data remains the property of the user and is not redistributed or sold.
+
+
 
