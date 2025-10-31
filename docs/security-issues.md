@@ -14,3 +14,10 @@ HealthTrackerAI prioritizes user data protection through secure authentication, 
 - Passwords are never stored directly; Firebase securely manages authentication.
 - Access to user data is restricted by user ID, and users can delete their data anytime. 
 
+## 3. Possible Attack Vectors and Mitigation
+- **Unauthorized Access:** Prevented through Firebase Auth and strict access control rules.  
+- **XSS (Cross-Site Scripting):** Prevented by sanitizing user inputs and escaping HTML.  
+- **Database Access or Modification:** Firestore permissions limit read/write access to the authenticated user only.  
+- **API Misuse:** API keys are stored securely in environment variables and never exposed on the client side.
+- By combining strong authentication, encrypted communication, anf least privilege data rules, HealthTrackerAI minimizes security risks and protects all user information. 
+
