@@ -1,5 +1,9 @@
-import { title } from "@/components/primitives";
-import DefaultLayout from "@/layouts/default";
+import React from "react";
+import { title } from "../../components/primitives";
+import DefaultLayout from "../../layouts/default";
+import Link from "next/link";
+import Image from "next/image";
+import bannerImage from "../heathtracker banner.png";
 
 export default function AboutPage() {
   return (
@@ -22,11 +26,7 @@ export default function AboutPage() {
           {/* Left card */}
           <div className="rounded-2xl border p-6 md:p-8">
             <div className="flex items-center gap-3">
-              <img
-                src="/healthtracker%20banner.png"
-                alt="HealthTrackerAI logo"
-                className="h-8 w-auto"
-              />
+              <Image src={bannerImage} alt="HealthTrackerAI logo" className="h-8 w-auto" priority />
               <span className="text-2xl font-semibold">HealthTrackerAI</span>
             </div>
 
@@ -48,11 +48,7 @@ export default function AboutPage() {
 
           {/* Right card: large image tile */}
           <div className="rounded-2xl border p-6 md:p-8 flex items-center justify-center">
-            <img
-              src="/healthtracker%20banner.png"
-              alt="HealthTrackerAI graphic"
-              className="max-h-64 w-auto"
-            />
+            <Image src={bannerImage} alt="HealthTrackerAI graphic" className="max-h-64 w-auto" />
           </div>
         </div>
 
