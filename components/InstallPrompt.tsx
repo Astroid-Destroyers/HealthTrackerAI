@@ -43,7 +43,23 @@ export const InstallPrompt = () => {
     document.addEventListener("click", handleUserInteraction);
     document.addEventListener("touchstart", handleUserInteraction);
 
-    const handleBeforeInstallPrompt = (e: Event) => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      // Only intercept if we're going to show our own prompt UI.
+      const hasDismissed =
+        localStorage.getItem("pwa-install-dismissed") === "true";
+
+      if (
+        !mobileCheck || // don't block native banner on desktop
+        hasDismissed || // user previously dismissed
+        isStandalone || // already installed
+        isInstalled || // flagged as installed
+        dismissedCount >= 3 // throttled
+      ) {
+        // Let the browser show its default banner.
+        return;
+      }
+
+      // We will show our own UI, so block the default mini-infobar.
       e.preventDefault();
       setDeferredPrompt(e);
 
@@ -70,11 +86,21 @@ export const InstallPrompt = () => {
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
+    // Mark as installed and clean up state when the app gets installed
+    const handleAppInstalled = () => {
+      localStorage.setItem("pwa-installed", "true");
+      setDeferredPrompt(null);
+      setShowPrompt(false);
+    };
+
+    window.addEventListener("appinstalled", handleAppInstalled);
+
     return () => {
       window.removeEventListener(
         "beforeinstallprompt",
         handleBeforeInstallPrompt,
       );
+      window.removeEventListener("appinstalled", handleAppInstalled);
       document.removeEventListener("click", handleUserInteraction);
       document.removeEventListener("touchstart", handleUserInteraction);
     };

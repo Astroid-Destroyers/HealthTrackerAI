@@ -16,9 +16,14 @@ export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
     // Service worker registration temporarily disabled to fix HMR issues
     // TODO: Re-enable for production
-    // if (process.env.NODE_ENV === "production") {
-    //   registerServiceWorker();
-    // }
+    if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
+      // Reuse existing service worker to satisfy PWA criteria (install prompt, etc.)
+      navigator.serviceWorker
+        .register("/firebase-messaging-sw.js")
+        .catch(() => {
+          // Ignore registration errors; PWA install prompt will just fall back to native behavior
+        });
+    }
   }, []);
 
   return (
