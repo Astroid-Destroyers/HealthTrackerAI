@@ -8,6 +8,7 @@ import {
   CardHeader,
   Button,
   Input,
+  Progress,
 } from "@heroui/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { doc, updateDoc } from "firebase/firestore";
@@ -38,9 +39,36 @@ interface HealthProfileSetupProps {
 }
 
 const steps = [
-  { title: "Basic Info", subtitle: "Tell us about yourself" },
-  { title: "Physical Stats", subtitle: "Height & weight details" },
-  { title: "Fitness Goals", subtitle: "What's your target?" },
+  {
+    title: "What's your name?",
+    subtitle: "Let's personalize your health journey",
+    description: "🌟 Your AI health companion needs to know what to call you!",
+    benefit: "Get personalized recommendations",
+  },
+  {
+    title: "Gender",
+    subtitle: "Help us personalize your experience", 
+    description: "👤 This helps us create better health insights for you",
+    benefit: "More accurate health metrics",
+  },
+  {
+    title: "Height",
+    subtitle: "We'll use this for accurate calculations",
+    description: "📏 Essential for calculating your BMI and calorie needs",
+    benefit: "Precise health calculations",
+  },
+  {
+    title: "Weight", 
+    subtitle: "Current weight for your health profile",
+    description: "⚖️ We'll track your progress from this starting point",
+    benefit: "Personalized weight tracking",
+  },
+  {
+    title: "What's your goal?",
+    subtitle: "What do you want to achieve?",
+    description: "🎯 Choose your health mission - we'll guide you there!",
+    benefit: "Tailored workout & meal plans",
+  },
 ];
 
 const goals = [
@@ -49,28 +77,28 @@ const goals = [
     label: "Lose Weight",
     emoji: "🏃‍♀️",
     description: "Shed pounds and feel great",
-    bgColor: "bg-red-500/20",
+    color: "from-red-500 to-pink-600",
   },
   {
     value: "muscle_gain",
-    label: "Build Muscle",
+    label: "Build Muscle", 
     emoji: "💪",
     description: "Gain strength and mass",
-    bgColor: "bg-blue-500/20",
+    color: "from-blue-500 to-indigo-600",
   },
   {
     value: "maintenance",
     label: "Stay Healthy",
-    emoji: "⚖️",
+    emoji: "⚖️", 
     description: "Maintain current fitness",
-    bgColor: "bg-green-500/20",
+    color: "from-green-500 to-emerald-600",
   },
   {
     value: "endurance",
     label: "Improve Endurance",
     emoji: "🏃‍♂️",
     description: "Build cardiovascular fitness",
-    bgColor: "bg-orange-500/20",
+    color: "from-orange-500 to-yellow-600",
   },
 ];
 
@@ -99,9 +127,11 @@ export default function HealthProfileSetup({
 
   const validateStep = (step: number): boolean => {
     switch (step) {
-      case 0:
-        return formData.name.trim().length >= 2 && formData.gender !== "";
-      case 1:
+      case 0: // Name
+        return formData.name.trim().length >= 2;
+      case 1: // Gender
+        return formData.gender !== "";
+      case 2: // Height
         if (formData.height.unit === "imperial") {
           return (
             formData.height.feet !== "" &&
@@ -116,7 +146,21 @@ export default function HealthProfileSetup({
             parseInt(formData.height.cm) <= 220
           );
         }
-      case 2:
+      case 3: // Weight
+        if (formData.weight.unit === "imperial") {
+          return (
+            formData.weight.pounds !== "" &&
+            parseInt(formData.weight.pounds) >= 80 &&
+            parseInt(formData.weight.pounds) <= 500
+          );
+        } else {
+          return (
+            formData.weight.kg !== "" &&
+            parseInt(formData.weight.kg) >= 35 &&
+            parseInt(formData.weight.kg) <= 250
+          );
+        }
+      case 4: // Goal
         return formData.goal !== "";
       default:
         return false;
@@ -144,15 +188,19 @@ export default function HealthProfileSetup({
 
   const getValidationError = (step: number): string => {
     switch (step) {
-      case 0:
-        if (formData.name.trim().length < 2) return "Please enter your name (at least 2 characters)";
-        if (!formData.gender) return "Please select your gender";
-        return "";
-      case 1:
+      case 0: // Name
+        return "Please enter your name (at least 2 characters)";
+      case 1: // Gender
+        return "Please select your gender";
+      case 2: // Height
         return formData.height.unit === "imperial"
           ? "Please enter your height in feet and inches"
           : "Please enter your height in centimeters";
-      case 2:
+      case 3: // Weight
+        return formData.weight.unit === "imperial"
+          ? "Please enter your weight in pounds"
+          : "Please enter your weight in kilograms";
+      case 4: // Goal
         return "Please select your fitness goal";
       default:
         return "";
@@ -206,9 +254,9 @@ export default function HealthProfileSetup({
 
   const renderStep = () => {
     switch (currentStep) {
-      case 0:
+      case 0: // Name
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="relative">
               <Input
                 classNames={{
@@ -224,52 +272,90 @@ export default function HealthProfileSetup({
                 variant="bordered"
                 onChange={(e) => updateFormData("name", e.target.value)}
               />
+              {formData.name.length >= 2 && (
+                <motion.div
+                  animate={{ scale: 1 }}
+                  className="absolute -right-2 -top-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm"
+                  initial={{ scale: 0 }}
+                >
+                  ✓
+                </motion.div>
+              )}
             </div>
+            {formData.name.length > 0 && (
+              <motion.div
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center p-3 rounded-lg bg-indigo-500/20 border border-indigo-400/30"
+                initial={{ opacity: 0, y: 10 }}
+              >
+                <span className="text-indigo-300">
+                  Hey {formData.name.split(" ")[0]}! 👋 Ready to start your
+                  health journey?
+                </span>
+              </motion.div>
+            )}
+          </div>
+        );
 
-            <div className="space-y-3">
-              <h4 className="text-white font-semibold text-lg">Gender</h4>
-              <div className="grid gap-3">
-                {[
-                  { value: "male", label: "Male", icon: "👨" },
-                  { value: "female", label: "Female", icon: "👩" },
-                  { value: "other", label: "Other", icon: "🏳️‍⚧️" },
-                ].map((option) => (
-                  <motion.div
-                    key={option.value}
-                    className={`cursor-pointer rounded-xl p-1 border-2 transition-all duration-300 ${
-                      formData.gender === option.value
-                        ? "border-indigo-400 bg-indigo-500/20"
-                        : "border-white/20 bg-white/5 hover:border-white/40 hover:bg-white/10"
-                    }`}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => updateFormData("gender", option.value)}
-                  >
-                    <div className="flex items-center gap-4 p-4">
-                      <div className="text-2xl">{option.icon}</div>
-                      <div className="flex-1">
-                        <div className="text-white font-semibold text-lg">
-                          {option.label}
-                        </div>
+      case 1: // Gender
+        return (
+          <div className="space-y-4">
+            <div className="grid gap-3">
+              {[
+                {
+                  value: "male",
+                  label: "Male",
+                  icon: "👨",
+                  color: "from-blue-500 to-indigo-600",
+                },
+                {
+                  value: "female",
+                  label: "Female",
+                  icon: "👩",
+                  color: "from-pink-500 to-purple-600",
+                },
+                {
+                  value: "other",
+                  label: "Other",
+                  icon: "🏳️‍⚧️",
+                  color: "from-emerald-500 to-teal-600",
+                },
+              ].map((option) => (
+                <motion.div
+                  key={option.value}
+                  className={`cursor-pointer rounded-xl p-1 border-2 transition-all duration-300 ${
+                    formData.gender === option.value
+                      ? "border-indigo-400 bg-indigo-500/20"
+                      : "border-white/20 bg-white/5 hover:border-white/40 hover:bg-white/10"
+                  }`}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => updateFormData("gender", option.value)}
+                >
+                  <div className="flex items-center gap-4 p-4">
+                    <div className="text-2xl">{option.icon}</div>
+                    <div className="flex-1">
+                      <div className="text-white font-semibold text-lg">
+                        {option.label}
                       </div>
-                      {formData.gender === option.value && (
-                        <motion.div
-                          animate={{ scale: 1 }}
-                          className="w-6 h-6 bg-white rounded-full flex items-center justify-center"
-                          initial={{ scale: 0 }}
-                        >
-                          <div className="w-3 h-3 bg-indigo-600 rounded-full" />
-                        </motion.div>
-                      )}
                     </div>
-                  </motion.div>
-                ))}
-              </div>
+                    {formData.gender === option.value && (
+                      <motion.div
+                        animate={{ scale: 1 }}
+                        className="w-6 h-6 bg-white rounded-full flex items-center justify-center"
+                        initial={{ scale: 0 }}
+                      >
+                        <div className="w-3 h-3 bg-indigo-600 rounded-full" />
+                      </motion.div>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
         );
 
-      case 1:
+      case 2: // Height
         return (
           <div className="space-y-6">
             {/* Unit Switcher for Height */}
@@ -516,7 +602,10 @@ export default function HealthProfileSetup({
       }}
       isOpen={isOpen}
       placement="center"
-      onOpenChange={onClose}
+      onOpenChange={(open) => {
+        console.log("HealthProfileSetup modal open change:", open);
+        if (!open) onClose();
+      }}
     >
       <ModalContent className="bg-transparent shadow-none border-0 max-w-lg w-full">
         <ModalBody className="p-0">

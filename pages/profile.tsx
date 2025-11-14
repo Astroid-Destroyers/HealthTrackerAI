@@ -71,6 +71,10 @@ export default function ProfilePage() {
   const [isHealthProfileModalOpen, setIsHealthProfileModalOpen] = useState(false);
 
   useEffect(() => {
+    console.log("Health profile modal state changed:", isHealthProfileModalOpen);
+  }, [isHealthProfileModalOpen]);
+
+  useEffect(() => {
     // Detect mobile devices and Chrome
     const mobileCheck =
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -505,6 +509,7 @@ export default function ProfilePage() {
 
   // Health profile setup modal handlers
   const handleHealthProfileSuccess = () => {
+    console.log("Health profile setup completed successfully!");
     setIsHealthProfileModalOpen(false);
     // Reload profile data by triggering useEffect
     setProfileLoading(true);
@@ -512,6 +517,7 @@ export default function ProfilePage() {
   };
 
   const handleCloseHealthProfileModal = () => {
+    console.log("Health profile setup modal closed");
     setIsHealthProfileModalOpen(false);
   };
 
@@ -673,6 +679,7 @@ export default function ProfilePage() {
                           </svg>
                         }
                         onClick={() => {
+                          console.log("Health Profile Setup button clicked!");
                           setIsHealthProfileModalOpen(true);
                         }}
                       >
