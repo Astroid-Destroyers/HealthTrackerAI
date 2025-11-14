@@ -200,8 +200,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
         "backdrop-blur-xl bg-white/5 border-b border-white/10 transition-all duration-300 z-50 fixed top-0 left-0 right-0",
       )}
       classNames={{
-        base: ["navbar-fixed-height"],
-        wrapper: ["max-w-full", "px-0", "h-16"],
+        base: ["navbar-fixed-height", "w-full"],
+        wrapper: ["w-full", "px-4", "h-16"],
         item: [
           "flex",
           "relative",
@@ -233,7 +233,10 @@ export const Navbar: React.FC<NavbarProps> = () => {
       position="sticky"
       onMenuOpenChange={setIsMenuOpen}
     >
-      <NavbarContent className="basis-1/3 md:basis-1/2" justify="start">
+      <NavbarContent
+        className="basis-2/3 md:basis-3/4 min-w-0"
+        justify="start"
+      >
         <NavbarBrand className="gap-2 sm:gap-3 max-w-fit">
           <NextLink
             className="flex justify-start items-center gap-2 group"
@@ -252,10 +255,10 @@ export const Navbar: React.FC<NavbarProps> = () => {
               </p>
             </div>
           </NextLink>
-        </NavbarBrand>
+    </NavbarBrand>
 
-        {/* Desktop Navigation - Fixed responsive breakpoint */}
-        <div className="hidden md:flex gap-6 justify-start ml-8">
+    {/* Desktop Navigation - Fixed responsive breakpoint */}
+    <div className="hidden md:flex flex-1 items-center justify-start ml-8 gap-4 whitespace-nowrap">
           {siteConfig.navItems
             .filter((item) => {
               // Hide "Ad Tests" for non-admin users
@@ -265,11 +268,12 @@ export const Navbar: React.FC<NavbarProps> = () => {
               return true;
             })
             .map((item) => (
-              <NavbarItem key={item.href}>
+              <NavbarItem key={item.href} className="shrink-0">
                 <NextLink
                   className={clsx(
                     "text-gray-300 hover:text-white transition-all duration-300 font-medium relative group",
                     "hover:scale-105 px-2 py-1 rounded-lg hover:bg-white/10",
+                    "whitespace-nowrap",
                   )}
                   href={item.href}
                 >
@@ -280,12 +284,13 @@ export const Navbar: React.FC<NavbarProps> = () => {
             ))}
 
           {/* Direct Dashboard Link */}
-          <NavbarItem>
+          <NavbarItem className="shrink-0">
             <NextLink
               href="/dashboard"
               className={clsx(
                 "text-gray-300 hover:text-white transition-all duration-300 font-medium relative group",
                 "hover:scale-105 px-2 py-1 rounded-lg hover:bg-white/10",
+                "whitespace-nowrap",
               )}
             >
               Dashboard
@@ -294,11 +299,12 @@ export const Navbar: React.FC<NavbarProps> = () => {
           </NavbarItem>
           {/* Admin link - only visible to admin user */}
           {user && user.email === "new.roeepalmon@gmail.com" && (
-            <NavbarItem>
+            <NavbarItem className="shrink-0">
               <NextLink
                 className={clsx(
                   "text-gray-300 hover:text-white transition-all duration-300 font-medium relative group",
                   "hover:scale-105 px-2 py-1 rounded-lg hover:bg-white/10",
+                  "whitespace-nowrap",
                 )}
                 href="/admin"
               >
@@ -311,7 +317,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
       </NavbarContent>
 
       <NavbarContent
-        className="hidden sm:flex basis-2/3 md:basis-1/2"
+        className="hidden sm:flex basis-1/3 md:basis-1/4"
         justify="end"
       >
         <NavbarItem className="hidden md:flex gap-3">
