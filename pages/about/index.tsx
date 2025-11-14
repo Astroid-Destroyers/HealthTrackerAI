@@ -3,7 +3,7 @@ import { title } from "../../components/primitives";
 import DefaultLayout from "../../layouts/default";
 import Link from "next/link";
 import Image from "next/image";
-import bannerImage from "../heathtracker banner.png";
+import bannerImage from "@/public/images/healthtracker-banner.png";
 
 export default function AboutPage() {
   return (
