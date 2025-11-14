@@ -37,6 +37,9 @@ export default function Dashboard() {
     const [workoutActive, setWorkoutActive] = useState(false);
     const [saving, setSaving] = useState(false);
 
+    // Mobile sidebar menu visibility
+    const [showMobileNav, setShowMobileNav] = useState<boolean>(false);
+
     const db = useMemo(() => getFirestore(app), []);
 
     // YYYY-MM-DD for today's Firestore doc
@@ -289,23 +292,35 @@ export default function Dashboard() {
                 <title>Dashboard</title>
             </Head>
 
-            <div className="min-h-screen flex bg-[#050814] text-white">
-                {/* LEFT SIDEBAR */}
-                <aside className="w-64 bg-[#050814] border-r border-white/10 flex flex-col justify-between py-6 px-5">
-                    <div>
-                        {/* Hello [Name]! */}
-                        <div className="flex items-center gap-2 mb-10">
-                            {/* Tiny logo box placeholder */}
-                            <div className="h-8 w-8 rounded-lg bg-[#C5FF2F] flex items-center justify-center text-xs font-extrabold text-black">
-                                HT
+            <div className="min-h-screen bg-[#050814] text-white flex flex-col md:flex-row">
+                {/* LEFT SIDEBAR (desktop) / TOP BAR (mobile) */}
+                <aside className="w-full md:w-64 bg-[#050814] border-b md:border-b-0 md:border-r border-white/10 flex md:flex-col justify-between py-4 md:py-6 px-4 md:px-5">
+                    <div className="flex flex-col md:flex-1">
+                        {/* Hello [Name]! + mobile nav toggle */}
+                        <div className="flex items-center justify-between md:justify-start gap-3 mb-4 md:mb-10">
+                            <div className="flex items-center gap-2">
+                                <div className="h-8 w-8 rounded-lg bg-[#C5FF2F] flex items-center justify-center text-xs font-extrabold text-black">
+                                    HT
+                                </div>
+                                <p className="text-base sm:text-lg font-semibold">
+                                    Hello {user.displayName ?? "there"}!
+                                </p>
                             </div>
-                            <p className="text-lg font-semibold">
-                                Hello {user.displayName ?? "there"}!
-                            </p>
+
+                            {/* Mobile hamburger button */}
+                            <button
+                                aria-label="Toggle dashboard menu"
+                                className="md:hidden h-9 w-9 flex items-center justify-center rounded-full border border-white/15 bg-white/5 hover:bg-white/10 text-white"
+                                onClick={() => setShowMobileNav((prev) => !prev)}
+                            >
+                                <span className="text-xl font-semibold">☰</span>
+                            </button>
                         </div>
 
                         {/* Nav buttons */}
-                        <nav className="flex flex-col gap-3">
+                        <nav
+                            className={`${showMobileNav ? "flex" : "hidden"} md:flex flex-col gap-3 mt-2 md:mt-0`}
+                        >
                             <button className="w-full rounded-full bg-[#46C5FF] text-black font-semibold py-2.5 px-6 text-left">
                                 Dashboard
                             </button>
@@ -324,33 +339,41 @@ export default function Dashboard() {
                         </nav>
                     </div>
 
-                    {/* Settings at the bottom */}
-                    <button className="text-sm text-gray-300 text-left mt-10">
+                    {/* Settings at the bottom (desktop) */}
+                    <button className="hidden md:block text-sm text-gray-300 text-left mt-10">
                         Settings
                     </button>
                 </aside>
 
                 {/* MAIN CONTENT */}
-                <main className="flex-1 bg-[#0B1526] px-10 py-6">
-                    {/* Top bar: Current day + Logout */}
-                    <div className="flex items-start justify-between mb-8">
-                        <div>
-                            <h1 className="text-3xl font-bold">
-                                Current Day: {todayInfo.dayName}
-                            </h1>
-                            <p className="text-gray-200 mt-1">
-                                {todayInfo.fullDate}
-                            </p>
-                            {/* Small text showing the Firestore key if you want it for debugging */}
-                            <p className="text-xs text-gray-500 mt-1">
-                                (Doc key: {todayKey})
-                            </p>
+                <main className="flex-1 bg-[#0B1526] px-4 sm:px-6 lg:px-10 py-4 sm:py-6">
+                    {/* Top bar: Back button + Current day + Logout */}
+                    <div className="flex items-center justify-between mb-6 sm:mb-8 gap-3">
+                        <div className="flex items-start gap-3">
+                            <button
+                                aria-label="Go back"
+                                className="flex items-center justify-center h-9 w-9 rounded-full border border-white/15 bg-white/5 hover:bg-white/10 text-white shadow-sm sm:h-10 sm:w-10"
+                                onClick={() => router.back()}
+                            >
+                                <span className="text-lg sm:text-xl">&lt;</span>
+                            </button>
+
+                            <div>
+                                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">
+                                    Current Day: {todayInfo.dayName}
+                                </h1>
+                                <p className="text-gray-200 mt-1 text-sm sm:text-base">
+                                    {todayInfo.fullDate}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    (Doc key: {todayKey})
+                                </p>
+                            </div>
                         </div>
 
                         <button
-                            className="px-6 py-2 rounded-full bg-[#C5FF2F] text-black font-semibold shadow-md hover:brightness-95"
+                            className="px-4 sm:px-6 py-2 rounded-full bg-[#C5FF2F] text-black text-sm sm:text-base font-semibold shadow-md hover:brightness-95"
                             onClick={() => {
-                                // optional: add real logout later
                                 router.push("/login");
                             }}
                         >
@@ -359,7 +382,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* GRID OF CARDS */}
-                    <div className="grid grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                         {/* Today’s Summary */}
                         <section className="bg-[#1A5DA8] rounded-xl p-5 shadow-md col-span-1">
                             <h2 className="text-lg font-semibold mb-4">
@@ -419,7 +442,7 @@ export default function Dashboard() {
                         </section>
 
                         {/* Workout Progress */}
-                        <section className="bg-[#1A5DA8] rounded-xl p-5 shadow-md">
+                        <section className="bg-[#1A5DA8] rounded-xl p-4 sm:p-5 shadow-md">
                             <h2 className="text-lg font-semibold mb-3">
                                 Workout Progress
                             </h2>
@@ -441,7 +464,7 @@ export default function Dashboard() {
                         </section>
 
                         {/* Ask AI about your plan */}
-                        <section className="bg-[#1A5DA8] rounded-xl p-5 shadow-md">
+                        <section className="bg-[#1A5DA8] rounded-xl p-4 sm:p-5 shadow-md">
                             <h2 className="text-lg font-semibold mb-3">
                                 Ask AI about your plan
                             </h2>
@@ -459,8 +482,8 @@ export default function Dashboard() {
                     </div>
 
                     {/* Bottom row: Nutrition card */}
-                    <div className="grid grid-cols-3 gap-6 mt-6">
-                        <section className="bg-[#1A5DA8] rounded-xl p-5 shadow-md col-span-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6">
+                        <section className="bg-[#1A5DA8] rounded-xl p-4 sm:p-5 shadow-md md:col-span-1">
                             <h2 className="text-lg font-semibold mb-4">
                                 Nutrition
                             </h2>
