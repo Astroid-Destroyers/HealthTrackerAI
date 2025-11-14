@@ -253,7 +253,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
             </div>
           </NextLink>
         </NavbarBrand>
-        
+
         {/* Desktop Navigation - Fixed responsive breakpoint */}
         <div className="hidden md:flex gap-6 justify-start ml-8">
           {siteConfig.navItems
@@ -265,19 +265,33 @@ export const Navbar: React.FC<NavbarProps> = () => {
               return true;
             })
             .map((item) => (
-            <NavbarItem key={item.href}>
-              <NextLink
-                className={clsx(
-                  "text-gray-300 hover:text-white transition-all duration-300 font-medium relative group",
-                  "hover:scale-105 px-2 py-1 rounded-lg hover:bg-white/10",
-                )}
-                href={item.href}
-              >
-                {item.label}
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-ai-gradient transition-all duration-300 group-hover:w-full" />
-              </NextLink>
-            </NavbarItem>
-          ))}
+              <NavbarItem key={item.href}>
+                <NextLink
+                  className={clsx(
+                    "text-gray-300 hover:text-white transition-all duration-300 font-medium relative group",
+                    "hover:scale-105 px-2 py-1 rounded-lg hover:bg-white/10",
+                  )}
+                  href={item.href}
+                >
+                  {item.label}
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-ai-gradient transition-all duration-300 group-hover:w-full" />
+                </NextLink>
+              </NavbarItem>
+            ))}
+
+          {/* Direct Dashboard Link */}
+          <NavbarItem>
+            <NextLink
+              href="/dashboard"
+              className={clsx(
+                "text-gray-300 hover:text-white transition-all duration-300 font-medium relative group",
+                "hover:scale-105 px-2 py-1 rounded-lg hover:bg-white/10",
+              )}
+            >
+              Dashboard
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-ai-gradient transition-all duration-300 group-hover:w-full" />
+            </NextLink>
+          </NavbarItem>
           {/* Admin link - only visible to admin user */}
           {user && user.email === "new.roeepalmon@gmail.com" && (
             <NavbarItem>
@@ -471,15 +485,15 @@ export const Navbar: React.FC<NavbarProps> = () => {
               return true;
             })
             .map((item, index) => (
-            <NavbarMenuItem key={`${item}-${index}`}>
-              <NextLink
-                className="text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-300 text-base font-medium py-3 px-4 rounded-xl w-full block"
-                href={item.href}
-              >
-                {item.label}
-              </NextLink>
-            </NavbarMenuItem>
-          ))}
+              <NavbarMenuItem key={`${item}-${index}`}>
+                <NextLink
+                  className="text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-300 text-base font-medium py-3 px-4 rounded-xl w-full block"
+                  href={item.href}
+                >
+                  {item.label}
+                </NextLink>
+              </NavbarMenuItem>
+            ))}
           {/* Admin link - only visible to admin user in mobile menu */}
           {user && user.email === "new.roeepalmon@gmail.com" && (
             <NavbarMenuItem>

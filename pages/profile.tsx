@@ -4,11 +4,11 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { motion } from "framer-motion";
 // Firebase imports for profile updates
 import { updateProfile } from "firebase/auth";
-import { 
-  RecaptchaVerifier, 
-  signInWithPhoneNumber, 
-  PhoneAuthProvider, 
-  linkWithCredential 
+import {
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  PhoneAuthProvider,
+  linkWithCredential
 } from "firebase/auth";
 import { Button } from "@heroui/button";
 import { Card, CardHeader, CardBody } from "@heroui/card";
@@ -179,7 +179,7 @@ export default function ProfilePage() {
           const profileData = userDoc.data() as UserProfile;
           console.log('Profile data loaded:', profileData); // Debug log
           setUserProfile(profileData);
-          
+
           // Initialize phone number field if user has one
           if (profileData.phoneNumber) {
             setPhoneNumber(profileData.phoneNumber);
@@ -420,18 +420,18 @@ export default function ProfilePage() {
 
     try {
       setPhoneLoading(true);
-      
+
       // Initialize reCAPTCHA
       const appVerifier = initializeRecaptcha();
-      
+
       if (!appVerifier) {
         alert('Failed to initialize reCAPTCHA. Please refresh and try again.');
         return;
       }
-      
+
       // Format phone number (add +1 if not present for US numbers)
-      const formattedPhone = phoneNumber.startsWith('+') 
-        ? phoneNumber 
+      const formattedPhone = phoneNumber.startsWith('+')
+        ? phoneNumber
         : `+1${phoneNumber.replace(/\D/g, '')}`;
 
       console.log('Attempting to send SMS to:', formattedPhone);
@@ -442,7 +442,7 @@ export default function ProfilePage() {
       alert('Verification code sent to your phone!');
     } catch (error: any) {
       console.error('Error sending verification code:', error);
-      
+
       // Provide more specific error messages
       if (error.code === 'auth/invalid-app-credential') {
         alert('Phone authentication is not properly configured in Firebase Console. Please enable Phone Authentication and try again.');
@@ -464,11 +464,11 @@ export default function ProfilePage() {
     try {
       setIsVerifying(true);
       const credential = PhoneAuthProvider.credential(confirmationResult.verificationId, verificationCode);
-      
+
       if (user) {
         // Link the phone credential to existing user
         await linkWithCredential(user, credential);
-        
+
         // Update user profile in Firestore
         const userDocRef = doc(db, "users", user.uid);
         await updateDoc(userDocRef, {
@@ -551,7 +551,7 @@ export default function ProfilePage() {
                   Complete your profile to get started
                 </p>
               </div>
-              
+
               {/* Phone Verification Card */}
               <Card className="backdrop-blur-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300">
                 <CardHeader className="pb-4">
@@ -570,7 +570,7 @@ export default function ProfilePage() {
                         Phone Number
                       </span>
                     </div>
-                    
+
                     <div className="pl-4 space-y-3">
                       <Input
                         className="max-w-xs"
@@ -587,7 +587,7 @@ export default function ProfilePage() {
                           setPhoneNumber(formatted);
                         }}
                       />
-                      
+
                       {!codeSent ? (
                         <Button
                           className="bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold"
@@ -637,7 +637,7 @@ export default function ProfilePage() {
                           </div>
                         </div>
                       )}
-                      
+
                       {/* reCAPTCHA container */}
                       <div id="recaptcha-container" />
                     </div>
@@ -889,7 +889,7 @@ export default function ProfilePage() {
                           {userProfile.email}
                         </p>
                       </div>
-                      
+
                       {/* Phone Number Section */}
                       <div className="group">
                         <div className="flex items-center gap-2 mb-2">
@@ -907,7 +907,7 @@ export default function ProfilePage() {
                             </Chip>
                           )}
                         </div>
-                        
+
                         {/* Always show phone input for now - for debugging */}
                         <div className="pl-4 space-y-3">
                           <Input
@@ -925,7 +925,7 @@ export default function ProfilePage() {
                               setPhoneNumber(formatted);
                             }}
                           />
-                          
+
                           {!codeSent ? (
                             <Button
                               className="bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold"
@@ -973,7 +973,7 @@ export default function ProfilePage() {
                               </Button>
                             </div>
                           )}
-                          
+
                           {/* reCAPTCHA container */}
                           <div id="recaptcha-container" />
                         </div>
@@ -1074,12 +1074,12 @@ export default function ProfilePage() {
                         <p className="text-sm font-medium text-white pl-4">
                           {userProfile.createdAt
                             ? new Date(
-                                userProfile.createdAt.seconds * 1000,
-                              ).toLocaleDateString("en-US", {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              })
+                              userProfile.createdAt.seconds * 1000,
+                            ).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })
                             : "Unknown"}
                         </p>
                       </div>
@@ -1163,9 +1163,8 @@ export default function ProfilePage() {
                                 }
                               />
                               <div
-                                className={`w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-purple-300/20 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-indigo-600 ${
-                                  notificationLoading ? "opacity-50 cursor-not-allowed" : ""
-                                }`}
+                                className={`w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-purple-300/20 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-indigo-600 ${notificationLoading ? "opacity-50 cursor-not-allowed" : ""
+                                  }`}
                               />
                             </label>
                             {notificationLoading && (
