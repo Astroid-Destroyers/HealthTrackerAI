@@ -1,7 +1,7 @@
 // Dashboard page
 import Head from "next/head";
 import { useEffect, useMemo, useState } from "react";
-import { getAuth, onAuthStateChanged, User } from "firebase/auth";
+import { getAuth, onAuthStateChanged, signOut, User } from "firebase/auth";
 import { useRouter } from "next/router";
 import {
     getFirestore,
@@ -34,11 +34,7 @@ export default function Dashboard() {
     });
 
     // Controls UI button states for logging workouts or saving data
-    const [workoutActive, setWorkoutActive] = useState(false);
     const [saving, setSaving] = useState(false);
-
-    // Mobile sidebar menu visibility
-    const [showMobileNav, setShowMobileNav] = useState<boolean>(false);
 
     const db = useMemo(() => getFirestore(app), []);
 
@@ -89,7 +85,11 @@ export default function Dashboard() {
                         updatedAt: serverTimestamp(),
                     });
                     // Initialize local state with defaults
-                    setStats({ calories: 0, burnedCalories: 0, workoutLogged: false });
+                    setStats({
+                        calories: 0,
+                        burnedCalories: 0,
+                        workoutLogged: false,
+                    });
                 } else {
                     const data = snap.data() as DayStats; // If document exists, load its data into local state
                     setStats({
@@ -107,7 +107,7 @@ export default function Dashboard() {
         return () => unsub();
     }, [db, router, todayKey]);
 
-    //This builds a reference to user's id and we only create this if a user is logged in
+    // This builds a reference to user's id and we only create this if a user is logged in
     const todayDocRef = useMemo(
         () => (user ? doc(db, "users", user.uid, "daily", todayKey) : null),
         [db, user, todayKey]
@@ -116,7 +116,7 @@ export default function Dashboard() {
     // Goal
     const [goal, setGoal] = useState<number>(1800);
 
-    //Goal progress
+    // Goal progress
     const goalProgress = useMemo(() => {
         const g = Number(goal) || 0;
         if (g <= 0) return 0;
@@ -124,7 +124,7 @@ export default function Dashboard() {
         return Math.min(100, Math.max(0, pct));
     }, [goal, stats.calories]);
 
-    //Net calories
+    // Net calories
     const netCalories = useMemo(
         () => (stats.calories ?? 0) - (stats.burnedCalories ?? 0),
         [stats.calories, stats.burnedCalories]
@@ -279,8 +279,23 @@ export default function Dashboard() {
         }
     };
 
+    // Logout handler
+    const handleLogout = async () => {
+        const auth = getAuth();
+        await signOut(auth);
+        router.replace("/login");
+    };
+
+    // Derived labels for header & workout
+    const currentDayLabel = todayInfo.dayName;
+    const todayString = todayInfo.fullDate;
+    const docKey = todayKey;
+    const workoutLabel = stats.workoutLogged
+        ? "Workout logged ✅"
+        : "Upper Body (not logged yet)";
+
     // If we are still loading user data, show a simple loading message
-    if (loading) return <p className="p-6">Loading…</p>;
+    if (loading) return <p className="p-6 text-white">Loading…</p>;
 
     // If there is no user, we already redirected to /login, so render nothing
     if (!user) return null;
@@ -289,230 +304,220 @@ export default function Dashboard() {
     return (
         <>
             <Head>
-                <title>Dashboard</title>
+                <title>Dashboard | HealthTrackerAI</title>
             </Head>
 
-            <div className="min-h-screen bg-[#050814] text-white flex flex-col md:flex-row">
-                {/* LEFT SIDEBAR (desktop) / TOP BAR (mobile) */}
-                <aside className="w-full md:w-64 bg-[#050814] border-b md:border-b-0 md:border-r border-white/10 flex md:flex-col justify-between py-4 md:py-6 px-4 md:px-5">
-                    <div className="flex flex-col md:flex-1">
-                        {/* Hello [Name]! + mobile nav toggle */}
-                        <div className="flex items-center justify-between md:justify-start gap-3 mb-4 md:mb-10">
-                            <div className="flex items-center gap-2">
-                                <div className="h-8 w-8 rounded-lg bg-[#C5FF2F] flex items-center justify-center text-xs font-extrabold text-black">
-                                    HT
-                                </div>
-                                <p className="text-base sm:text-lg font-semibold">
-                                    Hello {user.displayName ?? "there"}!
-                                </p>
+            <div className="min-h-screen bg-gradient-to-br from-[#0f1c2f] via-[#1c2950] to-[#301f4a] text-gray-100">
+                <div className="flex min-h-screen">
+                    {/* ========== SIDEBAR ========== */}
+                    <aside className="w-64 bg-[#141c2c]/95 border-r border-white/5 flex flex-col">
+                        {/* Profile / greeting */}
+                        <div className="px-6 pt-6 pb-4 flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-lime-400 text-[#141c2c] font-bold flex items-center justify-center">
+                                {user?.displayName?.[0] ?? "E"}
                             </div>
-
-                            {/* Mobile hamburger button */}
-                            <button
-                                aria-label="Toggle dashboard menu"
-                                className="md:hidden h-9 w-9 flex items-center justify-center rounded-full border border-white/15 bg-white/5 hover:bg-white/10 text-white"
-                                onClick={() => setShowMobileNav((prev) => !prev)}
-                            >
-                                <span className="text-xl font-semibold">☰</span>
-                            </button>
+                            <div className="flex flex-col">
+                                <span className="text-xs uppercase tracking-wide text-gray-400">
+                                    Hello
+                                </span>
+                                <span className="font-semibold">
+                                    {user?.displayName ?? "Emilia Mahmoodi!"}
+                                </span>
+                            </div>
                         </div>
 
-                        {/* Nav buttons */}
-                        <nav
-                            className={`${showMobileNav ? "flex" : "hidden"} md:flex flex-col gap-3 mt-2 md:mt-0`}
-                        >
-                            <button className="w-full rounded-full bg-[#46C5FF] text-black font-semibold py-2.5 px-6 text-left">
+                        {/* Nav items */}
+                        <nav className="mt-2 flex-1 px-3 space-y-1 text-sm">
+                            <button className="w-full text-left px-3 py-2 rounded-lg bg-white/10 text-white font-medium">
                                 Dashboard
                             </button>
-                            <button className="w-full rounded-full bg-transparent hover:bg-white/5 py-2.5 px-6 text-left text-sm text-gray-200">
+                            <button className="w-full text-left px-3 py-2 rounded-lg text-gray-300 hover:bg-white/5">
                                 Workouts
                             </button>
-                            <button className="w-full rounded-full bg-transparent hover:bg-white/5 py-2.5 px-6 text-left text-sm text-gray-200">
+                            <button className="w-full text-left px-3 py-2 rounded-lg text-gray-300 hover:bg-white/5">
                                 Nutrition
                             </button>
-                            <button className="w-full rounded-full bg-transparent hover:bg-white/5 py-2.5 px-6 text-left text-sm text-gray-200">
+                            <button className="w-full text-left px-3 py-2 rounded-lg text-gray-300 hover:bg-white/5">
                                 Goals
                             </button>
-                            <button className="w-full rounded-full bg-transparent hover:bg-white/5 py-2.5 px-6 text-left text-sm text-gray-200">
+                            <button className="w-full text-left px-3 py-2 rounded-lg text-gray-300 hover:bg-white/5">
                                 Profile
                             </button>
                         </nav>
-                    </div>
 
-                    {/* Settings at the bottom (desktop) */}
-                    <button className="hidden md:block text-sm text-gray-300 text-left mt-10">
-                        Settings
-                    </button>
-                </aside>
-
-                {/* MAIN CONTENT */}
-                <main className="flex-1 bg-[#0B1526] px-4 sm:px-6 lg:px-10 py-4 sm:py-6">
-                    {/* Top bar: Back button + Current day + Logout */}
-                    <div className="flex items-center justify-between mb-6 sm:mb-8 gap-3">
-                        <div className="flex items-start gap-3">
-                            <button
-                                aria-label="Go back"
-                                className="flex items-center justify-center h-9 w-9 rounded-full border border-white/15 bg-white/5 hover:bg-white/10 text-white shadow-sm sm:h-10 sm:w-10"
-                                onClick={() => router.back()}
-                            >
-                                <span className="text-lg sm:text-xl">&lt;</span>
-                            </button>
-
-                            <div>
-                                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">
-                                    Current Day: {todayInfo.dayName}
-                                </h1>
-                                <p className="text-gray-200 mt-1 text-sm sm:text-base">
-                                    {todayInfo.fullDate}
-                                </p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    (Doc key: {todayKey})
-                                </p>
-                            </div>
+                        {/* Settings / bottom */}
+                        <div className="px-4 py-4 border-t border-white/5 text-xs text-gray-400">
+                            Settings
                         </div>
+                    </aside>
 
-                        <button
-                            className="px-4 sm:px-6 py-2 rounded-full bg-[#C5FF2F] text-black text-sm sm:text-base font-semibold shadow-md hover:brightness-95"
-                            onClick={() => {
-                                router.push("/login");
-                            }}
-                        >
-                            Logout
-                        </button>
-                    </div>
-
-                    {/* GRID OF CARDS */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                        {/* Today’s Summary */}
-                        <section className="bg-[#1A5DA8] rounded-xl p-5 shadow-md col-span-1">
-                            <h2 className="text-lg font-semibold mb-4">
-                                Today&apos;s Summary
-                            </h2>
-                            <div className="flex justify-between mb-4">
-                                <div>
-                                    <p className="text-2xl font-bold">
-                                        {stats.calories ?? 0}
-                                    </p>
-                                    <p className="text-sm">Calories</p>
-                                </div>
-                                <div>
-                                    <p className="text-2xl font-bold">
-                                        {stats.burnedCalories ?? 0}
-                                    </p>
-                                    <p className="text-sm">Burned Calories</p>
-                                </div>
+                    {/* ========== MAIN CONTENT ========== */}
+                    <main className="flex-1 flex flex-col">
+                        {/* Top bar */}
+                        <header className="flex items-center justify-between px-8 pt-6 pb-4">
+                            <div>
+                                <p className="text-xs uppercase tracking-[0.18em] text-gray-400">
+                                    Current Day
+                                </p>
+                                <h1 className="text-2xl sm:text-3xl font-semibold">
+                                    {currentDayLabel ?? "Friday"}
+                                </h1>
+                                <p className="text-xs text-gray-400 mt-1">
+                                    {todayString} • (Doc key: {docKey})
+                                </p>
                             </div>
 
-                            {/* Your existing +/- buttons wired to Firestore */}
-                            <div className="flex flex-wrap gap-2">
-                                <button
-                                    className="px-3 py-1 rounded-md bg-white/90 text-[#1A5DA8] text-sm font-semibold disabled:opacity-50"
-                                    onClick={() => addCalories(100)}
-                                    disabled={saving}
-                                >
-                                    +100 cal
-                                </button>
-                                <button
-                                    className="px-3 py-1 rounded-md bg-white/90 text-[#1A5DA8] text-sm font-semibold disabled:opacity-50"
-                                    onClick={() => addCalories(-100)}
-                                    disabled={
-                                        saving || (stats.calories ?? 0) < 100
-                                    }
-                                >
-                                    -100 cal
-                                </button>
-                                <button
-                                    className="px-3 py-1 rounded-md bg-white/90 text-[#1A5DA8] text-sm font-semibold disabled:opacity-50"
-                                    onClick={() => addBurnedCalories(50)}
-                                    disabled={saving}
-                                >
-                                    +50 burned
-                                </button>
-                                <button
-                                    className="px-3 py-1 rounded-md bg-white/90 text-[#1A5DA8] text-sm font-semibold disabled:opacity-50"
-                                    onClick={() => addBurnedCalories(-50)}
-                                    disabled={
-                                        saving ||
-                                        (stats.burnedCalories ?? 0) < 50
-                                    }
-                                >
-                                    -50 burned
-                                </button>
-                            </div>
-                        </section>
-
-                        {/* Workout Progress */}
-                        <section className="bg-[#1A5DA8] rounded-xl p-4 sm:p-5 shadow-md">
-                            <h2 className="text-lg font-semibold mb-3">
-                                Workout Progress
-                            </h2>
-                            <p className="text-sm mb-4">
-                                Upper Body
-                                {stats.workoutLogged
-                                    ? " (logged)"
-                                    : " (not logged yet)"}
-                            </p>
                             <button
-                                className="px-4 py-2 rounded-md bg-[#C5FF2F] text-black font-semibold hover:brightness-95 disabled:opacity-50"
-                                onClick={toggleWorkoutLogged}
-                                disabled={saving}
+                                onClick={handleLogout}
+                                className="rounded-full bg-[#f6ff6b] hover:bg-[#e4f256] text-black font-semibold px-4 py-2 text-sm shadow-md"
                             >
-                                {stats.workoutLogged
-                                    ? "Mark as Not Done"
-                                    : "Start / Log Workout"}
+                                Logout
                             </button>
-                        </section>
+                        </header>
 
-                        {/* Ask AI about your plan */}
-                        <section className="bg-[#1A5DA8] rounded-xl p-4 sm:p-5 shadow-md">
-                            <h2 className="text-lg font-semibold mb-3">
-                                Ask AI about your plan
-                            </h2>
-                            <div className="flex gap-2 mt-2">
-                                <input
-                                    type="text"
-                                    placeholder="Ask anything..."
-                                    className="flex-1 rounded-md px-3 py-2 text-black text-sm outline-none"
-                                />
-                                <button className="px-4 py-2 rounded-md bg-[#C5FF2F] text-black font-semibold hover:brightness-95">
-                                    Ask
-                                </button>
+                        {/* Main grid */}
+                        <section className="flex-1 px-8 pb-10">
+                            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+                                {/* Today's Summary */}
+                                <div className="bg-[#2d3748]/80 border border-white/10 rounded-2xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] backdrop-blur-md p-6">
+                                    <h2 className="text-lg font-semibold mb-1">
+                                        Today&apos;s Summary
+                                    </h2>
+                                    <p className="text-xs text-gray-400 mb-4">
+                                        Quick view of your calories in &amp; out.
+                                    </p>
+
+                                    <div className="flex items-center gap-8 mb-4">
+                                        <div>
+                                            <p className="text-xs uppercase tracking-wide text-gray-400">
+                                                Calories
+                                            </p>
+                                            <p className="text-2xl font-semibold">
+                                                {stats?.calories ?? 0}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs uppercase tracking-wide text-gray-400">
+                                                Burned Calories
+                                            </p>
+                                            <p className="text-2xl font-semibold">
+                                                {stats?.burnedCalories ?? 0}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Increment buttons wired to handlers */}
+                                    <div className="flex flex-wrap gap-2 text-xs">
+                                        <button
+                                            onClick={() => addCalories(100)}
+                                            disabled={saving}
+                                            className="px-3 py-1.5 rounded-full bg-[#ff4ec7] hover:bg-[#d63eab] disabled:opacity-60 text-white font-medium"
+                                        >
+                                            +100 cal
+                                        </button>
+                                        <button
+                                            onClick={() => addCalories(-100)}
+                                            disabled={saving}
+                                            className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 disabled:opacity-60 text-gray-100"
+                                        >
+                                            -100 cal
+                                        </button>
+                                        <button
+                                            onClick={() => addBurnedCalories(50)}
+                                            disabled={saving}
+                                            className="px-3 py-1.5 rounded-full bg-[#ff4ec7] hover:bg-[#d63eab] disabled:opacity-60 text-white font-medium"
+                                        >
+                                            +50 burned
+                                        </button>
+                                        <button
+                                            onClick={() => addBurnedCalories(-50)}
+                                            disabled={saving}
+                                            className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 disabled:opacity-60 text-gray-100"
+                                        >
+                                            -50 burned
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Workout Progress */}
+                                <div className="bg-[#2d3748]/80 border border-white/10 rounded-2xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] backdrop-blur-md p-6">
+                                    <h2 className="text-lg font-semibold mb-1">
+                                        Workout Progress
+                                    </h2>
+                                    <p className="text-xs text-gray-400 mb-4">
+                                        {workoutLabel}
+                                    </p>
+
+                                    <button
+                                        onClick={toggleWorkoutLogged}
+                                        disabled={saving}
+                                        className="mt-auto inline-flex items-center justify-center rounded-full bg-[#ff4ec7] hover:bg-[#d63eab] disabled:opacity-60 px-4 py-2 text-sm font-semibold text-white shadow-md"
+                                    >
+                                        {stats.workoutLogged ? "Undo workout" : "Start / Log Workout"}
+                                    </button>
+                                </div>
+
+                                {/* Ask AI */}
+                                <div className="bg-[#2d3748]/80 border border-white/10 rounded-2xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] backdrop-blur-md p-6">
+                                    <h2 className="text-lg font-semibold mb-1">
+                                        Ask AI about your plan
+                                    </h2>
+                                    <p className="text-xs text-gray-400 mb-3">
+                                        Ask anything about your meals, workouts, or goals.
+                                    </p>
+
+                                    <div className="flex flex-col gap-3">
+                                        <textarea
+                                            className="w-full rounded-xl bg-black/20 border border-white/10 px-3 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#ff4ec7]/70"
+                                            rows={3}
+                                            placeholder="Ask anything..."
+                                        />
+                                        <div className="flex justify-end">
+                                            <button className="rounded-full bg-[#f6ff6b] hover:bg-[#e4f256] text-black font-semibold px-4 py-2 text-sm shadow-md">
+                                                Ask
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Nutrition card below */}
+                            <div className="bg-[#2d3748]/80 border border-white/10 rounded-2xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] backdrop-blur-md p-6">
+                                <h2 className="text-lg font-semibold mb-1">Nutrition</h2>
+                                <p className="text-xs text-gray-400 mb-4">
+                                    Track what you ate today.
+                                </p>
+
+                                <div className="grid gap-4 md:grid-cols-3 text-sm">
+                                    <div>
+                                        <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">
+                                            Breakfast
+                                        </p>
+                                        <div className="rounded-xl bg-black/20 border border-white/10 px-3 py-2 text-gray-300 text-xs">
+                                            What did you eat?
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">
+                                            Lunch
+                                        </p>
+                                        <div className="rounded-xl bg-black/20 border border-white/10 px-3 py-2 text-gray-300 text-xs">
+                                            What did you eat?
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">
+                                            Dinner
+                                        </p>
+                                        <div className="rounded-xl bg-black/20 border border-white/10 px-3 py-2 text-gray-300 text-xs">
+                                            What did you eat?
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </section>
-                    </div>
-
-                    {/* Bottom row: Nutrition card */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6">
-                        <section className="bg-[#1A5DA8] rounded-xl p-4 sm:p-5 shadow-md md:col-span-1">
-                            <h2 className="text-lg font-semibold mb-4">
-                                Nutrition
-                            </h2>
-                            <div className="space-y-3">
-                                <div>
-                                    <p className="text-sm mb-1">Breakfast</p>
-                                    <input
-                                        className="w-full rounded-md px-3 py-2 text-black text-sm outline-none"
-                                        placeholder="What did you eat?"
-                                    />
-                                </div>
-                                <div>
-                                    <p className="text-sm mb-1">Lunch</p>
-                                    <input
-                                        className="w-full rounded-md px-3 py-2 text-black text-sm outline-none"
-                                        placeholder="What did you eat?"
-                                    />
-                                </div>
-                                <div>
-                                    <p className="text-sm mb-1">Dinner</p>
-                                    <input
-                                        className="w-full rounded-md px-3 py-2 text-black text-sm outline-none"
-                                        placeholder="What did you eat?"
-                                    />
-                                </div>
-                            </div>
-                        </section>
-                    </div>
-                </main>
+                    </main>
+                </div>
             </div>
         </>
     );
