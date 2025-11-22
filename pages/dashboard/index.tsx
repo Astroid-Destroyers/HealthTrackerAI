@@ -355,6 +355,13 @@ export default function Dashboard() {
                     <main className="flex-1 flex flex-col">
                         {/* Top bar */}
                         <header className="flex items-center justify-between px-8 pt-6 pb-4">
+                            <button
+                                onClick={() => router.push("/")}
+                                className="flex items-center gap-2 text-gray-300 hover:text-white text-sm mb-2"
+                            >
+                                <span className="text-lg">‹</span>
+                                <span className="uppercase tracking-wide text-xs">Back</span>
+                            </button>
                             <div>
                                 <p className="text-xs uppercase tracking-[0.18em] text-gray-400">
                                     Current Day
