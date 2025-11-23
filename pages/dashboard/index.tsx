@@ -15,22 +15,35 @@ import { app } from "@/lib/firebase";
 
 // Defines the structure of daily statistics stored in Firestore
 type DayStats = {
-    calories: number;           // Total calories consumed by the user today
-    burnedCalories: number;     // Total calories burned from workouts
-    workoutLogged?: boolean;    // Determines whether a workout has been logged today
-    updatedAt?: any;            // Timestamp of the last update
+    calories: number; // Total calories consumed by the user today
+    burnedCalories: number; // Total calories burned from workouts
+    workoutLogged?: boolean; // Determines whether a workout has been logged today
+    updatedAt?: any; // Timestamp of the last update
+    breakfast?: string; // What the user ate for breakfast
+    lunch?: string; // What the user ate for lunch
+    dinner?: string; // What the user ate for dinner
 };
 
 export default function Dashboard() {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null); // Holds the currently authenticated Firebase user (or null if not logged in)
-    const [loading, setLoading] = useState(true);        // Tracks whether authentication check or data loading is still in progress
+    const [loading, setLoading] = useState(true); // Tracks whether authentication check or data loading is still in progress
 
     // Stores the user’s daily fitness stats retrieved from Firestore
     const [stats, setStats] = useState<DayStats>({
         calories: 0,
         burnedCalories: 0,
         workoutLogged: false,
+        breakfast: "",
+        lunch: "",
+        dinner: "",
+    });
+
+    // Separate local draft for the Nutrition textareas
+    const [mealDraft, setMealDraft] = useState({
+        breakfast: "",
+        lunch: "",
+        dinner: "",
     });
 
     // Controls UI button states for logging workouts or saving data
@@ -65,7 +78,7 @@ export default function Dashboard() {
             setUser(u);
             setLoading(false);
 
-            // Redirect to login page if user is not authenticated
+            // Redirect to home page if user is not authenticated
             if (!u) {
                 router.replace("/");
                 return;
@@ -82,6 +95,9 @@ export default function Dashboard() {
                         calories: 0,
                         burnedCalories: 0,
                         workoutLogged: false,
+                        breakfast: "",
+                        lunch: "",
+                        dinner: "",
                         updatedAt: serverTimestamp(),
                     });
                     // Initialize local state with defaults
@@ -89,6 +105,9 @@ export default function Dashboard() {
                         calories: 0,
                         burnedCalories: 0,
                         workoutLogged: false,
+                        breakfast: "",
+                        lunch: "",
+                        dinner: "",
                     });
                 } else {
                     const data = snap.data() as DayStats; // If document exists, load its data into local state
@@ -97,6 +116,9 @@ export default function Dashboard() {
                         burnedCalories: data.burnedCalories ?? 0,
                         workoutLogged: data.workoutLogged ?? false,
                         updatedAt: data.updatedAt,
+                        breakfast: data.breakfast ?? "",
+                        lunch: data.lunch ?? "",
+                        dinner: data.dinner ?? "",
                     });
                 }
             } catch (e) {
@@ -106,6 +128,15 @@ export default function Dashboard() {
 
         return () => unsub();
     }, [db, router, todayKey]);
+
+    // Keep the textareas (mealDraft) in sync whenever stats change
+    useEffect(() => {
+        setMealDraft({
+            breakfast: stats.breakfast ?? "",
+            lunch: stats.lunch ?? "",
+            dinner: stats.dinner ?? "",
+        });
+    }, [stats.breakfast, stats.lunch, stats.dinner]);
 
     // This builds a reference to user's id and we only create this if a user is logged in
     const todayDocRef = useMemo(
@@ -243,7 +274,7 @@ export default function Dashboard() {
         }
     };
 
-    // Resets today's stats back to zero and clears workout flag
+    // Resets today's stats back to zero and clears workout flag + meals
     // Uses a backup of current stats so we can restore them on error
     const resetToday = async () => {
         // If no doc ref or a save is in progress, do nothing
@@ -255,7 +286,19 @@ export default function Dashboard() {
         const previous = stats;
 
         // Optimistic UI: immediately reset local state
-        setStats({ calories: 0, burnedCalories: 0, workoutLogged: false });
+        setStats({
+            calories: 0,
+            burnedCalories: 0,
+            workoutLogged: false,
+            breakfast: "",
+            lunch: "",
+            dinner: "",
+        });
+        setMealDraft({
+            breakfast: "",
+            lunch: "",
+            dinner: "",
+        });
 
         try {
             // Write the reset values to Firestore
@@ -265,6 +308,9 @@ export default function Dashboard() {
                     calories: 0,
                     burnedCalories: 0,
                     workoutLogged: false,
+                    breakfast: "",
+                    lunch: "",
+                    dinner: "",
                     updatedAt: serverTimestamp(),
                 },
                 { merge: true }
@@ -274,6 +320,42 @@ export default function Dashboard() {
 
             // If Firestore write fails, restore previous stats
             setStats(previous);
+            setMealDraft({
+                breakfast: previous.breakfast ?? "",
+                lunch: previous.lunch ?? "",
+                dinner: previous.dinner ?? "",
+            });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    // Save nutrition notes (breakfast, lunch, dinner) to Firestore
+    const saveMeals = async () => {
+        if (!todayDocRef || saving) return;
+
+        setSaving(true);
+        try {
+            await setDoc(
+                todayDocRef,
+                {
+                    breakfast: mealDraft.breakfast,
+                    lunch: mealDraft.lunch,
+                    dinner: mealDraft.dinner,
+                    updatedAt: serverTimestamp(),
+                },
+                { merge: true }
+            );
+
+            // Also update local stats so everything stays in sync
+            setStats((prev) => ({
+                ...prev,
+                breakfast: mealDraft.breakfast,
+                lunch: mealDraft.lunch,
+                dinner: mealDraft.dinner,
+            }));
+        } catch (e) {
+            console.error("Failed to save meals:", e);
         } finally {
             setSaving(false);
         }
@@ -303,7 +385,7 @@ export default function Dashboard() {
     // If we are still loading user data, show a simple loading message
     if (loading) return <p className="p-6 text-white">Loading…</p>;
 
-    // If there is no user, we already redirected to /login, so render nothing
+    // If there is no user, we already redirected to /, so render nothing
     if (!user) return null;
 
     // Main dashboard UI
@@ -466,7 +548,9 @@ export default function Dashboard() {
                                         disabled={saving}
                                         className="mt-auto inline-flex items-center justify-center rounded-full bg-[#ff4ec7] hover:bg-[#d63eab] disabled:opacity-60 px-4 py-2 text-sm font-semibold text-white shadow-md"
                                     >
-                                        {stats.workoutLogged ? "Undo workout" : "Start / Log Workout"}
+                                        {stats.workoutLogged
+                                            ? "Undo workout"
+                                            : "Start / Log Workout"}
                                     </button>
                                 </div>
 
@@ -494,38 +578,81 @@ export default function Dashboard() {
                                 </div>
                             </div>
 
-                            {/* Nutrition card below */}
-                            <div className="bg-[#2d3748]/80 border border-white/10 rounded-2xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] backdrop-blur-md p-6">
+                            {/* Nutrition card */}
+                            <div className="bg-[#2d3748]/80 border border-white/10 rounded-2xl shadow-[0_18px_45px_rgba(0,0,0,0.45)] backdrop-blur-md p-6 mt-8">
                                 <h2 className="text-lg font-semibold mb-1">Nutrition</h2>
                                 <p className="text-xs text-gray-400 mb-4">
                                     Track what you ate today.
                                 </p>
 
                                 <div className="grid gap-4 md:grid-cols-3 text-sm">
+                                    {/* Breakfast */}
                                     <div>
                                         <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">
                                             Breakfast
                                         </p>
-                                        <div className="rounded-xl bg-black/20 border border-white/10 px-3 py-2 text-gray-300 text-xs">
-                                            What did you eat?
-                                        </div>
+                                        <textarea
+                                            className="w-full rounded-xl bg-black/20 border border-white/10 px-3 py-2 text-gray-100 text-xs placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#ff4ec7]/70"
+                                            rows={2}
+                                            placeholder="What did you eat?"
+                                            value={mealDraft.breakfast}
+                                            onChange={(e) =>
+                                                setMealDraft((prev) => ({
+                                                    ...prev,
+                                                    breakfast: e.target.value,
+                                                }))
+                                            }
+                                        />
                                     </div>
+
+                                    {/* Lunch */}
                                     <div>
                                         <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">
                                             Lunch
                                         </p>
-                                        <div className="rounded-xl bg-black/20 border border-white/10 px-3 py-2 text-gray-300 text-xs">
-                                            What did you eat?
-                                        </div>
+                                        <textarea
+                                            className="w-full rounded-xl bg-black/20 border border-white/10 px-3 py-2 text-gray-100 text-xs placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#ff4ec7]/70"
+                                            rows={2}
+                                            placeholder="What did you eat?"
+                                            value={mealDraft.lunch}
+                                            onChange={(e) =>
+                                                setMealDraft((prev) => ({
+                                                    ...prev,
+                                                    lunch: e.target.value,
+                                                }))
+                                            }
+                                        />
                                     </div>
+
+                                    {/* Dinner */}
                                     <div>
                                         <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">
                                             Dinner
                                         </p>
-                                        <div className="rounded-xl bg-black/20 border border-white/10 px-3 py-2 text-gray-300 text-xs">
-                                            What did you eat?
-                                        </div>
+                                        <textarea
+                                            className="w-full rounded-xl bg-black/20 border border-white/10 px-3 py-2 text-gray-100 text-xs placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#ff4ec7]/70"
+                                            rows={2}
+                                            placeholder="What did you eat?"
+                                            value={mealDraft.dinner}
+                                            onChange={(e) =>
+                                                setMealDraft((prev) => ({
+                                                    ...prev,
+                                                    dinner: e.target.value,
+                                                }))
+                                            }
+                                        />
                                     </div>
+                                </div>
+
+                                {/* Save button */}
+                                <div className="mt-4 flex justify-end">
+                                    <button
+                                        onClick={saveMeals}
+                                        disabled={saving}
+                                        className="rounded-full bg-[#f6ff6b] hover:bg-[#e4f256] disabled:opacity-60 text-black font-semibold px-4 py-2 text-sm shadow-md"
+                                    >
+                                        {saving ? "Saving..." : "Save meals"}
+                                    </button>
                                 </div>
                             </div>
                         </section>
