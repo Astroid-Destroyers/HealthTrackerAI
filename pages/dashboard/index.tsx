@@ -67,7 +67,7 @@ export default function Dashboard() {
 
             // Redirect to login page if user is not authenticated
             if (!u) {
-                router.replace("/login");
+                router.replace("/");
                 return;
             }
 
@@ -281,9 +281,15 @@ export default function Dashboard() {
 
     // Logout handler
     const handleLogout = async () => {
-        const auth = getAuth();
-        await signOut(auth);
-        router.replace("/login");
+        try {
+            const auth = getAuth();
+            await signOut(auth);
+
+            // send user to homepage after logout
+            router.replace("/");
+        } catch (error) {
+            console.error("Logout failed:", error);
+        }
     };
 
     // Derived labels for header & workout
