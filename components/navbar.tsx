@@ -255,10 +255,10 @@ export const Navbar: React.FC<NavbarProps> = () => {
               </p>
             </div>
           </NextLink>
-    </NavbarBrand>
+        </NavbarBrand>
 
-    {/* Desktop Navigation - Fixed responsive breakpoint */}
-    <div className="hidden md:flex flex-1 items-center justify-start ml-8 gap-4 whitespace-nowrap">
+        {/* Desktop Navigation - Fixed responsive breakpoint */}
+        <div className="hidden md:flex flex-1 items-center justify-start ml-8 gap-4 whitespace-nowrap">
           {siteConfig.navItems
             .filter((item) => {
               // Hide "Ad Tests" for non-admin users
@@ -283,20 +283,22 @@ export const Navbar: React.FC<NavbarProps> = () => {
               </NavbarItem>
             ))}
 
-          {/* Direct Dashboard Link */}
-          <NavbarItem className="shrink-0">
-            <NextLink
-              href="/dashboard"
-              className={clsx(
-                "text-gray-300 hover:text-white transition-all duration-300 font-medium relative group",
-                "hover:scale-105 px-2 py-1 rounded-lg hover:bg-white/10",
-                "whitespace-nowrap",
-              )}
-            >
-              Dashboard
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-ai-gradient transition-all duration-300 group-hover:w-full" />
-            </NextLink>
-          </NavbarItem>
+          {/* Direct Dashboard Link  -ONLY show if logged in */}
+          {user && (
+            <NavbarItem className="shrink-0">
+              <NextLink
+                href="/dashboard"
+                className={clsx(
+                  "text-gray-300 hover:text-white transition-all duration-300 font-medium relative group",
+                  "hover:scale-105 px-2 py-1 rounded-lg hover:bg-white/10",
+                  "whitespace-nowrap",
+                )}
+              >
+                Dashboard
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-ai-gradient transition-all duration-300 group-hover:w-full" />
+              </NextLink>
+            </NavbarItem>
+          )}
           {/* Admin link - only visible to admin user */}
           {user && user.email === "new.roeepalmon@gmail.com" && (
             <NavbarItem className="shrink-0">
