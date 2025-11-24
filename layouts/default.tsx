@@ -54,17 +54,23 @@ export default function DefaultLayout({
                 Contact
               </Link>
               <Link
+                className="text-gray-400 hover:text-white transition-colors"
+                href="/privacy"
+              >
+                Privacy
+              </Link>
+              <Link
+                className="text-gray-400 hover:text-white transition-colors"
+                href="/terms"
+              >
+                Terms
+              </Link>
+              <Link
                 isExternal
                 className="text-gray-400 hover:text-white transition-colors"
                 href="https://www.heroui.com"
               >
                 HeroUI
-              </Link>
-              <Link
-                className="text-gray-400 hover:text-white transition-colors"
-                href="/privacy"
-              >
-                Privacy
               </Link>
             </div>
           </div>
