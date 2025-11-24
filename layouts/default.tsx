@@ -60,6 +60,12 @@ export default function DefaultLayout({
               >
                 HeroUI
               </Link>
+              <Link
+                className="text-gray-400 hover:text-white transition-colors"
+                href="/privacy"
+              >
+                Privacy
+              </Link>
             </div>
           </div>
 
