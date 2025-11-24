@@ -23,7 +23,7 @@ import { Tabs, Tab } from "@heroui/tabs";
 import { Tooltip } from "@heroui/tooltip";
 import NextLink from "next/link";
 import clsx from "clsx";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import {
   signInWithEmailAndPassword,
@@ -46,6 +46,7 @@ import {
   CloseIcon,
 } from "@/components/icons";
 import MultiStepSignup from "@/components/MultiStepSignup";
+import { registerLoginModal } from "../utils/loginModal";
 
 interface NavbarProps {
   // props are now optional; real auth comes from context
@@ -56,6 +57,9 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = () => {
   const { user, loading } = useAuth(); // <-- live auth state
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  useEffect(() => {
+  registerLoginModal(() => setIsLoginOpen(true));
+}, []);
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [showMultiStepSignup, setShowMultiStepSignup] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);

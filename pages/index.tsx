@@ -9,6 +9,7 @@ import { siteConfig } from "@/config/site";
 import { GithubIcon } from "@/components/icons";
 import DefaultLayout from "@/layouts/default";
 import { useAuth } from "@/providers/AuthProvider";
+import { openLoginModal } from "../utils/loginModal";
 
 const features = [
   {
@@ -263,6 +264,7 @@ export default function IndexPage() {
             <Button
               className="w-full sm:w-auto px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg font-semibold text-white rounded-xl relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl min-h-[56px]"
               size="lg"
+              onPress={openLoginModal}
               style={{
                 background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
                 boxShadow: "0 4px 20px rgba(99, 102, 241, 0.3)",
@@ -385,7 +387,7 @@ export default function IndexPage() {
               AI-driven health insights.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button className="btn-ai-primary text-lg px-8 py-6" size="lg">
+              <Button className="btn-ai-primary text-lg px-8 py-6" size="lg" onPress={openLoginModal}>
                 Get Started Free
               </Button>
               <Button
