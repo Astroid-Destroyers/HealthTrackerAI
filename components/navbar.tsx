@@ -58,8 +58,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
   const { user, loading } = useAuth(); // <-- live auth state
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   useEffect(() => {
-  registerLoginModal(() => setIsLoginOpen(true));
-}, []);
+    registerLoginModal(() => setIsLoginOpen(true));
+  }, []);
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [showMultiStepSignup, setShowMultiStepSignup] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -368,7 +368,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                         className="justify-start bg-transparent hover:bg-white/10 text-white text-sm h-8"
                         size="sm"
                         variant="light"
-                        onPress={() => router.push("/profile")}
+                        onPress={() => router.push("/dashboard/profileSetUp")}
                       >
                         Edit Profile
                       </Button>
@@ -392,11 +392,11 @@ export const Navbar: React.FC<NavbarProps> = () => {
                   className="w-9 h-9 flex items-center justify-center rounded-xl bg-ai-gradient text-white font-semibold cursor-pointer hover:scale-105 transition-all duration-300 animate-glow"
                   role="button"
                   tabIndex={0}
-                  onClick={() => router.push("/profile")}
+                  onClick={() => router.push("/dashboard/profileSetUp")}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
-                      router.push("/profile");
+                      router.push("/dashboard/profileSetUp");
                     }
                   }}
                 >
@@ -551,7 +551,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
               <Button
                 className="backdrop-blur-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 w-full h-12 text-base"
                 variant="bordered"
-                onPress={() => router.push("/profile")}
+                onPress={() => router.push("/dashboard/profileSetUp")}
               >
                 View Profile
               </Button>
