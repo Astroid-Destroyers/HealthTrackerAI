@@ -342,7 +342,7 @@ export default function Dashboard() {
                             </button>
                             <button
                                 className="w-full text-left px-3 py-2 rounded-lg text-gray-300 hover:bg-white/5"
-                                onClick={() => router.push("/profile")}
+                                onClick={() => router.push("/dashboard/profileSetUp")}
                             >
                                 Profile
                             </button>
