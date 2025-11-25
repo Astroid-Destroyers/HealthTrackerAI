@@ -6,8 +6,10 @@ import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Progress } from "@heroui/progress";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
+import { Link } from "@heroui/link";
 
 import { auth, db } from "@/lib/firebase";
+
 
 interface SignupData {
   name: string;
@@ -27,6 +29,7 @@ interface SignupData {
   email: string;
   password: string;
   confirmPassword: string;
+  acceptedTerms: boolean;
 }
 
 interface MultiStepSignupProps {
@@ -96,7 +99,10 @@ export default function MultiStepSignup({
     email: "",
     password: "",
     confirmPassword: "",
+    acceptedTerms: false,
   });
+
+  // Terms & privacy checkbox
 
   const updateFormData = (field: keyof SignupData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -128,7 +134,8 @@ export default function MultiStepSignup({
       case 6:
         return (
           formData.password.length >= 6 &&
-          formData.password === formData.confirmPassword
+          formData.password === formData.confirmPassword &&
+          formData.acceptedTerms === true // Must accept terms
         );
       default:
         return false;
@@ -194,6 +201,9 @@ export default function MultiStepSignup({
         }
         if (formData.password !== formData.confirmPassword) {
           return "Passwords don't match";
+        }
+        if (!formData.acceptedTerms) {
+          return "Please agree to the Terms and Privacy Policy to create your account.";
         }
 
         return "";
@@ -310,13 +320,12 @@ export default function MultiStepSignup({
               ].map((option) => (
                 <motion.div
                   key={option.value}
-                  className={`relative cursor-pointer rounded-xl border-2 transition-all duration-300 ${
-                    formData.gender === option.value
+                  className={`relative cursor-pointer rounded-xl border-2 transition-all duration-300 ${formData.gender === option.value
                       ? "border-indigo-400 bg-gradient-to-r " +
-                        option.color +
-                        " shadow-lg"
+                      option.color +
+                      " shadow-lg"
                       : "border-white/20 bg-white/5 hover:border-white/40 hover:bg-white/10"
-                  }`}
+                    }`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => updateFormData("gender", option.value)}
@@ -366,11 +375,10 @@ export default function MultiStepSignup({
               ].map((unit) => (
                 <button
                   key={unit.key}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg transition-all duration-300 ${
-                    formData.height.unit === unit.key
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg transition-all duration-300 ${formData.height.unit === unit.key
                       ? "bg-indigo-500 text-white shadow-lg"
                       : "text-gray-300 hover:text-white hover:bg-white/10"
-                  }`}
+                    }`}
                   onClick={() =>
                     updateFormData("height", {
                       ...formData.height,
@@ -475,19 +483,19 @@ export default function MultiStepSignup({
               formData.height.feet &&
               formData.height.inches) ||
               (formData.height.unit === "metric" && formData.height.cm)) && (
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                className="text-center p-3 rounded-lg bg-blue-500/20 border border-blue-400/30"
-                initial={{ opacity: 0, y: 10 }}
-              >
-                <span className="text-blue-300">
-                  {formData.height.unit === "imperial"
-                    ? `That's ${Math.round((parseInt(formData.height.feet || "0") * 12 + parseInt(formData.height.inches || "0")) * 2.54)} cm`
-                    : `That's ${Math.floor(parseInt(formData.height.cm || "0") / 30.48)}'${Math.round((parseInt(formData.height.cm || "0") % 30.48) / 2.54)}"`}{" "}
-                  📊
-                </span>
-              </motion.div>
-            )}
+                <motion.div
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-center p-3 rounded-lg bg-blue-500/20 border border-blue-400/30"
+                  initial={{ opacity: 0, y: 10 }}
+                >
+                  <span className="text-blue-300">
+                    {formData.height.unit === "imperial"
+                      ? `That's ${Math.round((parseInt(formData.height.feet || "0") * 12 + parseInt(formData.height.inches || "0")) * 2.54)} cm`
+                      : `That's ${Math.floor(parseInt(formData.height.cm || "0") / 30.48)}'${Math.round((parseInt(formData.height.cm || "0") % 30.48) / 2.54)}"`}{" "}
+                    📊
+                  </span>
+                </motion.div>
+              )}
           </div>
         );
 
@@ -502,11 +510,10 @@ export default function MultiStepSignup({
               ].map((unit) => (
                 <button
                   key={unit.key}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg transition-all duration-300 ${
-                    formData.weight.unit === unit.key
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg transition-all duration-300 ${formData.weight.unit === unit.key
                       ? "bg-indigo-500 text-white shadow-lg"
                       : "text-gray-300 hover:text-white hover:bg-white/10"
-                  }`}
+                    }`}
                   onClick={() =>
                     updateFormData("weight", {
                       ...formData.weight,
@@ -575,19 +582,19 @@ export default function MultiStepSignup({
             {/* Weight conversion display */}
             {((formData.weight.unit === "imperial" && formData.weight.pounds) ||
               (formData.weight.unit === "metric" && formData.weight.kg)) && (
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                className="text-center p-3 rounded-lg bg-purple-500/20 border border-purple-400/30"
-                initial={{ opacity: 0, y: 10 }}
-              >
-                <span className="text-purple-300">
-                  {formData.weight.unit === "imperial"
-                    ? `That's ${Math.round(parseFloat(formData.weight.pounds || "0") * 0.453592)} kg`
-                    : `That's ${Math.round(parseFloat(formData.weight.kg || "0") * 2.20462)} lbs`}{" "}
-                  ⚖️
-                </span>
-              </motion.div>
-            )}
+                <motion.div
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-center p-3 rounded-lg bg-purple-500/20 border border-purple-400/30"
+                  initial={{ opacity: 0, y: 10 }}
+                >
+                  <span className="text-purple-300">
+                    {formData.weight.unit === "imperial"
+                      ? `That's ${Math.round(parseFloat(formData.weight.pounds || "0") * 0.453592)} kg`
+                      : `That's ${Math.round(parseFloat(formData.weight.kg || "0") * 2.20462)} lbs`}{" "}
+                    ⚖️
+                  </span>
+                </motion.div>
+              )}
           </div>
         );
 
@@ -623,13 +630,12 @@ export default function MultiStepSignup({
               ].map((goal) => (
                 <motion.div
                   key={goal.value}
-                  className={`relative cursor-pointer rounded-xl border-2 transition-all duration-300 ${
-                    formData.goal === goal.value
+                  className={`relative cursor-pointer rounded-xl border-2 transition-all duration-300 ${formData.goal === goal.value
                       ? "border-indigo-400 bg-gradient-to-r " +
-                        goal.color +
-                        " shadow-lg shadow-indigo-500/25"
+                      goal.color +
+                      " shadow-lg shadow-indigo-500/25"
                       : "border-white/20 bg-white/5 hover:border-white/40 hover:bg-white/10"
-                  }`}
+                    }`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => updateFormData("goal", goal.value)}
@@ -696,14 +702,13 @@ export default function MultiStepSignup({
                 classNames={{
                   base: "text-white",
                   input: "text-white placeholder:text-gray-400 text-lg px-4",
-                  inputWrapper: `backdrop-blur-xl bg-white/10 border-2 transition-all duration-300 h-14 rounded-xl ${
-                    formData.email &&
-                    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+                  inputWrapper: `backdrop-blur-xl bg-white/10 border-2 transition-all duration-300 h-14 rounded-xl ${formData.email &&
+                      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
                       ? "border-green-400/70 bg-green-400/10"
                       : formData.email && formData.email.length > 0
                         ? "border-red-400/70 bg-red-400/10"
                         : "border-white/20 hover:border-indigo-400/70 group-data-[focused=true]:border-indigo-500"
-                  }`,
+                    }`,
                 }}
                 placeholder="your.email@example.com"
                 size="lg"
@@ -729,19 +734,17 @@ export default function MultiStepSignup({
             {formData.email && (
               <motion.div
                 animate={{ opacity: 1, y: 0 }}
-                className={`text-center p-3 rounded-lg ${
-                  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+                className={`text-center p-3 rounded-lg ${/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
                     ? "bg-green-500/20 border border-green-400/30"
                     : "bg-amber-500/20 border border-amber-400/30"
-                }`}
+                  }`}
                 initial={{ opacity: 0, y: 10 }}
               >
                 <span
-                  className={`text-sm ${
-                    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+                  className={`text-sm ${/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
                       ? "text-green-300"
                       : "text-amber-300"
-                  }`}
+                    }`}
                 >
                   {/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
                     ? "✓ Perfect! This email looks great"
@@ -798,13 +801,12 @@ export default function MultiStepSignup({
               {formData.password.length >= 6 && (
                 <motion.div
                   animate={{ scale: 1 }}
-                  className={`absolute -right-2 -top-2 w-8 h-8 rounded-full flex items-center justify-center text-white text-sm shadow-lg ${
-                    passwordStrength === "strong"
+                  className={`absolute -right-2 -top-2 w-8 h-8 rounded-full flex items-center justify-center text-white text-sm shadow-lg ${passwordStrength === "strong"
                       ? "bg-green-500"
                       : passwordStrength === "medium"
                         ? "bg-yellow-500"
                         : "bg-red-500"
-                  }`}
+                    }`}
                   initial={{ scale: 0 }}
                 >
                   {passwordStrength === "strong"
@@ -827,29 +829,27 @@ export default function MultiStepSignup({
                   {[1, 2, 3].map((level) => (
                     <div
                       key={level}
-                      className={`flex-1 h-2 rounded-full transition-all duration-300 ${
-                        (passwordStrength === "weak" && level === 1) ||
-                        (passwordStrength === "medium" && level <= 2) ||
-                        (passwordStrength === "strong" && level <= 3)
+                      className={`flex-1 h-2 rounded-full transition-all duration-300 ${(passwordStrength === "weak" && level === 1) ||
+                          (passwordStrength === "medium" && level <= 2) ||
+                          (passwordStrength === "strong" && level <= 3)
                           ? level === 1
                             ? "bg-red-400"
                             : level === 2
                               ? "bg-yellow-400"
                               : "bg-green-400"
                           : "bg-white/20"
-                      }`}
+                        }`}
                     />
                   ))}
                 </div>
                 <div className="text-center text-sm">
                   <span
-                    className={`${
-                      passwordStrength === "strong"
+                    className={`${passwordStrength === "strong"
                         ? "text-green-400"
                         : passwordStrength === "medium"
                           ? "text-yellow-400"
                           : "text-red-400"
-                    }`}
+                      }`}
                   >
                     Password strength:{" "}
                     {passwordStrength === "strong"
@@ -867,13 +867,12 @@ export default function MultiStepSignup({
                 classNames={{
                   base: "text-white",
                   input: "text-white placeholder:text-gray-400 text-lg px-4",
-                  inputWrapper: `backdrop-blur-xl bg-white/10 border-2 transition-all duration-300 h-14 rounded-xl ${
-                    formData.confirmPassword.length > 0
+                  inputWrapper: `backdrop-blur-xl bg-white/10 border-2 transition-all duration-300 h-14 rounded-xl ${formData.confirmPassword.length > 0
                       ? passwordsMatch
                         ? "border-green-400/70 bg-green-400/10"
                         : "border-red-400/70 bg-red-400/10"
                       : "border-white/20 hover:border-indigo-400/70 group-data-[focused=true]:border-indigo-500"
-                  }`,
+                    }`,
                 }}
                 placeholder="Confirm your password"
                 size="lg"
@@ -900,17 +899,15 @@ export default function MultiStepSignup({
             {formData.confirmPassword.length > 0 && (
               <motion.div
                 animate={{ opacity: 1, y: 0 }}
-                className={`text-center p-3 rounded-lg ${
-                  passwordsMatch
+                className={`text-center p-3 rounded-lg ${passwordsMatch
                     ? "bg-green-500/20 border border-green-400/30"
                     : "bg-red-500/20 border border-red-400/30"
-                }`}
+                  }`}
                 initial={{ opacity: 0, y: 10 }}
               >
                 <span
-                  className={`text-sm ${
-                    passwordsMatch ? "text-green-300" : "text-red-300"
-                  }`}
+                  className={`text-sm ${passwordsMatch ? "text-green-300" : "text-red-300"
+                    }`}
                 >
                   {passwordsMatch
                     ? "✓ Passwords match perfectly!"
@@ -918,21 +915,50 @@ export default function MultiStepSignup({
                 </span>
               </motion.div>
             )}
+            {/* Terms of Service + Privacy checkbox */}
+            <div className="mt-4 flex items-start gap-3">
+              <input
+                type="checkbox"
+                checked={formData.acceptedTerms}
+                onChange={(e) =>
+                  updateFormData("acceptedTerms", e.target.checked)
+                }
+                className="mt-1 h-5 w-5 cursor-pointer accent-indigo-500"
+              />
 
-            {formData.password.length >= 6 && passwordsMatch && (
-              <motion.div
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-center p-4 rounded-xl bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/30"
-                initial={{ opacity: 0, scale: 0.8 }}
-              >
-                <div className="text-green-300 font-bold text-lg mb-2">
-                  🎉 You&apos;re all set!
-                </div>
-                <div className="text-green-300 text-sm">
-                  Ready to launch your personalized AI health journey?
-                </div>
-              </motion.div>
-            )}
+              <p className="text-gray-300 text-sm">
+                I agree to the {" "}
+                <Link
+                  href="/terms"
+                  className="text-indigo-400 underline" target="_blank"
+                >
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link
+                  href="/privacy"
+                  className="text-indigo-400 underline" target="_blank"
+                >
+                  Privacy Policy
+                </Link>.
+              </p>
+            </div>
+
+            {formData.password.length >= 6 && passwordsMatch &&
+              formData.acceptedTerms && (
+                <motion.div
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-center p-4 rounded-xl bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/30"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                >
+                  <div className="text-green-300 font-bold text-lg mb-2">
+                    🎉 You&apos;re all set!
+                  </div>
+                  <div className="text-green-300 text-sm">
+                    Ready to launch your personalized AI health journey?
+                  </div>
+                </motion.div>
+              )}
           </div>
         );
 
@@ -1063,13 +1089,11 @@ export default function MultiStepSignup({
               )}
 
               <Button
-                className={`flex-1 btn-ai-primary relative overflow-hidden group h-12 font-bold text-lg ${
-                  currentStep === 0 ? "w-full" : ""
-                } ${
-                  !validateStep(currentStep)
+                className={`flex-1 btn-ai-primary relative overflow-hidden group h-12 font-bold text-lg ${currentStep === 0 ? "w-full" : ""
+                  } ${!validateStep(currentStep)
                     ? "opacity-50 cursor-not-allowed"
                     : ""
-                }`}
+                  }`}
                 disabled={loading || !validateStep(currentStep)}
                 endContent={
                   !loading && (
