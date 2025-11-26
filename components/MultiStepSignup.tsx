@@ -52,20 +52,20 @@ const steps = [
   },
   {
     title: "Height",
-    subtitle: "We'll use this for accurate calculations",
+    subtitle: "We&apos;ll use this for accurate calculations",
     description: "📏 Essential for calculating your BMI and calorie needs",
     benefit: "Precise health calculations",
   },
   {
     title: "Weight",
     subtitle: "Current weight for your health profile",
-    description: "⚖️ We'll track your progress from this starting point",
+    description: "⚖️ We&apos;ll track your progress from this starting point",
     benefit: "Personalized weight tracking",
   },
   {
-    title: "What's your goal?",
+    title: "What&apos;s your goal?",
     subtitle: "What do you want to achieve?",
-    description: "🎯 Choose your health mission - we'll guide you there!",
+    description: "🎯 Choose your health mission - we&apos;ll guide you there!",
     benefit: "Tailored workout & meal plans",
   },
   {
@@ -911,7 +911,7 @@ export default function MultiStepSignup({
                 >
                   {passwordsMatch
                     ? "✓ Passwords match perfectly!"
-                    : "✖ Passwords don't match"}
+                    : "✖ Passwords don&apos;t match"}
                 </span>
               </motion.div>
             )}
