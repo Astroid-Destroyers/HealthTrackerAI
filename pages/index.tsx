@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/router";
 import { Link } from "@heroui/link";
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
@@ -9,6 +10,8 @@ import { siteConfig } from "@/config/site";
 import { GithubIcon } from "@/components/icons";
 import DefaultLayout from "@/layouts/default";
 import { useAuth } from "@/providers/AuthProvider";
+import { db } from "@/lib/firebase";
+import { doc, onSnapshot } from "firebase/firestore";
 
 const features = [
   {
@@ -46,19 +49,53 @@ const stats = [
 
 export default function IndexPage() {
   const { user, loading } = useAuth();
+  const router = useRouter();
   const [isVisible, setIsVisible] = useState(false);
+  const [nutritionTotals, setNutritionTotals] = useState({ calories: 0, protein: 0, carbs: 0, fats: 0 });
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
 
+  useEffect(() => {
+    if (!user) return;
+
+    const dateString = new Date().toISOString().split('T')[0];
+    const docRef = doc(db, "users", user.uid, "nutrition", dateString);
+    
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        let totals = { calories: 0, protein: 0, carbs: 0, fats: 0 };
+        
+        Object.values(data).forEach((meal: any) => {
+          if (Array.isArray(meal)) {
+            meal.forEach((item: any) => {
+              totals.calories += item.calories || 0;
+              totals.protein += item.protein || 0;
+              totals.carbs += item.carbs || 0;
+              totals.fats += item.fats || 0;
+            });
+          }
+        });
+        setNutritionTotals(totals);
+      } else {
+        setNutritionTotals({ calories: 0, protein: 0, carbs: 0, fats: 0 });
+      }
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
   // If user is logged in, show dashboard/welcome page
   if (user && !loading) {
+    const timeOfDay = new Date().getHours() < 12 ? "Morning" : new Date().getHours() < 18 ? "Afternoon" : "Evening";
+
     return (
       <DefaultLayout>
-        <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden">
+        <section className="min-h-screen flex flex-col items-center justify-start pt-32 md:pt-40 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden px-6 pb-20">
           {/* Animated background elements */}
-          <div className="absolute inset-0 opacity-20">
+          <div className="absolute inset-0 opacity-20 pointer-events-none">
             <motion.div
               animate={{
                 scale: [1, 1.2, 1],
@@ -83,64 +120,144 @@ export default function IndexPage() {
             />
           </div>
 
-          {/* Welcome Content */}
-          <div className="relative z-10 text-center max-w-4xl mx-auto px-6">
-            <motion.div
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-8"
-              initial={{ opacity: 0, y: 50 }}
-              transition={{ duration: 0.8 }}
-            >
-              <h1 className="text-6xl md:text-8xl font-bold mb-6">
-                <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  Welcome Back
-                </span>
-              </h1>
-              <h2 className="text-3xl md:text-4xl font-semibold text-white mb-4">
-                {user.displayName || user.email?.split("@")[0] || "User"}! 👋
-              </h2>
-              <p className="text-xl text-gray-300 font-light leading-relaxed">
-                Ready to continue your AI-powered health journey?
-              </p>
-            </motion.div>
+          {/* Dashboard Content */}
+          <div className="relative z-10 w-full max-w-6xl mx-auto">
+             {/* Header */}
+             <motion.div 
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+               className="mb-10 text-left"
+             >
+                <h1 className="text-4xl md:text-6xl font-bold text-white mb-3 tracking-tight">
+                  Good {timeOfDay}, <span className="text-indigo-400">{user.displayName || "User"}</span>
+                </h1>
+                <p className="text-gray-400 text-lg md:text-xl font-light">Here's your daily health overview.</p>
+             </motion.div>
 
-            <motion.div
-              animate={{ opacity: 1, scale: 1 }}
-              className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl p-8 shadow-2xl"
-              initial={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-            >
-              <h3 className="text-2xl font-semibold text-white mb-4">
-                Your Health Dashboard
-              </h3>
-              <p className="text-gray-300 text-lg mb-6">
-                Your personalized AI health insights and recommendations are
-                being prepared.
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="backdrop-blur-xl bg-white/5 border border-white/10">
-                  <CardBody className="text-center p-6">
-                    <div className="text-3xl mb-2">📊</div>
-                    <h4 className="text-white font-semibold">Health Metrics</h4>
-                    <p className="text-gray-400 text-sm">Coming Soon</p>
-                  </CardBody>
-                </Card>
-                <Card className="backdrop-blur-xl bg-white/5 border border-white/10">
-                  <CardBody className="text-center p-6">
-                    <div className="text-3xl mb-2">🧠</div>
-                    <h4 className="text-white font-semibold">AI Insights</h4>
-                    <p className="text-gray-400 text-sm">Coming Soon</p>
-                  </CardBody>
-                </Card>
-                <Card className="backdrop-blur-xl bg-white/5 border border-white/10">
-                  <CardBody className="text-center p-6">
-                    <div className="text-3xl mb-2">🎯</div>
-                    <h4 className="text-white font-semibold">Goals</h4>
-                    <p className="text-gray-400 text-sm">Coming Soon</p>
-                  </CardBody>
-                </Card>
-              </div>
-            </motion.div>
+             {/* Bento Grid */}
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[200px]">
+                
+                {/* Nutrition - Hero Card (2x2) */}
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.1 }}
+                  className="md:col-span-2 md:row-span-2"
+                >
+                  <Card 
+                    isPressable 
+                    onPress={() => router.push('/nutrition')}
+                    className="w-full h-full bg-gradient-to-br from-emerald-900/40 to-teal-900/40 border border-white/10 backdrop-blur-md hover:scale-[1.02] transition-transform duration-300"
+                  >
+                    <CardBody className="p-8 flex flex-col justify-between h-full">
+                      <div className="flex justify-between items-start">
+                        <div className="p-4 bg-emerald-500/20 rounded-2xl backdrop-blur-sm border border-emerald-500/20">
+                          <span className="text-4xl">🥗</span>
+                        </div>
+                        <span className="px-4 py-1.5 rounded-full bg-white/10 text-sm text-white font-medium border border-white/5">
+                          Daily Tracker
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className="text-3xl font-bold text-white mb-2">Nutrition</h3>
+                        <p className="text-gray-300 mb-6 text-lg">Track your calories, macros, and meals to hit your daily targets.</p>
+                        
+                        {/* Real Stats Visualization */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm font-medium">
+                            <span className="text-emerald-400">Calories</span>
+                            <span className="text-white">{nutritionTotals.calories} / 2,500 kcal</span>
+                          </div>
+                          <div className="w-full bg-white/10 h-3 rounded-full overflow-hidden">
+                            <motion.div 
+                              initial={{ width: 0 }}
+                              animate={{ width: `${Math.min((nutritionTotals.calories / 2500) * 100, 100)}%` }}
+                              transition={{ duration: 1, delay: 0.5 }}
+                              className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full" 
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </CardBody>
+                  </Card>
+                </motion.div>
+
+                {/* Goals (1x1) */}
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="md:col-span-1 md:row-span-1"
+                >
+                  <Card 
+                    isPressable 
+                    onPress={() => router.push('/goals')}
+                    className="w-full h-full bg-gradient-to-br from-purple-900/40 to-indigo-900/40 border border-white/10 backdrop-blur-md hover:scale-[1.02] transition-transform duration-300"
+                  >
+                    <CardBody className="p-6 flex flex-col justify-between h-full">
+                      <div className="flex justify-between items-start">
+                        <div className="p-3 bg-purple-500/20 rounded-xl border border-purple-500/20">
+                          <span className="text-2xl">🎯</span>
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-bold text-white mb-1">Goals</h3>
+                        <p className="text-purple-200/70 text-sm">3 Active Goals</p>
+                      </div>
+                    </CardBody>
+                  </Card>
+                </motion.div>
+
+                {/* Workout (1x1) */}
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="md:col-span-1 md:row-span-1"
+                >
+                  <Card 
+                    isPressable 
+                    onPress={() => router.push('/workout')}
+                    className="w-full h-full bg-gradient-to-br from-orange-900/40 to-red-900/40 border border-white/10 backdrop-blur-md hover:scale-[1.02] transition-transform duration-300"
+                  >
+                    <CardBody className="p-6 flex flex-col justify-between h-full">
+                      <div className="flex justify-between items-start">
+                        <div className="p-3 bg-orange-500/20 rounded-xl border border-orange-500/20">
+                          <span className="text-2xl">💪</span>
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-bold text-white mb-1">Workout</h3>
+                        <p className="text-orange-200/70 text-sm">Log Activity</p>
+                      </div>
+                    </CardBody>
+                  </Card>
+                </motion.div>
+
+                {/* AI Insights (3x1) - Wide Banner */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="md:col-span-3 md:row-span-1"
+                >
+                  <Card className="w-full h-full bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-white/10 backdrop-blur-md">
+                    <CardBody className="p-6 flex flex-col md:flex-row items-center gap-6 h-full">
+                      <div className="p-4 bg-blue-500/20 rounded-full shrink-0 border border-blue-500/20">
+                        <span className="text-3xl">🧠</span>
+                      </div>
+                      <div className="flex-grow text-center md:text-left">
+                        <h3 className="text-xl font-bold text-white mb-1">AI Health Insights</h3>
+                        <p className="text-gray-300">Your weekly health analysis is ready. You've improved your sleep consistency by 15% this week!</p>
+                      </div>
+                      <Button className="bg-white/10 text-white hover:bg-white/20 border border-white/10" variant="flat">
+                        View Report
+                      </Button>
+                    </CardBody>
+                  </Card>
+                </motion.div>
+
+             </div>
           </div>
         </section>
       </DefaultLayout>
