@@ -11,7 +11,7 @@ import { GithubIcon } from "@/components/icons";
 import DefaultLayout from "@/layouts/default";
 import { useAuth } from "@/providers/AuthProvider";
 import { db } from "@/lib/firebase";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, collection, getDocs, getDoc } from "firebase/firestore";
 
 const features = [
   {
@@ -52,6 +52,8 @@ export default function IndexPage() {
   const router = useRouter();
   const [isVisible, setIsVisible] = useState(false);
   const [nutritionTotals, setNutritionTotals] = useState({ calories: 0, protein: 0, carbs: 0, fats: 0 });
+  const [weeklyWorkouts, setWeeklyWorkouts] = useState(0);
+  const [workoutGoal, setWorkoutGoal] = useState(3);
 
   useEffect(() => {
     setIsVisible(true);
@@ -85,6 +87,59 @@ export default function IndexPage() {
     });
 
     return () => unsubscribe();
+  }, [user]);
+
+  // Fetch weekly workout completions
+  useEffect(() => {
+    const fetchWeeklyWorkouts = async () => {
+      if (!user) return;
+
+      try {
+        // Get user's workout goal
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setWorkoutGoal(userData.weeklyWorkoutGoal || 3);
+        }
+
+        // Get workout logs
+        const workoutLogsRef = collection(db, "users", user.uid, "workoutLogs");
+        
+        // Calculate start of current week (Sunday)
+        const now = new Date();
+        const dayOfWeek = now.getDay(); // 0 is Sunday
+        const startOfWeek = new Date(now);
+        startOfWeek.setHours(0, 0, 0, 0);
+        startOfWeek.setDate(now.getDate() - dayOfWeek);
+        
+        const querySnapshot = await getDocs(workoutLogsRef);
+        
+        let count = 0;
+        querySnapshot.forEach((doc) => {
+          const dateStr = doc.id; // Date format: YYYY-MM-DD
+          const data = doc.data();
+          const completed = data.completed || [];
+          
+          // Check if date is within current week and has at least 1 completed exercise
+          const logDate = new Date(dateStr);
+          if (logDate >= startOfWeek && completed.length > 0) {
+            count++;
+          }
+        });
+        
+        setWeeklyWorkouts(count);
+      } catch (error) {
+        console.error("Error fetching workout logs:", error);
+      }
+    };
+
+    if (user) {
+      fetchWeeklyWorkouts();
+      // Refresh every minute to catch updates
+      const interval = setInterval(fetchWeeklyWorkouts, 60000);
+      return () => clearInterval(interval);
+    }
   }, [user]);
 
   // If user is logged in, show dashboard/welcome page
@@ -201,8 +256,23 @@ export default function IndexPage() {
                         </div>
                       </div>
                       <div>
-                        <h3 className="text-2xl font-bold text-white mb-1">Goals</h3>
-                        <p className="text-purple-200/70 text-sm">3 Active Goals</p>
+                        <h3 className="text-2xl font-bold text-white mb-2">Goals</h3>
+                        
+                        {/* Workout Progress */}
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs font-medium">
+                            <span className="text-purple-300">Weekly Workouts</span>
+                            <span className="text-white">{weeklyWorkouts} / {workoutGoal} days</span>
+                          </div>
+                          <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+                            <motion.div 
+                              initial={{ width: 0 }}
+                              animate={{ width: `${Math.min((weeklyWorkouts / workoutGoal) * 100, 100)}%` }}
+                              transition={{ duration: 1, delay: 0.5 }}
+                              className="bg-gradient-to-r from-purple-500 to-indigo-400 h-full rounded-full" 
+                            />
+                          </div>
+                        </div>
                       </div>
                     </CardBody>
                   </Card>
@@ -248,9 +318,13 @@ export default function IndexPage() {
                       </div>
                       <div className="flex-grow text-center md:text-left">
                         <h3 className="text-xl font-bold text-white mb-1">AI Health Insights</h3>
-                        <p className="text-gray-300">Your weekly health analysis is ready. You've improved your sleep consistency by 15% this week!</p>
+                        <p className="text-gray-300">Small insights that change everything</p>
                       </div>
-                      <Button className="bg-white/10 text-white hover:bg-white/20 border border-white/10" variant="flat">
+                      <Button 
+                        className="bg-white/10 text-white hover:bg-white/20 border border-white/10" 
+                        variant="flat"
+                        onPress={() => router.push("/ai-insights")}
+                      >
                         View Report
                       </Button>
                     </CardBody>

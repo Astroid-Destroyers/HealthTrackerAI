@@ -61,6 +61,14 @@ export default function NutritionPage() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
+  // AI Chat State
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'assistant', content: string, foods?: FoodItem[]}[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [isLoadingChat, setIsLoadingChat] = useState(false);
+  const [selectedMealForAI, setSelectedMealForAI] = useState<MealType | null>(null);
+  const [pendingFoodToAdd, setPendingFoodToAdd] = useState<FoodItem | null>(null);
+
   // Format date as YYYY-MM-DD for Firestore document ID
   const dateString = date.toISOString().split('T')[0];
 
@@ -227,6 +235,86 @@ export default function NutritionPage() {
     const newDate = new Date(date);
     newDate.setDate(date.getDate() + days);
     setDate(newDate);
+  };
+
+  const handleSendMessage = async () => {
+    if (!chatInput.trim() || isLoadingChat) return;
+
+    const userMessage = chatInput.trim();
+    setChatInput("");
+    setChatMessages([...chatMessages, { role: 'user', content: userMessage }]);
+    setIsLoadingChat(true);
+
+    try {
+      const remainingMacros = {
+        calories: DEFAULT_GOALS.calories - totals.calories,
+        protein: DEFAULT_GOALS.protein - totals.protein,
+        carbs: DEFAULT_GOALS.carbs - totals.carbs,
+        fats: DEFAULT_GOALS.fats - totals.fats,
+      };
+
+      const res = await fetch('/api/nutrition-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          message: userMessage,
+          remainingMacros 
+        }),
+      });
+
+      const data = await res.json();
+      
+      if (data.isStructured && data.foods && Array.isArray(data.foods)) {
+        // Structured response with foods array
+        const foodItems: FoodItem[] = data.foods.map((food: any) => ({
+          id: crypto.randomUUID(),
+          name: food.name,
+          calories: food.calories,
+          protein: food.protein,
+          carbs: food.carbs,
+          fats: food.fats,
+        }));
+        
+        setChatMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: data.explanation || 'Here are some recommendations:',
+          foods: foodItems 
+        }]);
+      } else {
+        // Fallback text response
+        setChatMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: data.reply || 'Sorry, I could not generate a response.' 
+        }]);
+      }
+    } catch (error) {
+      console.error('Chat error:', error);
+      setChatMessages(prev => [...prev, { role: 'assistant', content: 'An error occurred. Please try again.' }]);
+    } finally {
+      setIsLoadingChat(false);
+    }
+  };
+
+  const handleAddAIFood = async (food: FoodItem, meal: MealType) => {
+    if (!user) return;
+
+    const docRef = doc(db, "users", user.uid, "nutrition", dateString);
+
+    try {
+      await setDoc(docRef, {
+        [meal]: arrayUnion(food)
+      }, { merge: true });
+
+      setSelectedMealForAI(null);
+      setPendingFoodToAdd(null);
+    } catch (error) {
+      console.error("Error adding AI food:", error);
+    }
+  };
+
+  const handleFoodClick = (food: FoodItem) => {
+    setPendingFoodToAdd(food);
+    setSelectedMealForAI(null); // Will trigger the meal selector modal
   };
 
   if (loading || !user) return null;
@@ -596,6 +684,207 @@ export default function NutritionPage() {
                   Add {selectedFoods.length > 0 ? `${selectedFoods.length} Items` : 'Food'}
                 </Button>
               </ModalFooter>
+            </ModalContent>
+          </Modal>
+
+          {/* AI Chat Floating Button */}
+          <AnimatePresence>
+            {!isChatOpen && (
+              <motion.button
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                onClick={() => setIsChatOpen(true)}
+                className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full shadow-2xl flex items-center justify-center text-white text-2xl hover:scale-110 transition-transform z-50"
+              >
+                🤖
+              </motion.button>
+            )}
+          </AnimatePresence>
+
+          {/* AI Chat Modal */}
+          <AnimatePresence>
+            {isChatOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                className="fixed bottom-8 right-8 w-96 h-[600px] bg-slate-900 rounded-2xl shadow-2xl border border-white/10 flex flex-col overflow-hidden z-50"
+              >
+                {/* Chat Header */}
+                <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🤖</span>
+                    <div>
+                      <h3 className="text-white font-bold">AI Nutrition Coach</h3>
+                      <p className="text-white/80 text-xs">Ask me anything about nutrition!</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsChatOpen(false)}
+                    className="text-white hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Remaining Macros Summary */}
+                <div className="bg-slate-800 px-4 py-3 border-b border-white/5">
+                  <p className="text-xs text-gray-400 mb-2 uppercase tracking-wider font-semibold">Remaining Today</p>
+                  <div className="grid grid-cols-4 gap-2 text-center">
+                    <div>
+                      <p className="text-lg font-bold text-white">{Math.max(0, DEFAULT_GOALS.calories - totals.calories)}</p>
+                      <p className="text-[10px] text-gray-500">cal</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-blue-400">{Math.max(0, DEFAULT_GOALS.protein - totals.protein)}g</p>
+                      <p className="text-[10px] text-gray-500">protein</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-orange-400">{Math.max(0, DEFAULT_GOALS.carbs - totals.carbs)}g</p>
+                      <p className="text-[10px] text-gray-500">carbs</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-red-400">{Math.max(0, DEFAULT_GOALS.fats - totals.fats)}g</p>
+                      <p className="text-[10px] text-gray-500">fats</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Chat Messages */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {chatMessages.length === 0 && (
+                    <div className="text-center text-gray-500 mt-8">
+                      <p className="text-sm mb-4">💬 Start a conversation!</p>
+                      <div className="space-y-2 text-xs text-left bg-white/5 rounded-lg p-4">
+                        <p className="font-semibold text-gray-400 uppercase tracking-wider">Try asking:</p>
+                        <button 
+                          onClick={() => setChatInput("What foods can I eat to get 20g of protein with my remaining calories?")}
+                          className="block w-full text-left text-purple-400 hover:text-purple-300 hover:bg-white/5 rounded p-2 transition-colors"
+                        >
+                          "What foods can I eat to get 20g of protein?"
+                        </button>
+                        <button 
+                          onClick={() => setChatInput("Suggest a healthy dinner with my remaining macros")}
+                          className="block w-full text-left text-purple-400 hover:text-purple-300 hover:bg-white/5 rounded p-2 transition-colors"
+                        >
+                          "Suggest a healthy dinner"
+                        </button>
+                        <button 
+                          onClick={() => setChatInput("What's a good post-workout snack?")}
+                          className="block w-full text-left text-purple-400 hover:text-purple-300 hover:bg-white/5 rounded p-2 transition-colors"
+                        >
+                          "What's a good post-workout snack?"
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {chatMessages.map((msg, idx) => (
+                    <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                        msg.role === 'user' 
+                          ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' 
+                          : 'bg-white/10 text-gray-200'
+                      }`}>
+                        <p className="text-sm whitespace-pre-wrap mb-2">{msg.content}</p>
+                        
+                        {/* AI Food Recommendations */}
+                        {msg.foods && msg.foods.length > 0 && (
+                          <div className="space-y-2 mt-3">
+                            {msg.foods.map((food) => (
+                              <button
+                                key={food.id}
+                                onClick={() => handleFoodClick(food)}
+                                className="w-full bg-slate-800 hover:bg-slate-700 rounded-lg p-3 text-left transition-colors border border-white/10 hover:border-purple-400"
+                              >
+                                <p className="text-white font-semibold text-sm mb-1">{food.name}</p>
+                                <p className="text-xs text-gray-400">
+                                  {food.calories} cal • P: {food.protein}g • C: {food.carbs}g • F: {food.fats}g
+                                </p>
+                                <p className="text-xs text-purple-400 mt-2">Click to add to meal →</p>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {isLoadingChat && (
+                    <div className="flex justify-start">
+                      <div className="bg-white/10 rounded-2xl px-4 py-3">
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Chat Input */}
+                <div className="p-4 border-t border-white/10 bg-slate-800">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Ask about nutrition..."
+                      value={chatInput}
+                      onValueChange={setChatInput}
+                      onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+                      disabled={isLoadingChat}
+                      variant="bordered"
+                      classNames={{
+                        inputWrapper: "border-white/20 hover:border-white/40 bg-slate-900",
+                        input: "text-white"
+                      }}
+                    />
+                    <Button 
+                      isIconOnly
+                      color="primary"
+                      isLoading={isLoadingChat}
+                      onPress={handleSendMessage}
+                      className="bg-gradient-to-r from-purple-500 to-pink-500"
+                    >
+                      ↑
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Meal Selection Modal for AI Recommendations */}
+          <Modal 
+            isOpen={pendingFoodToAdd !== null && selectedMealForAI === null} 
+            onClose={() => {
+              setPendingFoodToAdd(null);
+              setSelectedMealForAI(null);
+            }}
+            backdrop="blur"
+            placement="center"
+          >
+            <ModalContent className="bg-slate-800 border border-white/10 text-white">
+              <ModalHeader className="border-b border-white/10">
+                Add "{pendingFoodToAdd?.name}" to...
+              </ModalHeader>
+              <ModalBody className="py-6">
+                <div className="grid grid-cols-2 gap-3">
+                  {(['breakfast', 'lunch', 'dinner', 'snacks'] as MealType[]).map((meal) => (
+                    <button
+                      key={meal}
+                      onClick={() => {
+                        if (pendingFoodToAdd) {
+                          handleAddAIFood(pendingFoodToAdd, meal);
+                        }
+                      }}
+                      className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-400 rounded-lg p-4 transition-all capitalize font-medium text-white"
+                    >
+                      {meal}
+                    </button>
+                  ))}
+                </div>
+              </ModalBody>
             </ModalContent>
           </Modal>
 

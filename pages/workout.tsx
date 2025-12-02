@@ -1,5 +1,6 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Input } from "@heroui/input";
@@ -36,6 +37,18 @@ export default function WorkoutPage() {
     reps: "10",
     weight: ""
   });
+
+  // AI Chat State
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'assistant', content: string, exercises?: Exercise[]}[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [isLoadingChat, setIsLoadingChat] = useState(false);
+  const [selectedDayForAI, setSelectedDayForAI] = useState<string | null>(null);
+  const [pendingExerciseToAdd, setPendingExerciseToAdd] = useState<Exercise | null>(null);
+
+  // Edit Exercise State
+  const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const todayDateString = new Date().toISOString().split('T')[0];
 
@@ -129,6 +142,109 @@ export default function WorkoutPage() {
       });
     } catch (error) {
       console.error("Error deleting exercise:", error);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!chatInput.trim() || isLoadingChat) return;
+
+    const userMessage = chatInput.trim();
+    setChatInput("");
+    setChatMessages([...chatMessages, { role: 'user', content: userMessage }]);
+    setIsLoadingChat(true);
+
+    try {
+      const res = await fetch('/api/workout-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          message: userMessage,
+          currentDay: selectedDay 
+        }),
+      });
+
+      const data = await res.json();
+      
+      if (data.isStructured && data.exercises && Array.isArray(data.exercises)) {
+        // Structured response with exercises array
+        const exerciseItems: Exercise[] = data.exercises.map((ex: any) => ({
+          id: crypto.randomUUID(),
+          name: ex.name,
+          sets: ex.sets,
+          reps: ex.reps,
+          weight: ex.weight || "",
+        }));
+        
+        setChatMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: data.explanation || 'Here are some workout recommendations:',
+          exercises: exerciseItems 
+        }]);
+      } else {
+        // Fallback text response
+        setChatMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: data.reply || 'Sorry, I could not generate a response.' 
+        }]);
+      }
+    } catch (error) {
+      console.error('Chat error:', error);
+      setChatMessages(prev => [...prev, { role: 'assistant', content: 'An error occurred. Please try again.' }]);
+    } finally {
+      setIsLoadingChat(false);
+    }
+  };
+
+  const handleAddAIExercise = async (exercise: Exercise, day: string) => {
+    if (!user) return;
+
+    const docRef = doc(db, "users", user.uid, "workoutSchedule", day);
+
+    try {
+      await setDoc(docRef, {
+        exercises: arrayUnion(exercise)
+      }, { merge: true });
+
+      setSelectedDayForAI(null);
+      setPendingExerciseToAdd(null);
+    } catch (error) {
+      console.error("Error adding AI exercise:", error);
+    }
+  };
+
+  const handleExerciseClick = (exercise: Exercise) => {
+    setPendingExerciseToAdd(exercise);
+    setSelectedDayForAI(null); // Will trigger the day selector modal
+  };
+
+  const handleEditExercise = (exercise: Exercise) => {
+    setEditingExercise({ ...exercise });
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!user || !editingExercise) return;
+
+    const docRef = doc(db, "users", user.uid, "workoutSchedule", selectedDay);
+    
+    try {
+      // Find the original exercise in the list
+      const originalExercise = exercises.find(ex => ex.id === editingExercise.id);
+      if (!originalExercise) return;
+
+      // Remove the old exercise and add the updated one
+      const updatedExercises = exercises.map(ex => 
+        ex.id === editingExercise.id ? editingExercise : ex
+      );
+
+      await setDoc(docRef, {
+        exercises: updatedExercises
+      });
+
+      setIsEditModalOpen(false);
+      setEditingExercise(null);
+    } catch (error) {
+      console.error("Error updating exercise:", error);
     }
   };
 
@@ -255,15 +371,26 @@ export default function WorkoutPage() {
                           </div>
                         </div>
                         
-                        <Button
-                          isIconOnly
-                          color="danger"
-                          variant="light"
-                          onPress={() => handleDeleteExercise(exercise)}
-                          className="opacity-50 hover:opacity-100"
-                        >
-                          ✕
-                        </Button>
+                        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            isIconOnly
+                            color="primary"
+                            variant="light"
+                            onPress={() => handleEditExercise(exercise)}
+                            className="opacity-50 hover:opacity-100"
+                          >
+                            ✏️
+                          </Button>
+                          <Button
+                            isIconOnly
+                            color="danger"
+                            variant="light"
+                            onPress={() => handleDeleteExercise(exercise)}
+                            className="opacity-50 hover:opacity-100"
+                          >
+                            ✕
+                          </Button>
+                        </div>
                       </CardBody>
                     </Card>
                   );
@@ -358,6 +485,287 @@ export default function WorkoutPage() {
                   isDisabled={!newExercise.name}
                 >
                   Add to Schedule
+                </Button>
+              </ModalFooter>
+            </ModalContent>
+          </Modal>
+
+          {/* AI Chat Floating Button */}
+          <AnimatePresence>
+            {!isChatOpen && (
+              <motion.button
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                onClick={() => setIsChatOpen(true)}
+                className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-full shadow-2xl flex items-center justify-center text-white text-2xl hover:scale-110 transition-transform z-50"
+              >
+                💪
+              </motion.button>
+            )}
+          </AnimatePresence>
+
+          {/* AI Chat Modal */}
+          <AnimatePresence>
+            {isChatOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                className="fixed bottom-8 right-8 w-96 h-[600px] bg-slate-900 rounded-2xl shadow-2xl border border-white/10 flex flex-col overflow-hidden z-50"
+              >
+                {/* Chat Header */}
+                <div className="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">💪</span>
+                    <div>
+                      <h3 className="text-white font-bold">AI Fitness Coach</h3>
+                      <p className="text-white/80 text-xs">Ask me about workouts!</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsChatOpen(false)}
+                    className="text-white hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Current Day Info */}
+                <div className="bg-slate-800 px-4 py-3 border-b border-white/5">
+                  <p className="text-xs text-gray-400 mb-1 uppercase tracking-wider font-semibold">Currently Viewing</p>
+                  <p className="text-lg font-bold text-white">{selectedDay}</p>
+                </div>
+
+                {/* Chat Messages */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {chatMessages.length === 0 && (
+                    <div className="text-center text-gray-500 mt-8">
+                      <p className="text-sm mb-4">💬 Start a conversation!</p>
+                      <div className="space-y-2 text-xs text-left bg-white/5 rounded-lg p-4">
+                        <p className="font-semibold text-gray-400 uppercase tracking-wider">Try asking:</p>
+                        <button 
+                          onClick={() => setChatInput("What are the best exercises for chest day?")}
+                          className="block w-full text-left text-orange-400 hover:text-orange-300 hover:bg-white/5 rounded p-2 transition-colors"
+                        >
+                          "What are the best exercises for chest day?"
+                        </button>
+                        <button 
+                          onClick={() => setChatInput("Suggest a leg workout routine")}
+                          className="block w-full text-left text-orange-400 hover:text-orange-300 hover:bg-white/5 rounded p-2 transition-colors"
+                        >
+                          "Suggest a leg workout routine"
+                        </button>
+                        <button 
+                          onClick={() => setChatInput("What exercises target shoulders?")}
+                          className="block w-full text-left text-orange-400 hover:text-orange-300 hover:bg-white/5 rounded p-2 transition-colors"
+                        >
+                          "What exercises target shoulders?"
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {chatMessages.map((msg, idx) => (
+                    <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                        msg.role === 'user' 
+                          ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white' 
+                          : 'bg-white/10 text-gray-200'
+                      }`}>
+                        <p className="text-sm whitespace-pre-wrap mb-2">{msg.content}</p>
+                        
+                        {/* AI Exercise Recommendations */}
+                        {msg.exercises && msg.exercises.length > 0 && (
+                          <div className="space-y-2 mt-3">
+                            {msg.exercises.map((exercise) => (
+                              <button
+                                key={exercise.id}
+                                onClick={() => handleExerciseClick(exercise)}
+                                className="w-full bg-slate-800 hover:bg-slate-700 rounded-lg p-3 text-left transition-colors border border-white/10 hover:border-orange-400"
+                              >
+                                <p className="text-white font-semibold text-sm mb-1">{exercise.name}</p>
+                                <p className="text-xs text-gray-400">
+                                  {exercise.sets} sets • {exercise.reps} reps{exercise.weight ? ` • ${exercise.weight}` : ''}
+                                </p>
+                                <p className="text-xs text-orange-400 mt-2">Click to add to schedule →</p>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {isLoadingChat && (
+                    <div className="flex justify-start">
+                      <div className="bg-white/10 rounded-2xl px-4 py-3">
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Chat Input */}
+                <div className="p-4 border-t border-white/10 bg-slate-800">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Ask about workouts..."
+                      value={chatInput}
+                      onValueChange={setChatInput}
+                      onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+                      disabled={isLoadingChat}
+                      variant="bordered"
+                      classNames={{
+                        inputWrapper: "border-white/20 hover:border-white/40 bg-slate-900",
+                        input: "text-white"
+                      }}
+                    />
+                    <Button 
+                      isIconOnly
+                      color="primary"
+                      isLoading={isLoadingChat}
+                      onPress={handleSendMessage}
+                      className="bg-gradient-to-r from-orange-500 to-red-500"
+                    >
+                      ↑
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Day Selection Modal for AI Recommendations */}
+          <Modal 
+            isOpen={pendingExerciseToAdd !== null && selectedDayForAI === null} 
+            onClose={() => {
+              setPendingExerciseToAdd(null);
+              setSelectedDayForAI(null);
+            }}
+            backdrop="blur"
+            placement="center"
+          >
+            <ModalContent className="bg-slate-800 border border-white/10 text-white">
+              <ModalHeader className="border-b border-white/10">
+                Add "{pendingExerciseToAdd?.name}" to...
+              </ModalHeader>
+              <ModalBody className="py-6">
+                <div className="grid grid-cols-2 gap-3">
+                  {DAYS.map((day) => (
+                    <button
+                      key={day}
+                      onClick={() => {
+                        if (pendingExerciseToAdd) {
+                          handleAddAIExercise(pendingExerciseToAdd, day);
+                        }
+                      }}
+                      className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-orange-400 rounded-lg p-4 transition-all font-medium text-white"
+                    >
+                      {day}
+                    </button>
+                  ))}
+                </div>
+              </ModalBody>
+            </ModalContent>
+          </Modal>
+
+          {/* Edit Exercise Modal */}
+          <Modal 
+            isOpen={isEditModalOpen} 
+            onClose={() => {
+              setIsEditModalOpen(false);
+              setEditingExercise(null);
+            }}
+            backdrop="blur"
+            placement="center"
+            classNames={{
+              base: "bg-slate-900 border border-white/10",
+              header: "border-b border-white/10",
+              footer: "border-t border-white/10",
+              closeButton: "hover:bg-white/5 active:bg-white/10",
+            }}
+          >
+            <ModalContent>
+              <ModalHeader className="text-white">Edit Exercise</ModalHeader>
+              <ModalBody className="py-6 flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm text-gray-400 font-medium">Exercise Name</label>
+                  <Input
+                    autoFocus
+                    placeholder="e.g. Bench Press"
+                    variant="bordered"
+                    value={editingExercise?.name || ""}
+                    onValueChange={(v) => setEditingExercise(editingExercise ? { ...editingExercise, name: v } : null)}
+                    classNames={{
+                      input: "text-white",
+                      inputWrapper: "border-white/20 hover:border-white/40"
+                    }}
+                  />
+                </div>
+                
+                <div className="flex gap-4">
+                  <div className="flex flex-col gap-2 flex-1">
+                    <label className="text-sm text-gray-400 font-medium">Sets</label>
+                    <Input
+                      type="number"
+                      placeholder="3"
+                      variant="bordered"
+                      value={editingExercise?.sets?.toString() || ""}
+                      onValueChange={(v) => setEditingExercise(editingExercise ? { ...editingExercise, sets: parseInt(v) || 0 } : null)}
+                      classNames={{
+                        input: "text-white",
+                        inputWrapper: "border-white/20 hover:border-white/40"
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="flex flex-col gap-2 flex-1">
+                    <label className="text-sm text-gray-400 font-medium">Reps</label>
+                    <Input
+                      placeholder="8-12"
+                      variant="bordered"
+                      value={editingExercise?.reps || ""}
+                      onValueChange={(v) => setEditingExercise(editingExercise ? { ...editingExercise, reps: v } : null)}
+                      classNames={{
+                        input: "text-white",
+                        inputWrapper: "border-white/20 hover:border-white/40"
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm text-gray-400 font-medium">Target Weight</label>
+                  <Input
+                    placeholder="e.g. 135 lbs"
+                    variant="bordered"
+                    value={editingExercise?.weight || ""}
+                    onValueChange={(v) => setEditingExercise(editingExercise ? { ...editingExercise, weight: v } : null)}
+                    classNames={{
+                      input: "text-white",
+                      inputWrapper: "border-white/20 hover:border-white/40"
+                    }}
+                  />
+                </div>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" variant="light" onPress={() => {
+                  setIsEditModalOpen(false);
+                  setEditingExercise(null);
+                }}>
+                  Cancel
+                </Button>
+                <Button 
+                  className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold"
+                  onPress={handleSaveEdit}
+                  isDisabled={!editingExercise?.name}
+                >
+                  Save Changes
                 </Button>
               </ModalFooter>
             </ModalContent>

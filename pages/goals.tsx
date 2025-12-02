@@ -129,13 +129,13 @@ export default function GoalsPage() {
     }
   }, [user?.uid]);
 
-  // Fetch weekly workouts
+  // Fetch weekly workouts from workoutLogs (count days with at least 1 completed exercise)
   useEffect(() => {
     const fetchWeeklyWorkouts = async () => {
       if (!user?.uid) return;
 
       try {
-        const workoutsRef = collection(db, "users", user.uid, "workouts");
+        const workoutLogsRef = collection(db, "users", user.uid, "workoutLogs");
         
         // Calculate start of current week (Sunday)
         const now = new Date();
@@ -144,21 +144,24 @@ export default function GoalsPage() {
         startOfWeek.setHours(0, 0, 0, 0);
         startOfWeek.setDate(now.getDate() - dayOfWeek);
         
-        const q = query(workoutsRef, orderBy("date", "desc"));
-        const querySnapshot = await getDocs(q);
+        const querySnapshot = await getDocs(workoutLogsRef);
         
         let count = 0;
         querySnapshot.forEach((doc) => {
+          const dateStr = doc.id; // Date format: YYYY-MM-DD
           const data = doc.data();
-          const workoutDate = data.date.toDate();
-          if (workoutDate >= startOfWeek) {
+          const completed = data.completed || [];
+          
+          // Check if date is within current week and has at least 1 completed exercise
+          const logDate = new Date(dateStr);
+          if (logDate >= startOfWeek && completed.length > 0) {
             count++;
           }
         });
         
         setWeeklyWorkouts(count);
       } catch (error) {
-        console.error("Error fetching workouts:", error);
+        console.error("Error fetching workout logs:", error);
       }
     };
 
@@ -251,13 +254,20 @@ export default function GoalsPage() {
     
     setIsLoggingWorkout(true);
     try {
-      const workoutsRef = collection(db, "users", user.uid, "workouts");
-      await addDoc(workoutsRef, {
-        date: Timestamp.now(),
-        type: 'workout'
-      });
+      // Get today's date in YYYY-MM-DD format
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0];
       
-      setWeeklyWorkouts(prev => prev + 1);
+      const workoutLogRef = doc(db, "users", user.uid, "workoutLogs", dateStr);
+      const workoutLogDoc = await getDoc(workoutLogRef);
+      
+      if (!workoutLogDoc.exists() || !workoutLogDoc.data()?.completed?.length) {
+        // Only increment if this is the first workout logged today
+        setWeeklyWorkouts(prev => prev + 1);
+      }
+      
+      // Note: This just triggers a re-fetch, actual workout completion happens in workout.tsx
+      alert("Please mark exercises as completed on the Workout page to log workouts!");
     } catch (error) {
       console.error("Error logging workout:", error);
       alert("Failed to log workout");
@@ -297,20 +307,15 @@ export default function GoalsPage() {
       const weightEntriesRef = collection(db, "users", user.uid, "weightEntries");
       const weightSnapshot = await getDocs(weightEntriesRef);
       const deletePromises = weightSnapshot.docs.map(doc => deleteDoc(doc.ref));
-      
-      // Delete workouts
-      const workoutsRef = collection(db, "users", user.uid, "workouts");
-      const workoutSnapshot = await getDocs(workoutsRef);
-      const workoutDeletePromises = workoutSnapshot.docs.map(doc => deleteDoc(doc.ref));
 
-      await Promise.all([...deletePromises, ...workoutDeletePromises]);
+      await Promise.all([...deletePromises]);
 
       // Reset local state
       setWeightEntries([]);
       setWeeklyWorkouts(0);
       setEntriesLoaded(false); // Trigger re-sync of initial weight
       
-      alert("Data reset successfully");
+      alert("Weight data reset successfully. Note: Workout logs are managed from the Workout page.");
     } catch (error) {
       console.error("Error resetting data:", error);
       alert("Failed to reset data");
@@ -530,9 +535,9 @@ export default function GoalsPage() {
                     <CardBody className="p-6">
                       <div className="flex justify-between items-end mb-2">
                         <div>
-                          <h3 className="text-xl font-bold text-white mb-1">Weekly Workouts</h3>
+                          <h3 className="text-xl font-bold text-white mb-1">Weekly Workout Days</h3>
                           <p className="text-gray-400 text-sm">
-                            {weeklyWorkouts} of {userProfile.weeklyWorkoutGoal || 3} workouts completed this week
+                            {weeklyWorkouts} of {userProfile.weeklyWorkoutGoal || 3} days completed this week
                           </p>
                         </div>
                         <div className="flex gap-2">
@@ -550,10 +555,9 @@ export default function GoalsPage() {
                           <Button
                             size="sm"
                             className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
-                            onPress={handleLogWorkout}
-                            isLoading={isLoggingWorkout}
+                            onPress={() => router.push('/workout')}
                           >
-                            + Log Workout
+                            Go to Workouts →
                           </Button>
                         </div>
                       </div>
