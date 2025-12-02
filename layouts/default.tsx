@@ -5,6 +5,10 @@ import { Head } from "./head";
 
 import { Navbar } from "@/components/navbar";
 
+import { useAuth } from "@/providers/AuthProvider";
+
+const ADMIN_EMAIL = "admin@healthtrackerai.com";  // Admin email
+
 interface DefaultLayoutProps {
   children: React.ReactNode;
   title?: string;
@@ -21,6 +25,9 @@ export default function DefaultLayout({
   url,
 }: DefaultLayoutProps) {
   const [loggedIn, setLoggedIn] = useState(false);
+  const { user } = useAuth();
+  const isAdmin = user?.email === ADMIN_EMAIL;
+
 
   return (
     <div className="relative flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -65,6 +72,15 @@ export default function DefaultLayout({
               >
                 Terms
               </Link>
+              {/* Admin only link */}
+              {isAdmin && (
+                <Link
+                  className="text-gray-400 hover:text-white transition-colors"
+                  href="/admin"
+                >
+                  Admin
+                </Link>
+              )}
               <Link
                 isExternal
                 className="text-gray-400 hover:text-white transition-colors"
