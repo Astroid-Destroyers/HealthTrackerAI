@@ -36,7 +36,7 @@ interface Device {
   deviceType: string;
 }
 
-const ADMIN_EMAIL = "new.roeepalmon@gmail.com";
+const ADMIN_EMAIL = "admin@healthtrackerai.com";
 
 // Helper function to format phone numbers
 const formatPhoneNumber = (phoneNumber: string) => {
@@ -57,7 +57,7 @@ export default function AdminPanel() {
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [customMessage, setCustomMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
-  
+
   // SMS functionality state
   const [showSmsModal, setShowSmsModal] = useState(false);
   const [smsMessage, setSmsMessage] = useState("");
@@ -229,18 +229,18 @@ export default function AdminPanel() {
     setSendingFcm(true);
     try {
       const idToken = await user.getIdToken();
-      
+
       // Only get tokens from devices that have notifications enabled
-      const enabledDevices = selectedUser.devices.filter((device: any) => 
+      const enabledDevices = selectedUser.devices.filter((device: any) =>
         device.notificationsEnabled === true && device.fcmToken
       );
-      
+
       if (enabledDevices.length === 0) {
         alert("This user has no devices with notifications enabled");
         setSendingFcm(false);
         return;
       }
-      
+
       const deviceTokens = enabledDevices.map((device: any) => device.fcmToken);
 
       const response = await fetch("/api/admin/send-fcm", {
@@ -677,7 +677,7 @@ export default function AdminPanel() {
                   >
                     SMS Message
                   </label>
-                  
+
                   {/* Quick Templates */}
                   <div className="flex flex-wrap gap-2 mb-2">
                     <button
