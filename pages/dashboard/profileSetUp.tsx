@@ -225,7 +225,7 @@ export default function ProfilePage() {
     if (loadingUser) {
         return (
             <>
-                <Head>
+                <Head />
                     <title>Profile | HealthTrackerAI</title>
                 </Head>
                 <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
@@ -238,7 +238,7 @@ export default function ProfilePage() {
     if (!user) {
         return (
             <>
-                <Head>
+                <Head />
                     <title>Profile | HealthTrackerAI</title>
                 </Head>
                 <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
@@ -260,7 +260,7 @@ export default function ProfilePage() {
 
     return (
         <>
-            <Head>
+            <Head />
                 <title>Profile | HealthTrackerAI</title>
             </Head>
 

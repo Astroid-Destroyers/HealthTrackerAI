@@ -7,14 +7,18 @@ import { Navbar } from "@/components/navbar";
 
 export default function DefaultLayout({
   children,
+  title,
+  description,
 }: {
   children: React.ReactNode;
+  title?: string;
+  description?: string;
 }) {
   const [loggedIn, setLoggedIn] = useState(false);
 
   return (
     <div className="relative flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <Head />
+      <Head title={title} description={description} />
       <Navbar loggedIn={loggedIn} setLoggedIn={setLoggedIn} />
       <main className="flex-grow">{children}</main>
       <footer className="backdrop-blur-xl bg-white/5 border-t border-white/10">

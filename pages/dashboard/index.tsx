@@ -289,7 +289,7 @@ export default function Dashboard() {
     // Main dashboard UI
     return (
         <>
-            <Head>
+            <Head />
                 <title>Dashboard | HealthTrackerAI</title>
             </Head>
 
