@@ -1,7 +1,6 @@
 // pages/dashboard/index.tsx
 
 // Dashboard page
-import Head from "next/head";
 import { useEffect, useMemo, useState } from "react";
 import { getAuth, onAuthStateChanged, signOut, User } from "firebase/auth";
 import { useRouter } from "next/router";
@@ -13,6 +12,7 @@ import {
     increment,
     serverTimestamp,
 } from "firebase/firestore";
+import { Head } from "../../layouts/head";
 import { app } from "@/lib/firebase";
 
 // Defines the structure of daily statistics stored in Firestore
@@ -289,10 +289,7 @@ export default function Dashboard() {
     // Main dashboard UI
     return (
         <>
-            <Head />
-                <title>Dashboard | HealthTrackerAI</title>
-            </Head>
-
+            <Head title="Dashboard | HealthTrackerAI" description="Dashboard page for HealthTrackerAI" />
             <div className="min-h-screen bg-gradient-to-br from-[#0f1c2f] via-[#1c2950] to-[#301f4a] text-gray-100">
                 <div className="flex min-h-screen">
                     {/* ========== SIDEBAR ========== */}
