@@ -4,6 +4,7 @@ import {
   Navbar as HeroUINavbar,
   NavbarContent,
   NavbarMenu,
+  NavbarMenuToggle,
   NavbarBrand,
   NavbarItem,
   NavbarMenuItem,
@@ -23,8 +24,8 @@ import { Tabs, Tab } from "@heroui/tabs";
 import { Tooltip } from "@heroui/tooltip";
 import NextLink from "next/link";
 import clsx from "clsx";
-import { useCallback, useState, useEffect } from "react";
-import { useRouter } from "next/router";
+import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -38,15 +39,8 @@ import { useAuth } from "../providers/AuthProvider";
 
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
-import {
-  GithubIcon,
-  SearchIcon,
-  Logo,
-  MenuIcon,
-  CloseIcon,
-} from "@/components/icons";
+import { GithubIcon, SearchIcon, Logo } from "@/components/icons";
 import MultiStepSignup from "@/components/MultiStepSignup";
-import { registerLoginModal } from "../utils/loginModal";
 
 interface NavbarProps {
   // props are now optional; real auth comes from context
@@ -57,18 +51,15 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = () => {
   const { user, loading } = useAuth(); // <-- live auth state
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  useEffect(() => {
-    registerLoginModal(() => setIsLoginOpen(true));
-  }, []);
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [showMultiStepSignup, setShowMultiStepSignup] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
 
   // form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [fullName, setFullName] = useState("");
 
   // ui state
   const [submitting, setSubmitting] = useState(false);
@@ -78,6 +69,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
     setEmail("");
     setPassword("");
     setConfirmPassword("");
+    setFullName("");
     setErr(null);
     setSubmitting(false);
   };
@@ -168,8 +160,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
     try {
       setLoggingOut(true);
       await signOut(auth); // end Firebase session
-      // Auth state change will trigger re-render automatically
-    } catch {
+      router.refresh(); // force re-render of server/components using auth
+    } catch (e) {
       // optional: toast or console.error(e);
     } finally {
       setLoggingOut(false);
@@ -199,59 +191,22 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
   return (
     <HeroUINavbar
-      isBordered
-      className={clsx(
-        "backdrop-blur-xl bg-white/5 border-b border-white/10 transition-all duration-300 z-50 fixed top-0 left-0 right-0",
-      )}
-      classNames={{
-        base: ["navbar-fixed-height", "w-full"],
-        wrapper: ["w-full", "px-4", "h-16"],
-        item: [
-          "flex",
-          "relative",
-          "h-full",
-          "items-center",
-          "data-[active=true]:after:content-['']",
-          "data-[active=true]:after:absolute",
-          "data-[active=true]:after:bottom-0",
-          "data-[active=true]:after:left-0",
-          "data-[active=true]:after:right-0",
-          "data-[active=true]:after:h-[2px]",
-          "data-[active=true]:after:rounded-[2px]",
-          "data-[active=true]:after:bg-primary",
-        ],
-        menu: [
-          "fixed",
-          "inset-0",
-          "z-[60]",
-          "w-screen",
-          "h-screen",
-          "backdrop-blur-xl",
-          "bg-black/40",
-        ],
-        menuItem: ["w-full"],
-      }}
-      height="64px"
-      isMenuOpen={isMenuOpen}
-      maxWidth="full"
-      position="sticky"
-      onMenuOpenChange={setIsMenuOpen}
+      className="backdrop-blur-xl bg-white/5 border-b border-white/10 fixed top-0 z-50"
+      maxWidth="xl"
+      position="static"
     >
-      <NavbarContent
-        className="basis-2/3 md:basis-3/4 min-w-0"
-        justify="start"
-      >
-        <NavbarBrand className="gap-2 sm:gap-3 max-w-fit">
+      <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
+        <NavbarBrand className="gap-3 max-w-fit">
           <NextLink
             className="flex justify-start items-center gap-2 group"
             href="/"
           >
             <div className="relative">
-              <Logo className="w-6 h-6 sm:w-8 sm:h-8" />
+              <Logo />
               <div className="absolute inset-0 bg-ai-gradient rounded-full blur-lg opacity-30 group-hover:opacity-60 transition-opacity" />
             </div>
             <div className="flex flex-col">
-              <p className="font-bold text-white text-sm sm:text-lg gradient-text fallback-text">
+              <p className="font-bold text-white text-lg gradient-text">
                 HealthTrackerAI
               </p>
               <p className="text-xs text-gray-400 hidden sm:block">
@@ -260,57 +215,28 @@ export const Navbar: React.FC<NavbarProps> = () => {
             </div>
           </NextLink>
         </NavbarBrand>
-
-        {/* Desktop Navigation - Fixed responsive breakpoint */}
-        <div className="hidden md:flex flex-1 items-center justify-start ml-8 gap-4 whitespace-nowrap">
-          {siteConfig.navItems
-            .filter((item) => {
-              // Hide "Ad Tests" for non-admin users
-              if (item.href === "/ad-tests") {
-                return user && user.email === "new.roeepalmon@gmail.com";
-              }
-              return true;
-            })
-            .map((item) => (
-              <NavbarItem key={item.href} className="shrink-0">
-                <NextLink
-                  className={clsx(
-                    "text-gray-300 hover:text-white transition-all duration-300 font-medium relative group",
-                    "hover:scale-105 px-2 py-1 rounded-lg hover:bg-white/10",
-                    "whitespace-nowrap",
-                  )}
-                  href={item.href}
-                >
-                  {item.label}
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-ai-gradient transition-all duration-300 group-hover:w-full" />
-                </NextLink>
-              </NavbarItem>
-            ))}
-
-          {/* Direct Dashboard Link  -ONLY show if logged in */}
-          {user && (
-            <NavbarItem className="shrink-0">
+        <div className="hidden lg:flex gap-6 justify-start ml-8">
+          {siteConfig.navItems.map((item) => (
+            <NavbarItem key={item.href}>
               <NextLink
-                href="/dashboard"
                 className={clsx(
                   "text-gray-300 hover:text-white transition-all duration-300 font-medium relative group",
-                  "hover:scale-105 px-2 py-1 rounded-lg hover:bg-white/10",
-                  "whitespace-nowrap",
+                  "hover:scale-105",
                 )}
+                href={item.href}
               >
-                Dashboard
+                {item.label}
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-ai-gradient transition-all duration-300 group-hover:w-full" />
               </NextLink>
             </NavbarItem>
-          )}
+          ))}
           {/* Admin link - only visible to admin user */}
           {user && user.email === "new.roeepalmon@gmail.com" && (
-            <NavbarItem className="shrink-0">
+            <NavbarItem>
               <NextLink
                 className={clsx(
                   "text-gray-300 hover:text-white transition-all duration-300 font-medium relative group",
-                  "hover:scale-105 px-2 py-1 rounded-lg hover:bg-white/10",
-                  "whitespace-nowrap",
+                  "hover:scale-105",
                 )}
                 href="/admin"
               >
@@ -323,13 +249,13 @@ export const Navbar: React.FC<NavbarProps> = () => {
       </NavbarContent>
 
       <NavbarContent
-        className="hidden sm:flex basis-1/3 md:basis-1/4"
+        className="hidden sm:flex basis-1/5 sm:basis-full"
         justify="end"
       >
-        <NavbarItem className="hidden md:flex gap-3">
+        <NavbarItem className="hidden sm:flex gap-3">
           <Link
             isExternal
-            className="text-gray-400 hover:text-white transition-all duration-300 hover:scale-110 p-2 rounded-lg hover:bg-white/10"
+            className="text-gray-400 hover:text-white transition-all duration-300 hover:scale-110"
             href={siteConfig.links.github}
             title="GitHub"
           >
@@ -342,12 +268,10 @@ export const Navbar: React.FC<NavbarProps> = () => {
         {!loading && !user ? (
           <NavbarItem>
             <Button
-              className="btn-ai-primary text-sm px-4 sm:px-6 py-2 font-medium min-h-[36px] sm:min-h-[40px]"
-              size="sm"
+              className="btn-ai-primary text-sm px-6 py-2 font-medium"
               onPress={() => setIsLoginOpen(true)}
             >
-              <span className="hidden sm:inline">Login / Signup</span>
-              <span className="sm:hidden">Login</span>
+              Login / Signup
             </Button>
           </NavbarItem>
         ) : (
@@ -368,7 +292,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                         className="justify-start bg-transparent hover:bg-white/10 text-white text-sm h-8"
                         size="sm"
                         variant="light"
-                        onPress={() => router.push("/dashboard/profileSetUp")}
+                        onPress={() => router.push("/profile")}
                       >
                         Edit Profile
                       </Button>
@@ -392,11 +316,11 @@ export const Navbar: React.FC<NavbarProps> = () => {
                   className="w-9 h-9 flex items-center justify-center rounded-xl bg-ai-gradient text-white font-semibold cursor-pointer hover:scale-105 transition-all duration-300 animate-glow"
                   role="button"
                   tabIndex={0}
-                  onClick={() => router.push("/dashboard/profileSetUp")}
+                  onClick={() => router.push("/profile")}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
-                      router.push("/dashboard/profileSetUp");
+                      router.push("/profile");
                     }
                   }}
                 >
@@ -420,152 +344,105 @@ export const Navbar: React.FC<NavbarProps> = () => {
       </NavbarContent>
 
       <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <ThemeSwitch />
-          <button
-            aria-label={
-              isMenuOpen ? "Close navigation menu" : "Open navigation menu"
-            }
-            className="text-white hover:bg-white/10 rounded-lg p-2 transition-colors w-10 h-10 flex items-center justify-center"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen ? <CloseIcon size={20} /> : <MenuIcon size={20} />}
-          </button>
+          <NavbarMenuToggle className="text-white" />
         </div>
       </NavbarContent>
 
-      <NavbarMenu className="fixed inset-0 z-[60] w-screen h-screen backdrop-blur-xl bg-black/80 pt-4 pb-6 overflow-y-auto">
-        {/* Mobile Header with branding */}
-        <div className="flex items-center justify-between mx-4 mb-8 pb-4 border-b border-white/20">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Logo className="w-8 h-8" />
-              <div className="absolute inset-0 bg-ai-gradient rounded-full blur-lg opacity-30" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-white font-bold text-lg gradient-text">
-                HealthTrackerAI
-              </span>
-              <span className="text-gray-400 text-xs">
-                AI-Powered Healthcare
-              </span>
-            </div>
-          </div>
-          <button
-            aria-label="Close navigation menu"
-            className="text-white hover:bg-white/10 rounded-lg p-2 transition-colors w-10 h-10 flex items-center justify-center"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            <CloseIcon size={24} />
-          </button>
-        </div>
-
-        {/* Mobile Search */}
-        <div className="mx-4 mb-8">{searchInput}</div>
-
-        {/* Mobile User Profile Section */}
-        {user && (
-          <div className="mx-4 mb-6">
-            <div className="flex items-center gap-3 p-4 backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl">
-              <div className="w-12 h-12 flex items-center justify-center rounded-xl bg-ai-gradient text-white font-bold text-lg">
-                {(
-                  user?.displayName?.[0] ||
-                  user?.email?.[0] ||
-                  "?"
-                ).toUpperCase()}
-              </div>
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-white font-semibold text-sm truncate">
-                  {user?.displayName || "User"}
-                </span>
-                <span className="text-gray-400 text-xs truncate">
-                  {user?.email}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Navigation Items */}
-        <div className="mx-4 flex flex-col gap-1">
-          {siteConfig.navItems
-            .filter((item) => {
-              // Hide "Ad Tests" for non-admin users
-              if (item.href === "/ad-tests") {
-                return user && user.email === "new.roeepalmon@gmail.com";
-              }
-              return true;
-            })
-            .map((item, index) => (
-              <NavbarMenuItem key={`${item}-${index}`}>
-                <NextLink
-                  className="text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-300 text-base font-medium py-3 px-4 rounded-xl w-full block"
-                  href={item.href}
-                >
-                  {item.label}
-                </NextLink>
-              </NavbarMenuItem>
-            ))}
+      <NavbarMenu className="backdrop-blur-xl bg-white/5 border-r border-white/10 pt-6">
+        <div className="hidden md:block mb-4">{searchInput}</div>
+        <div className="mx-4 mt-2 flex flex-col gap-3">
+          {siteConfig.navItems.map((item, index) => (
+            <NavbarMenuItem key={`${item}-${index}`}>
+              <Link
+                className="text-gray-300 hover:text-white transition-colors text-lg font-medium"
+                href={item.href}
+                size="lg"
+              >
+                {item.label}
+              </Link>
+            </NavbarMenuItem>
+          ))}
           {/* Admin link - only visible to admin user in mobile menu */}
           {user && user.email === "new.roeepalmon@gmail.com" && (
             <NavbarMenuItem>
-              <NextLink
-                className="text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-300 text-base font-medium py-3 px-4 rounded-xl w-full block"
+              <Link
+                className="text-gray-300 hover:text-white transition-colors text-lg font-medium"
                 href="/admin"
+                size="lg"
               >
                 Admin
-              </NextLink>
+              </Link>
             </NavbarMenuItem>
           )}
-        </div>
 
-        {/* Action Buttons Section */}
-        <div className="border-t border-white/10 mt-6 pt-6 mx-4">
-          {/* Social Links */}
-          <div className="mb-6">
-            <Link
-              isExternal
-              className="flex items-center gap-3 text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-300 py-3 px-4 rounded-xl"
-              href={siteConfig.links.github}
-            >
-              <GithubIcon className="w-5 h-5" />
-              <span className="text-base font-medium">GitHub</span>
-            </Link>
+          {/* Mobile Auth Controls */}
+          <div className="border-t border-white/10 mt-6 pt-6">
+            <NavbarMenuItem className="mb-4">
+              <Link
+                isExternal
+                className="flex items-center gap-3 text-gray-300 hover:text-white transition-colors"
+                href={siteConfig.links.github}
+              >
+                <GithubIcon className="w-5 h-5" />
+                <span className="text-lg">GitHub</span>
+              </Link>
+            </NavbarMenuItem>
+
+            {!loading && !user ? (
+              <NavbarMenuItem>
+                <Button
+                  className="btn-ai-primary w-full text-base font-medium py-3"
+                  onPress={() => setIsLoginOpen(true)}
+                >
+                  Login / Signup
+                </Button>
+              </NavbarMenuItem>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <NavbarMenuItem>
+                  <div className="flex items-center gap-3 p-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl">
+                    <div className="w-12 h-12 flex items-center justify-center rounded-xl bg-ai-gradient text-white font-bold text-lg">
+                      {(
+                        user?.displayName?.[0] ||
+                        user?.email?.[0] ||
+                        "?"
+                      ).toUpperCase()}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-white font-semibold">
+                        {user?.displayName || "User"}
+                      </span>
+                      <span className="text-gray-400 text-sm">
+                        {user?.email}
+                      </span>
+                    </div>
+                  </div>
+                </NavbarMenuItem>
+                <NavbarMenuItem>
+                  <Button
+                    className="backdrop-blur-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 w-full"
+                    variant="bordered"
+                    onPress={() => router.push("/profile")}
+                  >
+                    View Profile
+                  </Button>
+                </NavbarMenuItem>
+                <NavbarMenuItem>
+                  <Button
+                    className="backdrop-blur-xl bg-red-500/10 border border-red-400/30 text-red-400 hover:bg-red-500/20 w-full"
+                    isDisabled={loggingOut}
+                    isLoading={loggingOut}
+                    variant="bordered"
+                    onPress={handleLogout}
+                  >
+                    Logout
+                  </Button>
+                </NavbarMenuItem>
+              </div>
+            )}
           </div>
-
-          {/* Auth Buttons */}
-          {!loading && !user ? (
-            <div className="space-y-3">
-              <Button
-                className="btn-ai-primary w-full text-base font-medium py-4 h-12"
-                onPress={() => {
-                  setIsLoginOpen(true);
-                  setIsMenuOpen(false);
-                }}
-              >
-                Login / Signup
-              </Button>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              <Button
-                className="backdrop-blur-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 w-full h-12 text-base"
-                variant="bordered"
-                onPress={() => router.push("/dashboard/profileSetUp")}
-              >
-                View Profile
-              </Button>
-              <Button
-                className="backdrop-blur-xl bg-red-500/10 border border-red-400/30 text-red-400 hover:bg-red-500/20 w-full h-12 text-base"
-                isDisabled={loggingOut}
-                isLoading={loggingOut}
-                variant="bordered"
-                onPress={handleLogout}
-              >
-                {loggingOut ? "Signing out..." : "Sign Out"}
-              </Button>
-            </div>
-          )}
         </div>
       </NavbarMenu>
 

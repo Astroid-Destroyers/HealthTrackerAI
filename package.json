@@ -11,7 +11,6 @@
   "dependencies": {
     "@heroui/button": "^2.2.25",
     "@heroui/card": "^2.2.24",
-    "@heroui/chip": "^2.2.22",
     "@heroui/code": "2.2.19",
     "@heroui/input": "^2.4.27",
     "@heroui/kbd": "2.2.20",
@@ -26,10 +25,7 @@
     "@heroui/snippet": "2.2.26",
     "@heroui/switch": "2.2.23",
     "@heroui/system": "2.4.21",
-    "@heroui/table": "^2.2.27",
-    "@heroui/tabs": "^2.2.24",
-    "@heroui/theme": "^2.4.23",
-    "@heroui/tooltip": "^2.2.24",
+    "@heroui/theme": "2.4.21",
     "@react-aria/visually-hidden": "3.8.27",
     "clsx": "2.1.1",
     "firebase": "^12.3.0",
@@ -41,8 +37,7 @@
     "nodemailer": "^7.0.6",
     "openai": "^5.19.1",
     "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "resend": "^6.1.1"
+    "react-dom": "18.3.1"
   },
   "devDependencies": {
     "@eslint/compat": "1.2.8",

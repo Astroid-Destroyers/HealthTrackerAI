@@ -1,25 +1,18 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { motion } from "framer-motion";
+
 // Firebase imports for profile updates
 import { updateProfile } from "firebase/auth";
-import {
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
-  PhoneAuthProvider,
-  linkWithCredential
-} from "firebase/auth";
 import { Button } from "@heroui/button";
 import { Card, CardHeader, CardBody } from "@heroui/card";
 import { Chip } from "@heroui/chip";
-import { Input } from "@heroui/input";
 
-import { db, auth } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { useAuth } from "@/providers/AuthProvider";
 import { useNotifications } from "@/hooks/useNotifications";
 import DefaultLayout from "@/layouts/default";
-import HealthProfileSetup from "@/components/HealthProfileSetup";
 
 interface UserProfile {
   name: string;
@@ -37,8 +30,6 @@ interface UserProfile {
   };
   goal: string;
   email: string;
-  phoneNumber?: string;
-  phoneVerified?: boolean;
   createdAt: any;
   updatedAt: any;
 }
@@ -46,33 +37,17 @@ interface UserProfile {
 export default function ProfilePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [isEditing, setIsEditing] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+  const [updating, setUpdating] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [notificationLoading, setNotificationLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isChrome, setIsChrome] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [displayName, setDisplayName] = useState("");
-  const [updating, setUpdating] = useState(false);
 
   // New state for user profile data
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-
-  // Phone verification states
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [verificationCode, setVerificationCode] = useState("");
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [codeSent, setCodeSent] = useState(false);
-  const [phoneLoading, setPhoneLoading] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState<any>(null);
-  const [recaptchaVerifier, setRecaptchaVerifier] = useState<any>(null);
-
-  // Health profile setup modal state
-  const [isHealthProfileModalOpen, setIsHealthProfileModalOpen] = useState(false);
-
-  useEffect(() => {
-    console.log("Health profile modal state changed:", isHealthProfileModalOpen);
-  }, [isHealthProfileModalOpen]);
 
   useEffect(() => {
     // Detect mobile devices and Chrome
@@ -89,75 +64,6 @@ export default function ProfilePage() {
 
   const { isSupported, requestPermission, getToken, sendTestNotification } =
     useNotifications();
-
-  // Add debugging state for mobile issues
-  const [debugInfo, setDebugInfo] = useState({
-    hasServiceWorker: false,
-    hasPushManager: false,
-    hasNotification: false,
-    firebaseSupported: null as boolean | null,
-    userAgent: "",
-    isHTTPS: false,
-    isMobile: false,
-    isChrome: false,
-    isIOS: false,
-    isStandalone: false,
-  });
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const isMobile =
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-          navigator.userAgent,
-        );
-      const isChrome =
-        /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const isStandalone =
-        window.matchMedia &&
-        window.matchMedia("(display-mode: standalone)").matches;
-
-      setDebugInfo({
-        hasServiceWorker: "serviceWorker" in navigator,
-        hasPushManager: "PushManager" in window,
-        hasNotification: "Notification" in window,
-        firebaseSupported: null, // Will be set async
-        userAgent: navigator.userAgent,
-        isHTTPS: location.protocol === "https:" || location.hostname === "localhost",
-        isMobile,
-        isChrome,
-        isIOS,
-        isStandalone,
-      });
-
-      // Check Firebase messaging support and register service worker
-      import("@/lib/firebase").then(async ({ getMessagingInstance }) => {
-        try {
-          // Try to register service worker first for mobile
-          if ("serviceWorker" in navigator) {
-            const registration = await navigator.serviceWorker.register(
-              "/firebase-messaging-sw.js",
-              { scope: "/" }
-            );
-            console.log("Service worker registered:", !!registration);
-          }
-
-          const messaging = await getMessagingInstance();
-
-          setDebugInfo((prev) => ({
-            ...prev,
-            firebaseSupported: !!messaging,
-          }));
-        } catch (error) {
-          console.error("Firebase messaging support check failed:", error);
-          setDebugInfo((prev) => ({
-            ...prev,
-            firebaseSupported: false,
-          }));
-        }
-      });
-    }
-  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -176,19 +82,12 @@ export default function ProfilePage() {
         const userDoc = await getDoc(userDocRef);
 
         if (userDoc.exists()) {
-          const profileData = userDoc.data() as UserProfile;
-          console.log('Profile data loaded:', profileData); // Debug log
-          setUserProfile(profileData);
-
-          // Initialize phone number field if user has one
-          if (profileData.phoneNumber) {
-            setPhoneNumber(profileData.phoneNumber);
-          }
+          setUserProfile(userDoc.data() as UserProfile);
         } else {
-          console.log('No profile document found for user'); // Debug log
+          console.log("No profile data found for user");
         }
-      } catch {
-        // Error fetching user profile
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
       } finally {
         setProfileLoading(false);
       }
@@ -198,15 +97,6 @@ export default function ProfilePage() {
       fetchUserProfile();
     }
   }, [user?.uid]);
-
-  // Cleanup recaptcha on unmount
-  useEffect(() => {
-    return () => {
-      if (recaptchaVerifier) {
-        recaptchaVerifier.clear();
-      }
-    };
-  }, [recaptchaVerifier]);
 
   useEffect(() => {
     if (user?.uid) {
@@ -250,13 +140,14 @@ export default function ProfilePage() {
 
           // Call backend API to store device info
           try {
-            const response = await fetch("/api/user/notification-preferences", {
+            const response = await fetch("/api/admin/toggle-notifications", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${await user.getIdToken()}`,
               },
               body: JSON.stringify({
+                userId: user.uid,
                 deviceId: deviceId,
                 enabled: true,
                 fcmToken: fcmToken,
@@ -272,12 +163,10 @@ export default function ProfilePage() {
             });
 
             if (!response.ok) {
-              console.warn("Failed to update notification preferences on backend");
-            } else {
-              console.log("✅ Notification preferences saved to database");
+              console.error("Failed to update device info on backend");
             }
-          } catch (error) {
-            console.error("Error saving notification preferences:", error);
+          } catch (apiError) {
+            console.error("Error calling toggle-notifications API:", apiError);
           }
 
           // Send test notification after 3 seconds
@@ -290,8 +179,8 @@ export default function ProfilePage() {
                 tag: "welcome-notification",
                 requireInteraction: false,
               });
-            } catch {
-              // Failed to send test notification
+            } catch (error) {
+              console.error("Failed to send test notification:", error);
             }
           }, 3000);
         } else {
@@ -309,29 +198,28 @@ export default function ProfilePage() {
 
         // Call backend API to disable notifications
         try {
-          const response = await fetch("/api/user/notification-preferences", {
+          const response = await fetch("/api/admin/toggle-notifications", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${await user.getIdToken()}`,
             },
             body: JSON.stringify({
+              userId: user.uid,
               deviceId: deviceId,
               enabled: false,
             }),
           });
 
           if (!response.ok) {
-            console.warn("Failed to update notification preferences on backend");
-          } else {
-            console.log("✅ Notifications disabled in database");
+            console.error("Failed to update device info on backend");
           }
-        } catch (error) {
-          console.error("Error disabling notification preferences:", error);
+        } catch (apiError) {
+          console.error("Error calling toggle-notifications API:", apiError);
         }
       }
-    } catch {
-      // Error toggling notifications
+    } catch (error) {
+      console.error("Error toggling notifications:", error);
       alert("Failed to update notification settings. Please try again.");
     } finally {
       setNotificationLoading(false);
@@ -348,8 +236,8 @@ export default function ProfilePage() {
       });
       setIsEditing(false);
       alert("Profile updated successfully!");
-    } catch {
-      // Error updating profile
+    } catch (error) {
+      console.error("Error updating profile:", error);
       alert("Failed to update profile. Please try again.");
     } finally {
       setUpdating(false);
@@ -400,127 +288,6 @@ export default function ProfilePage() {
     return genderMap[gender] || gender;
   };
 
-  // Phone verification functions
-  const initializeRecaptcha = () => {
-    if (!recaptchaVerifier && typeof window !== 'undefined') {
-      const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible',
-        callback: () => {
-          // reCAPTCHA solved, allow signInWithPhoneNumber
-        },
-      });
-      setRecaptchaVerifier(verifier);
-      return verifier;
-    }
-    return recaptchaVerifier;
-  };
-
-  const sendVerificationCode = async () => {
-    if (!phoneNumber.trim() || phoneLoading) return;
-
-    try {
-      setPhoneLoading(true);
-
-      // Initialize reCAPTCHA
-      const appVerifier = initializeRecaptcha();
-
-      if (!appVerifier) {
-        alert('Failed to initialize reCAPTCHA. Please refresh and try again.');
-        return;
-      }
-
-      // Format phone number (add +1 if not present for US numbers)
-      const formattedPhone = phoneNumber.startsWith('+')
-        ? phoneNumber
-        : `+1${phoneNumber.replace(/\D/g, '')}`;
-
-      console.log('Attempting to send SMS to:', formattedPhone);
-
-      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
-      setConfirmationResult(confirmation);
-      setCodeSent(true);
-      alert('Verification code sent to your phone!');
-    } catch (error: any) {
-      console.error('Error sending verification code:', error);
-
-      // Provide more specific error messages
-      if (error.code === 'auth/invalid-app-credential') {
-        alert('Phone authentication is not properly configured in Firebase Console. Please enable Phone Authentication and try again.');
-      } else if (error.code === 'auth/too-many-requests') {
-        alert('Too many requests. Please wait before trying again.');
-      } else if (error.code === 'auth/invalid-phone-number') {
-        alert('Invalid phone number format. Please use format: (555) 123-4567');
-      } else {
-        alert(`Failed to send verification code: ${error.message || 'Unknown error'}`);
-      }
-    } finally {
-      setPhoneLoading(false);
-    }
-  };
-
-  const verifyPhoneNumber = async () => {
-    if (!confirmationResult || !verificationCode.trim() || isVerifying) return;
-
-    try {
-      setIsVerifying(true);
-      const credential = PhoneAuthProvider.credential(confirmationResult.verificationId, verificationCode);
-
-      if (user) {
-        // Link the phone credential to existing user
-        await linkWithCredential(user, credential);
-
-        // Update user profile in Firestore
-        const userDocRef = doc(db, "users", user.uid);
-        await updateDoc(userDocRef, {
-          phoneNumber: phoneNumber,
-          phoneVerified: true,
-          updatedAt: new Date(),
-        });
-
-        // Update local state
-        if (userProfile) {
-          setUserProfile({
-            ...userProfile,
-            phoneNumber: phoneNumber,
-            phoneVerified: true,
-          });
-        }
-
-        alert('Phone number verified successfully!');
-        setCodeSent(false);
-        setVerificationCode('');
-      }
-    } catch (error) {
-      console.error('Error verifying phone number:', error);
-      alert('Invalid verification code. Please try again.');
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const formatPhoneNumber = (value: string) => {
-    const cleaned = value.replace(/\D/g, '');
-    const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
-    if (match) {
-      return `(${match[1]}) ${match[2]}-${match[3]}`;
-    }
-    return value;
-  };
-
-  // Health profile setup modal handlers
-  const handleHealthProfileSuccess = () => {
-    console.log("Health profile setup completed successfully!");
-    setIsHealthProfileModalOpen(false);
-    // Reload profile data by triggering useEffect
-    setProfileLoading(true);
-    // The useEffect will refetch the data automatically
-  };
-
-  const handleCloseHealthProfileModal = () => {
-    console.log("Health profile setup modal closed");
-    setIsHealthProfileModalOpen(false);
-  };
-
   if (loading || profileLoading) {
     return (
       <DefaultLayout>
@@ -536,179 +303,6 @@ export default function ProfilePage() {
 
   if (!user) {
     return null; // Will redirect
-  }
-
-  // If no profile data exists, show a simplified version with just phone verification
-  if (!userProfile) {
-    return (
-      <DefaultLayout>
-        <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden">
-          <div className="relative z-10 pt-24 pb-12 px-6">
-            <div className="container mx-auto max-w-4xl">
-              <div className="text-center mb-12">
-                <h1 className="text-4xl font-bold text-white mb-4">Profile Setup</h1>
-                <p className="text-gray-400">
-                  Complete your profile to get started
-                </p>
-              </div>
-
-              {/* Phone Verification Card */}
-              <Card className="backdrop-blur-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
-                      <span className="text-white text-xl">📱</span>
-                    </div>
-                    <h3 className="text-xl font-bold text-white">Phone Verification</h3>
-                  </div>
-                </CardHeader>
-                <CardBody className="space-y-6">
-                  <div className="group">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 rounded-full bg-emerald-400" />
-                      <span className="text-sm font-medium text-gray-400 uppercase tracking-wider">
-                        Phone Number
-                      </span>
-                    </div>
-
-                    <div className="pl-4 space-y-3">
-                      <Input
-                        className="max-w-xs"
-                        classNames={{
-                          input: "text-white placeholder:text-gray-400",
-                          inputWrapper: "backdrop-blur-xl bg-white/5 border-white/20 hover:border-white/30 group-data-[focus=true]:border-white/40",
-                        }}
-                        placeholder="(555) 123-4567"
-                        size="sm"
-                        type="tel"
-                        value={phoneNumber}
-                        onChange={(e) => {
-                          const formatted = formatPhoneNumber(e.target.value);
-                          setPhoneNumber(formatted);
-                        }}
-                      />
-
-                      {!codeSent ? (
-                        <Button
-                          className="bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold"
-                          isDisabled={!phoneNumber.trim() || phoneLoading}
-                          isLoading={phoneLoading}
-                          size="sm"
-                          onClick={sendVerificationCode}
-                        >
-                          Send Verification Code
-                        </Button>
-                      ) : (
-                        <div className="space-y-2">
-                          <Input
-                            className="max-w-xs"
-                            classNames={{
-                              input: "text-white placeholder:text-gray-400",
-                              inputWrapper: "backdrop-blur-xl bg-white/5 border-white/20 hover:border-white/30 group-data-[focus=true]:border-white/40",
-                            }}
-                            placeholder="Enter 6-digit code"
-                            size="sm"
-                            type="text"
-                            value={verificationCode}
-                            onChange={(e) => setVerificationCode(e.target.value)}
-                          />
-                          <div className="flex gap-2">
-                            <Button
-                              className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold"
-                              isDisabled={!verificationCode.trim() || isVerifying}
-                              isLoading={isVerifying}
-                              size="sm"
-                              onClick={verifyPhoneNumber}
-                            >
-                              Verify Code
-                            </Button>
-                            <Button
-                              className="text-gray-400 hover:text-white"
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                setCodeSent(false);
-                                setVerificationCode('');
-                                setConfirmationResult(null);
-                              }}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* reCAPTCHA container */}
-                      <div id="recaptcha-container" />
-                    </div>
-                  </div>
-                </CardBody>
-              </Card>
-
-              {/* Health Profile Setup Card */}
-              <Card className="backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl">
-                <CardBody className="p-8">
-                  <div className="text-center space-y-6">
-                    <div className="space-y-2">
-                      <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                        Complete Your Health Profile
-                      </h3>
-                      <p className="text-gray-400 text-lg">
-                        Set up your health profile to start tracking your
-                        wellness journey with AI-powered insights.
-                      </p>
-                    </div>
-
-                    <div className="flex justify-center">
-                      <Button
-                        className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold px-8 py-3 text-lg"
-                        size="lg"
-                        startContent={
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                            />
-                          </svg>
-                        }
-                        onClick={() => {
-                          console.log("Health Profile Setup button clicked!");
-                          setIsHealthProfileModalOpen(true);
-                        }}
-                      >
-                        Start Health Profile Setup
-                      </Button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 text-sm text-gray-400">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-emerald-400 rounded-full" />
-                        <span>Basic Health Info</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-blue-400 rounded-full" />
-                        <span>Fitness Goals</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-purple-400 rounded-full" />
-                        <span>AI Insights</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardBody>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </DefaultLayout>
-    );
   }
 
   return (
@@ -752,12 +346,16 @@ export default function ProfilePage() {
               transition={{ duration: 0.8 }}
             >
               <div className="relative inline-block mb-6">
-                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 flex items-center justify-center text-4xl font-bold text-white shadow-2xl mx-auto profile-avatar-glow">
-                  {(
-                    user?.displayName?.[0] ||
-                    user?.email?.[0] ||
-                    "?"
-                  ).toUpperCase()}
+                <div
+                  className="w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 flex items-center justify-center text-4xl font-bold text-white shadow-2xl mx-auto"
+                  style={{
+                    boxShadow:
+                      "0 0 50px rgba(99, 102, 241, 0.3), 0 0 100px rgba(139, 92, 246, 0.2)",
+                  }}
+                >
+                  {(userProfile?.name || user.displayName || user.email || "U")
+                    .charAt(0)
+                    .toUpperCase()}
                 </div>
                 {userProfile && (
                   <motion.div
@@ -889,95 +487,6 @@ export default function ProfilePage() {
                           {userProfile.email}
                         </p>
                       </div>
-
-                      {/* Phone Number Section */}
-                      <div className="group">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-2 h-2 rounded-full bg-emerald-400" />
-                          <span className="text-sm font-medium text-gray-400 uppercase tracking-wider">
-                            Phone Number
-                          </span>
-                          {userProfile.phoneVerified && (
-                            <Chip
-                              className="bg-emerald-500/20 text-emerald-300 border-emerald-400/20"
-                              size="sm"
-                              variant="bordered"
-                            >
-                              ✓ Verified
-                            </Chip>
-                          )}
-                        </div>
-
-                        {/* Always show phone input for now - for debugging */}
-                        <div className="pl-4 space-y-3">
-                          <Input
-                            className="max-w-xs"
-                            classNames={{
-                              input: "text-white placeholder:text-gray-400",
-                              inputWrapper: "backdrop-blur-xl bg-white/5 border-white/20 hover:border-white/30 group-data-[focus=true]:border-white/40",
-                            }}
-                            placeholder="(555) 123-4567"
-                            size="sm"
-                            type="tel"
-                            value={phoneNumber}
-                            onChange={(e) => {
-                              const formatted = formatPhoneNumber(e.target.value);
-                              setPhoneNumber(formatted);
-                            }}
-                          />
-
-                          {!codeSent ? (
-                            <Button
-                              className="bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold"
-                              isDisabled={!phoneNumber.trim() || phoneLoading}
-                              isLoading={phoneLoading}
-                              size="sm"
-                              onClick={sendVerificationCode}
-                            >
-                              Send Code
-                            </Button>
-                          ) : (
-                            <div className="space-y-2">
-                              <Input
-                                className="max-w-xs"
-                                classNames={{
-                                  input: "text-white placeholder:text-gray-400",
-                                  inputWrapper: "backdrop-blur-xl bg-white/5 border-white/20 hover:border-white/30 group-data-[focus=true]:border-white/40",
-                                }}
-                                placeholder="Enter 6-digit code"
-                                size="sm"
-                                type="text"
-                                value={verificationCode}
-                                onChange={(e) => setVerificationCode(e.target.value)}
-                              />
-                              <Button
-                                className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold mr-2"
-                                isDisabled={!verificationCode.trim() || isVerifying}
-                                isLoading={isVerifying}
-                                size="sm"
-                                onClick={verifyPhoneNumber}
-                              >
-                                Verify
-                              </Button>
-                              <Button
-                                className="text-gray-400 hover:text-white"
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => {
-                                  setCodeSent(false);
-                                  setVerificationCode("");
-                                  setConfirmationResult(null);
-                                }}
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          )}
-
-                          {/* reCAPTCHA container */}
-                          <div id="recaptcha-container" />
-                        </div>
-                      </div>
                     </CardBody>
                   </Card>
 
@@ -1074,12 +583,12 @@ export default function ProfilePage() {
                         <p className="text-sm font-medium text-white pl-4">
                           {userProfile.createdAt
                             ? new Date(
-                              userProfile.createdAt.seconds * 1000,
-                            ).toLocaleDateString("en-US", {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            })
+                                userProfile.createdAt.seconds * 1000,
+                              ).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })
                             : "Unknown"}
                         </p>
                       </div>
@@ -1116,168 +625,6 @@ export default function ProfilePage() {
               </motion.div>
             )}
 
-            {/* Notification Preferences - Always Available */}
-            <motion.div
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-12 max-w-2xl mx-auto"
-              initial={{ opacity: 0, y: 30 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-            >
-              <Card className="backdrop-blur-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/10">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
-                      <span className="text-white text-xl">🔔</span>
-                    </div>
-                    <h3 className="text-xl font-bold text-white">
-                      Notification Preferences
-                    </h3>
-                  </div>
-                </CardHeader>
-                <CardBody className="space-y-6">
-                  <div className="group">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-2 h-2 rounded-full bg-purple-400" />
-                          <span className="text-sm font-medium text-gray-400 uppercase tracking-wider">
-                            Push Notifications
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-300 pl-4">
-                          Receive health reminders and updates from our support team
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {isSupported ? (
-                          <>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                              <span className="sr-only">Enable push notifications</span>
-                              <input
-                                checked={notificationsEnabled}
-                                className="sr-only"
-                                disabled={notificationLoading}
-                                type="checkbox"
-                                onChange={(e) =>
-                                  handleNotificationToggle(e.target.checked)
-                                }
-                              />
-                              <div
-                                className={`w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-purple-300/20 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-purple-500 peer-checked:to-indigo-600 ${notificationLoading ? "opacity-50 cursor-not-allowed" : ""
-                                  }`}
-                              />
-                            </label>
-                            {notificationLoading && (
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-400" />
-                            )}
-                          </>
-                        ) : debugInfo.hasServiceWorker &&
-                          debugInfo.hasPushManager &&
-                          debugInfo.hasNotification &&
-                          debugInfo.isHTTPS ? (
-                          <div className="text-xs text-orange-400">
-                            <div>⚠️ Firebase not supported</div>
-                            <div>Basic browser support available</div>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-red-400">
-                            Not supported in this browser
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {notificationsEnabled && (
-                      <div className="pl-4 p-3 rounded-lg bg-purple-500/10 border border-purple-400/20">
-                        <div className="flex items-center gap-2 text-purple-300 text-sm">
-                          <span>✓</span>
-                          <span>Notifications are enabled for this device</span>
-                        </div>
-                        <p className="text-xs text-gray-400 mt-1">
-                          You&apos;ll receive health reminders, tips, and important updates from the admin team.
-                        </p>
-                      </div>
-                    )}
-                    {!notificationsEnabled && isSupported && (
-                      <div className="pl-4 p-3 rounded-lg bg-gray-600/10 border border-gray-500/20">
-                        <div className="flex items-center gap-2 text-gray-400 text-sm">
-                          <span>○</span>
-                          <span>Enable notifications to receive health updates</span>
-                        </div>
-                      </div>
-                    )}
-                    {!isSupported && (
-                      <div className="pl-4 p-3 rounded-lg bg-red-500/10 border border-red-400/20">
-                        <div className="text-red-400 text-sm mb-2">
-                          <span>⚠️</span>
-                          <span className="ml-1">Push notifications not supported</span>
-                        </div>
-                        <details className="text-xs text-gray-400">
-                          <summary className="cursor-pointer hover:text-gray-300">
-                            Debug Information (tap to expand)
-                          </summary>
-                          <div className="mt-2 space-y-1">
-                            <div>
-                              Service Worker:{"　"}
-                              {debugInfo.hasServiceWorker ? "✓" : "✗"}
-                            </div>
-                            <div>
-                              Push Manager:{"　"}
-                              {debugInfo.hasPushManager ? "✓" : "✗"}
-                            </div>
-                            <div>
-                              Notifications API:{"　"}
-                              {debugInfo.hasNotification ? "✓" : "✗"}
-                            </div>
-                            <div>
-                              HTTPS:{"　"}
-                              {debugInfo.isHTTPS ? "✓" : "✗"}
-                            </div>
-                            <div>
-                              Mobile Device:{"　"}
-                              {debugInfo.isMobile ? "✓" : "✗"}
-                            </div>
-                            <div>
-                              Chrome Browser:{"　"}
-                              {debugInfo.isChrome ? "✓" : "✗"}
-                            </div>
-                            <div>
-                              iOS Device:{"　"}
-                              {debugInfo.isIOS ? "✓" : "✗"}
-                            </div>
-                            <div>
-                              PWA Mode:{"　"}
-                              {debugInfo.isStandalone ? "✓" : "✗"}
-                            </div>
-                            <div>
-                              Firebase Support:{"　"}
-                              {debugInfo.firebaseSupported === null
-                                ? "⏳ Checking..."
-                                : debugInfo.firebaseSupported
-                                  ? "✓"
-                                  : "✗"}
-                            </div>
-                            <div className="text-xs break-all">
-                              Browser: {debugInfo.userAgent.substring(0, 60)}...
-                            </div>
-                            {debugInfo.isMobile && debugInfo.isChrome && !debugInfo.isHTTPS && (
-                              <div className="mt-2 p-2 bg-yellow-500/10 border border-yellow-400/20 rounded text-yellow-300">
-                                ⚠️ Chrome on mobile requires HTTPS for push notifications
-                              </div>
-                            )}
-                            {debugInfo.isIOS && !debugInfo.isStandalone && (
-                              <div className="mt-2 p-2 bg-blue-500/10 border border-blue-400/20 rounded text-blue-300">
-                                💡 iOS: Add to home screen for better notification support
-                              </div>
-                            )}
-                          </div>
-                        </details>
-                      </div>
-                    )}
-                  </div>
-                </CardBody>
-              </Card>
-            </motion.div>
-
             {/* Action Buttons */}
             <motion.div
               animate={{ opacity: 1, y: 0 }}
@@ -1309,13 +656,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
-
-      {/* Health Profile Setup Modal */}
-      <HealthProfileSetup
-        isOpen={isHealthProfileModalOpen}
-        onClose={handleCloseHealthProfileModal}
-        onSuccess={handleHealthProfileSuccess}
-      />
     </DefaultLayout>
   );
 }

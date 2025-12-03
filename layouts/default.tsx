@@ -5,35 +5,18 @@ import { Head } from "./head";
 
 import { Navbar } from "@/components/navbar";
 
-import { useAuth } from "@/providers/AuthProvider";
-
-const ADMIN_EMAIL = "admin@healthtrackerai.com";  // Admin email
-
-interface DefaultLayoutProps {
-  children: React.ReactNode;
-  title?: string;
-  description?: string;
-  image?: string;
-  url?: string;
-}
-
 export default function DefaultLayout({
   children,
-  title,
-  description,
-  image,
-  url,
-}: DefaultLayoutProps) {
+}: {
+  children: React.ReactNode;
+}) {
   const [loggedIn, setLoggedIn] = useState(false);
-  const { user } = useAuth();
-  const isAdmin = user?.email === ADMIN_EMAIL;
-
 
   return (
     <div className="relative flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <Head description={description} image={image} title={title} url={url} />
+      <Head />
       <Navbar loggedIn={loggedIn} setLoggedIn={setLoggedIn} />
-      <main className="flex-grow pt-16">{children}</main>
+      <main className="flex-grow">{children}</main>
       <footer className="backdrop-blur-xl bg-white/5 border-t border-white/10">
         <div className="container mx-auto max-w-7xl px-6 py-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -60,27 +43,6 @@ export default function DefaultLayout({
               >
                 Contact
               </Link>
-              <Link
-                className="text-gray-400 hover:text-white transition-colors"
-                href="/privacy"
-              >
-                Privacy
-              </Link>
-              <Link
-                className="text-gray-400 hover:text-white transition-colors"
-                href="/terms"
-              >
-                Terms
-              </Link>
-              {/* Admin only link */}
-              {isAdmin && (
-                <Link
-                  className="text-gray-400 hover:text-white transition-colors"
-                  href="/admin"
-                >
-                  Admin
-                </Link>
-              )}
               <Link
                 isExternal
                 className="text-gray-400 hover:text-white transition-colors"

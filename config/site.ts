@@ -28,10 +28,6 @@ export const siteConfig = {
       label: "Contact Us",
       href: "/contact-us",
     },
-    {
-      label: "Ad Tests",
-      href: "/ad-tests",
-    },
   ],
   navMenuItems: [
     {

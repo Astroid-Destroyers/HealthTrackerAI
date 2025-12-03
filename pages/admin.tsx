@@ -20,12 +20,16 @@ interface User {
   uid: string;
   email: string;
   displayName: string | null;
+<<<<<<< HEAD
   phoneNumber?: string;
   phoneVerified?: boolean;
   devices: Device[];
   notificationPreferences?: Record<string, any>;
   notificationEnabledDevices?: number;
   hasValidFcmTokens?: boolean;
+=======
+  devices: Device[];
+>>>>>>> 966c9965e2367376fbfd15f2c22c311aeaf0d3e9
 }
 
 interface Device {
@@ -36,6 +40,7 @@ interface Device {
   deviceType: string;
 }
 
+<<<<<<< HEAD
 const ADMIN_EMAIL = "admin@healthtrackerai.com";
 
 // Helper function to format phone numbers
@@ -47,6 +52,17 @@ const formatPhoneNumber = (phoneNumber: string) => {
   }
   return phoneNumber;
 };
+=======
+interface Device {
+  id: string;
+  userAgent: string;
+  lastLogin: string;
+  notificationsEnabled: boolean;
+  deviceType: string;
+}
+
+const ADMIN_EMAIL = "new.roeepalmon@gmail.com";
+>>>>>>> 966c9965e2367376fbfd15f2c22c311aeaf0d3e9
 
 export default function AdminPanel() {
   const { user, loading } = useAuth();
@@ -58,6 +74,7 @@ export default function AdminPanel() {
   const [customMessage, setCustomMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
 
+<<<<<<< HEAD
   // SMS functionality state
   const [showSmsModal, setShowSmsModal] = useState(false);
   const [smsMessage, setSmsMessage] = useState("");
@@ -75,6 +92,8 @@ export default function AdminPanel() {
   const [emailMessage, setEmailMessage] = useState("");
   const [sendingEmail, setSendingEmail] = useState(false);
 
+=======
+>>>>>>> 966c9965e2367376fbfd15f2c22c311aeaf0d3e9
   // Check if user is admin
   useEffect(() => {
     if (!loading && (!user || user.email !== ADMIN_EMAIL)) {
@@ -106,8 +125,13 @@ export default function AdminPanel() {
 
         setUsers(data.users);
       }
+<<<<<<< HEAD
     } catch {
       // Failed to load users
+=======
+    } catch (error) {
+      console.error("Failed to load users:", error);
+>>>>>>> 966c9965e2367376fbfd15f2c22c311aeaf0d3e9
     } finally {
       setLoadingUsers(false);
     }
@@ -135,8 +159,13 @@ export default function AdminPanel() {
         // Refresh users data
         loadUsers();
       }
+<<<<<<< HEAD
     } catch {
       // Failed to toggle notifications
+=======
+    } catch (error) {
+      console.error("Failed to toggle notifications:", error);
+>>>>>>> 966c9965e2367376fbfd15f2c22c311aeaf0d3e9
     }
   };
 
@@ -166,14 +195,20 @@ export default function AdminPanel() {
       } else {
         alert("Failed to send message");
       }
+<<<<<<< HEAD
     } catch {
       // Failed to send message
+=======
+    } catch (error) {
+      console.error("Failed to send message:", error);
+>>>>>>> 966c9965e2367376fbfd15f2c22c311aeaf0d3e9
       alert("Failed to send message");
     } finally {
       setSendingMessage(false);
     }
   };
 
+<<<<<<< HEAD
   const sendSmsMessage = async () => {
     if (
       !selectedUser ||
@@ -342,6 +377,8 @@ export default function AdminPanel() {
     }
   };
 
+=======
+>>>>>>> 966c9965e2367376fbfd15f2c22c311aeaf0d3e9
   const getDeviceType = (userAgent: string) => {
     if (
       userAgent.includes("Mobile") ||
@@ -375,12 +412,17 @@ export default function AdminPanel() {
     <DefaultLayout>
       <div className="container mx-auto max-w-7xl px-6 py-8">
         <div className="mb-8">
+<<<<<<< HEAD
           <h1 className="text-4xl font-bold text-center mb-4">
             <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
               Admin Panel
             </span>
           </h1>
           <p className="text-center text-gray-400 text-lg">
+=======
+          <h1 className="text-3xl font-bold text-center mb-2">Admin Panel</h1>
+          <p className="text-center text-default-600">
+>>>>>>> 966c9965e2367376fbfd15f2c22c311aeaf0d3e9
             Manage users and their devices
           </p>
         </div>
@@ -388,9 +430,15 @@ export default function AdminPanel() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Users List */}
           <div className="lg:col-span-2">
+<<<<<<< HEAD
             <Card className="backdrop-blur-xl bg-white/5 border border-white/10">
               <CardHeader className="border-b border-white/10">
                 <h3 className="text-xl font-semibold text-white">
+=======
+            <Card>
+              <CardHeader>
+                <h3 className="text-xl font-semibold">
+>>>>>>> 966c9965e2367376fbfd15f2c22c311aeaf0d3e9
                   All Users ({users.length})
                 </h3>
               </CardHeader>
@@ -401,6 +449,7 @@ export default function AdminPanel() {
                     <p>Loading users...</p>
                   </div>
                 ) : (
+<<<<<<< HEAD
                   <Table
                     aria-label="Users table"
                     className="backdrop-blur-xl bg-transparent"
@@ -416,6 +465,13 @@ export default function AdminPanel() {
                       <TableColumn>Phone</TableColumn>
                       <TableColumn>Devices</TableColumn>
                       <TableColumn>Notifications</TableColumn>
+=======
+                  <Table aria-label="Users table">
+                    <TableHeader>
+                      <TableColumn>Email</TableColumn>
+                      <TableColumn>Name</TableColumn>
+                      <TableColumn>Devices</TableColumn>
+>>>>>>> 966c9965e2367376fbfd15f2c22c311aeaf0d3e9
                       <TableColumn>Actions</TableColumn>
                     </TableHeader>
                     <TableBody>
@@ -423,6 +479,7 @@ export default function AdminPanel() {
                         <TableRow key={user.uid}>
                           <TableCell>{user.email}</TableCell>
                           <TableCell>{user.displayName || "N/A"}</TableCell>
+<<<<<<< HEAD
                           <TableCell>
                             {user.phoneNumber ? (
                               <div className="flex items-center gap-2">
@@ -508,6 +565,17 @@ export default function AdminPanel() {
                                 </Button>
                               )}
                             </div>
+=======
+                          <TableCell>{user.devices.length}</TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="flat"
+                              onPress={() => setSelectedUser(user)}
+                            >
+                              Manage
+                            </Button>
+>>>>>>> 966c9965e2367376fbfd15f2c22c311aeaf0d3e9
                           </TableCell>
                         </TableRow>
                       ))}
@@ -521,6 +589,7 @@ export default function AdminPanel() {
           {/* User Device Management */}
           <div>
             {selectedUser ? (
+<<<<<<< HEAD
               <Card className="backdrop-blur-xl bg-white/5 border border-white/10">
                 <CardHeader className="border-b border-white/10">
                   <div>
@@ -554,6 +623,23 @@ export default function AdminPanel() {
                             {getDeviceType(device.userAgent)} Device
                           </p>
                           <p className="text-xs text-gray-400">
+=======
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">
+                    {selectedUser.email}&apos;s Devices
+                  </h3>
+                </CardHeader>
+                <CardBody className="space-y-4">
+                  {selectedUser.devices.map((device) => (
+                    <div key={device.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <p className="font-medium text-sm">
+                            {getDeviceType(device.userAgent)} Device
+                          </p>
+                          <p className="text-xs text-default-500">
+>>>>>>> 966c9965e2367376fbfd15f2c22c311aeaf0d3e9
                             Last login:{" "}
                             {new Date(device.lastLogin).toLocaleString()}
                           </p>
@@ -571,13 +657,23 @@ export default function AdminPanel() {
                         />
                       </div>
 
+<<<<<<< HEAD
                       <div className="text-xs text-gray-400 mb-2">
+=======
+                      <div className="text-xs text-default-400 mb-2">
+>>>>>>> 966c9965e2367376fbfd15f2c22c311aeaf0d3e9
                         {device.userAgent.substring(0, 50)}...
                       </div>
 
                       <Button
+<<<<<<< HEAD
                         className="w-full btn-ai-primary"
                         size="sm"
+=======
+                        className="w-full"
+                        size="sm"
+                        variant="flat"
+>>>>>>> 966c9965e2367376fbfd15f2c22c311aeaf0d3e9
                         onPress={() => setSelectedDevice(device)}
                       >
                         Send Message
@@ -596,9 +692,15 @@ export default function AdminPanel() {
                 </CardBody>
               </Card>
             ) : (
+<<<<<<< HEAD
               <Card className="backdrop-blur-xl bg-white/5 border border-white/10">
                 <CardBody className="text-center py-8">
                   <p className="text-gray-400">
+=======
+              <Card>
+                <CardBody className="text-center py-8">
+                  <p className="text-default-500">
+>>>>>>> 966c9965e2367376fbfd15f2c22c311aeaf0d3e9
                     Select a user to manage their devices
                   </p>
                 </CardBody>
@@ -609,6 +711,7 @@ export default function AdminPanel() {
 
         {/* Send Custom Message Modal */}
         {selectedDevice && selectedUser && (
+<<<<<<< HEAD
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-md backdrop-blur-xl bg-slate-900/95 border border-white/20 shadow-2xl">
               <CardHeader className="border-b border-white/10">
@@ -621,6 +724,16 @@ export default function AdminPanel() {
                     {getDeviceType(selectedDevice.userAgent)} device
                   </p>
                 </div>
+=======
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <h3 className="text-lg font-semibold">Send Custom Message</h3>
+                <p className="text-sm text-default-600">
+                  To {selectedUser.email} on{" "}
+                  {getDeviceType(selectedDevice.userAgent)} device
+                </p>
+>>>>>>> 966c9965e2367376fbfd15f2c22c311aeaf0d3e9
               </CardHeader>
               <CardBody className="space-y-4">
                 <Input
@@ -651,6 +764,7 @@ export default function AdminPanel() {
             </Card>
           </div>
         )}
+<<<<<<< HEAD
 
         {/* Send SMS Modal */}
         {showSmsModal && selectedUser && selectedUser.phoneNumber && (
@@ -994,6 +1108,8 @@ export default function AdminPanel() {
             </Card>
           </div>
         )}
+=======
+>>>>>>> 966c9965e2367376fbfd15f2c22c311aeaf0d3e9
       </div>
     </DefaultLayout>
   );
