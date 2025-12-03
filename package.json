@@ -27,6 +27,7 @@
     "@heroui/system": "2.4.21",
     "@heroui/tabs": "^2.2.24",
     "@heroui/theme": "2.4.23",
+    "@heroui/tooltip": "^2.2.24",
     "@react-aria/visually-hidden": "3.8.27",
     "clsx": "2.1.1",
     "firebase": "^12.3.0",
