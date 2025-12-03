@@ -1,0 +1,113 @@
+name: Deploy
+
+# This workflow is currently disabled because this Next.js application
+# uses API routes and server-side features that require a Node.js runtime.
+# GitHub Pages only supports static sites.
+#
+# Recommended deployment platforms:
+# - Vercel (https://vercel.com) - Optimized for Next.js, zero-config deployment
+# - Netlify (https://netlify.com) - Supports serverless functions
+# - AWS Amplify (https://aws.amazon.com/amplify/) - Full-stack deployment
+#
+# To deploy to Vercel:
+# 1. Connect your GitHub repository at https://vercel.com/new
+# 2. Vercel will auto-detect Next.js and configure builds
+# 3. Add environment variables in Vercel dashboard (see DEPLOYMENT.md)
+# 4. Vercel will automatically deploy on push to main
+#
+# To enable GitHub Pages deployment (NOT RECOMMENDED for this app):
+# - Remove all API routes from pages/api/
+# - Add "output: 'export'" to next.config.js
+# - Uncomment the workflow below
+# - Enable GitHub Pages in repository settings
+
+on:
+  workflow_dispatch:  # Manual trigger only
+    inputs:
+      deployment_target:
+        description: 'Deployment target'
+        required: true
+        default: 'vercel'
+        type: choice
+        options:
+          - vercel
+          - netlify
+          - aws-amplify
+          - github-pages-static
+
+jobs:
+  deployment-instructions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show deployment instructions
+        run: |
+          echo "## 📦 Deployment Instructions" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This Next.js application requires server-side rendering and cannot be deployed to GitHub Pages." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Recommended: Deploy to Vercel" >> $GITHUB_STEP_SUMMARY
+          echo "1. Visit https://vercel.com/new" >> $GITHUB_STEP_SUMMARY
+          echo "2. Import this repository: Astroid-Destroyers/HealthTrackerAI" >> $GITHUB_STEP_SUMMARY
+          echo "3. Configure environment variables (see DEPLOYMENT.md)" >> $GITHUB_STEP_SUMMARY
+          echo "4. Deploy! Vercel will auto-configure Next.js" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Alternative: Deploy to Netlify" >> $GITHUB_STEP_SUMMARY
+          echo "1. Visit https://app.netlify.com/start" >> $GITHUB_STEP_SUMMARY
+          echo "2. Connect this repository" >> $GITHUB_STEP_SUMMARY
+          echo "3. Build command: \`npm run build\`" >> $GITHUB_STEP_SUMMARY
+          echo "4. Publish directory: \`.next\`" >> $GITHUB_STEP_SUMMARY
+          echo "5. Add environment variables in Netlify dashboard" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "See DEPLOYMENT.md for complete deployment guide." >> $GITHUB_STEP_SUMMARY
+          
+          # Exit with informational message
+          echo "⚠️  This workflow is for documentation purposes only."
+          echo "Please deploy using Vercel, Netlify, or AWS Amplify."
+          exit 0
+
+# ============================================================================
+# GITHUB PAGES DEPLOYMENT (COMMENTED OUT - NOT SUITABLE FOR THIS APP)
+# ============================================================================
+# This section is commented out because the app uses API routes.
+# To use GitHub Pages, you must:
+# 1. Remove all files in pages/api/ directory
+# 2. Remove server-side data fetching (getServerSideProps)
+# 3. Add "output: 'export'" to next.config.js
+# 4. Update build script to generate static export
+# 5. Uncomment the job below
+
+# deploy-github-pages:
+#   runs-on: ubuntu-latest
+#   needs: build
+#   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+#   
+#   permissions:
+#     contents: read
+#     pages: write
+#     id-token: write
+#   
+#   environment:
+#     name: github-pages
+#     url: ${{ steps.deployment.outputs.page_url }}
+#   
+#   steps:
+#     - name: Checkout
+#       uses: actions/checkout@v4
+#     
+#     - name: Download build artifact
+#       uses: actions/download-artifact@v4
+#       with:
+#         name: site-build
+#         path: ./build-output
+#     
+#     - name: Setup Pages
+#       uses: actions/configure-pages@v4
+#     
+#     - name: Upload artifact to Pages
+#       uses: actions/upload-pages-artifact@v3
+#       with:
+#         path: ./build-output
+#     
+#     - name: Deploy to GitHub Pages
+#       id: deployment
+#       uses: actions/deploy-pages@v4
