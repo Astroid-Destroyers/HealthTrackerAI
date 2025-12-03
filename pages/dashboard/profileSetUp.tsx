@@ -1,6 +1,6 @@
 //Profile Set up from dashboard
-import Head from "next/head";
 import Link from "next/link";
+import { Head } from "@/layouts/head";
 import { useEffect, useMemo, useState } from "react";
 import { User, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
@@ -225,9 +225,7 @@ export default function ProfilePage() {
     if (loadingUser) {
         return (
             <>
-                <Head />
-                    <title>Profile | HealthTrackerAI</title>
-                </Head>
+                <Head title="Profile | HealthTrackerAI" />
                 <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
                     Loading profile...
                 </div>
@@ -238,9 +236,7 @@ export default function ProfilePage() {
     if (!user) {
         return (
             <>
-                <Head />
-                    <title>Profile | HealthTrackerAI</title>
-                </Head>
+                <Head title="Profile | HealthTrackerAI" />
                 <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
                     <div className="text-center space-y-4">
                         <p className="text-lg">
@@ -260,9 +256,7 @@ export default function ProfilePage() {
 
     return (
         <>
-            <Head />
-                <title>Profile | HealthTrackerAI</title>
-            </Head>
+            <Head title="Profile | HealthTrackerAI" />
 
             <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white flex">
                 {/* LEFT SIDEBAR */}

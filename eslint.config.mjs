@@ -57,7 +57,6 @@ export default defineConfig([globalIgnores([
         "@typescript-eslint": typescriptEslint,
         "jsx-a11y": fixupPluginRules(jsxA11Y),
         prettier: fixupPluginRules(prettier),
-        
     },
 
     languageOptions: {
@@ -83,17 +82,6 @@ export default defineConfig([globalIgnores([
         },
     },
 
-    files: ["**/*.ts", "**/*.tsx"],
-    "env": {
-            "browser": true,
-            "es2021": true
-        },
-        "extends": [
-            "eslint:recommended",
-            "plugin:react/recommended",
-          	"next/core-web-vitals"
-        ],
- 
     rules: {
         // General rules to reduce build friction
         "no-console": "warn",
