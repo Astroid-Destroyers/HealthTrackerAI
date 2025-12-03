@@ -61,22 +61,7 @@ export default function AdminPanel() {
   const [emailMessage, setEmailMessage] = useState("");
   const [sendingEmail, setSendingEmail] = useState(false);
 
-    // SMS functionality state
-    const [showSmsModal, setShowSmsModal] = useState(false);
-    const [smsMessage, setSmsMessage] = useState("");
-    const [sendingSms, setSendingSms] = useState(false);
-
-    // FCM functionality state
-    const [showFcmModal, setShowFcmModal] = useState(false);
-    const [fcmTitle, setFcmTitle] = useState("");
-    const [fcmMessage, setFcmMessage] = useState("");
-    const [sendingFcm, setSendingFcm] = useState(false);
-
-    // Email functionality state
-    const [showEmailModal, setShowEmailModal] = useState(false);
-    const [emailSubject, setEmailSubject] = useState("");
-    const [emailMessage, setEmailMessage] = useState("");
-    const [sendingEmail, setSendingEmail] = useState(false);
+    
 
   useEffect(() => {
     if (!loading && (!user || user.email !== ADMIN_EMAIL)) {
@@ -961,21 +946,3 @@ export default function AdminPanel() {
       </DefaultLayout>
     );
   }
-                      setShowEmailModal(false);
-                      setEmailSubject("");
-                      setEmailMessage("");
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </CardBody>
-            </Card>
-          </div>
-        )}
-=======
->>>>>>> 966c9965e2367376fbfd15f2c22c311aeaf0d3e9
-      </div>
-    </DefaultLayout>
-  );
-}

@@ -25,7 +25,8 @@
     "@heroui/snippet": "2.2.26",
     "@heroui/switch": "2.2.23",
     "@heroui/system": "2.4.21",
-    "@heroui/theme": "2.4.21",
+    "@heroui/theme": "2.4.23",
+    "@heroui/tabs": "^2.2.24",
     "@react-aria/visually-hidden": "3.8.27",
     "clsx": "2.1.1",
     "firebase": "^12.3.0",
@@ -40,6 +41,7 @@
     "react-dom": "18.3.1"
   },
   "devDependencies": {
+      "eslint-plugin-next": "14.1.0",
     "@eslint/compat": "1.2.8",
     "@eslint/eslintrc": "3.3.1",
     "@eslint/js": "9.25.1",
