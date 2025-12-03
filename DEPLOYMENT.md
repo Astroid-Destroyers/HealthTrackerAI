@@ -261,26 +261,26 @@ The application uses Discord webhooks for contact form submissions. SMTP configu
 
 ⚠️ **IMPORTANT**: The repository currently has syntax errors in `pages/dashboard/profileSetUp.tsx` that prevent the build from succeeding:
 
-- Line 228-230: Incorrect JSX syntax with `<Head />` self-closing tag followed by children
-- Line 94 in `eslint.config.mjs`: Empty plugin name in extends array causing ESLint errors
+- Line 228: Incorrect JSX syntax - `<Head />` is used as a self-closing tag but is followed by children elements
+- Lines 91-95 in `eslint.config.mjs`: Empty plugin name in extends array causing ESLint errors
 
 These issues need to be fixed before the CI workflow can pass successfully. The errors are **NOT** introduced by the CI/CD changes but pre-exist in the codebase.
 
 **To fix `profileSetUp.tsx`**:
 ```tsx
-// Current (incorrect):
+// Current (incorrect) - self-closing tag with children:
 <Head />
     <title>Profile | HealthTrackerAI</title>
 </Head>
 
-// Should be:
+// Corrected - proper opening tag:
 <Head>
     <title>Profile | HealthTrackerAI</title>
 </Head>
 ```
 
 **To fix `eslint.config.mjs`**:
-Remove or fix line 94 which has an invalid empty plugin reference in the extends array.
+Remove or fix lines 91-95 which have an invalid empty plugin reference in the extends array (`"next/core-web-vitals"` with no corresponding plugin configuration).
 
 Once these issues are resolved, the build will succeed and the CI workflow will pass.
 

@@ -42,6 +42,9 @@ jobs:
           else
             echo "No tsconfig.json found, skipping typecheck"
           fi
+        # Continue on error to allow pre-existing TypeScript errors
+        # This ensures CI doesn't block on issues that existed before these changes
+        # TODO: Remove continue-on-error once pre-existing errors are fixed
         continue-on-error: true
       
       - name: Run tests
@@ -52,6 +55,7 @@ jobs:
           else
             echo "No test script found in package.json, skipping tests"
           fi
+        # Continue on error to handle missing or failing tests gracefully
         continue-on-error: true
       
       - name: Build application

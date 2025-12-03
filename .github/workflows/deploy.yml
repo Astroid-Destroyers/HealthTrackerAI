@@ -25,7 +25,7 @@ on:
   workflow_dispatch:  # Manual trigger only
     inputs:
       deployment_target:
-        description: 'Deployment target'
+        description: 'Deployment target (informational only)'
         required: true
         default: 'vercel'
         type: choice
@@ -33,7 +33,6 @@ on:
           - vercel
           - netlify
           - aws-amplify
-          - github-pages-static
 
 jobs:
   deployment-instructions:
