@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint --fix"
+    "lint": "eslint --fix",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@heroui/button": "^2.2.25",
