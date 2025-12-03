@@ -41,7 +41,6 @@
     "react-dom": "18.3.1"
   },
   "devDependencies": {
-      "eslint-plugin-next": "^13.6.0",
     "@eslint/compat": "1.2.8",
     "@eslint/eslintrc": "3.3.1",
     "@eslint/js": "9.25.1",
