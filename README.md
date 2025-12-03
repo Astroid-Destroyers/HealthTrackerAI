@@ -77,6 +77,31 @@ For Gmail, you'll need to:
 ### Other Email Providers
 The configuration works with most SMTP providers. Update the `SMTP_HOST` and `SMTP_PORT` accordingly.
 
+## CI/CD and Deployment
+
+This repository includes GitHub Actions workflows for continuous integration and deployment guidance.
+
+### CI Workflow
+The CI workflow (`.github/workflows/ci.yml`) runs automatically on:
+- Push to `main` branch
+- Pull requests to `main` branch
+
+It performs:
+- Dependency installation
+- TypeScript type checking
+- Application build
+- Artifact upload for deployment
+
+### Deployment
+This Next.js application uses API routes and server-side features that require a Node.js runtime. **GitHub Pages is not suitable** for this application.
+
+**Recommended deployment platforms:**
+- [Vercel](https://vercel.com) - Optimized for Next.js (currently deployed)
+- [Netlify](https://netlify.com) - Supports serverless functions
+- [AWS Amplify](https://aws.amazon.com/amplify/) - Full-stack hosting
+
+For detailed deployment instructions, environment variable configuration, and troubleshooting, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+
 ## License
 
 Licensed under the [MIT license](https://github.com/heroui-inc/next-pages-template/blob/main/LICENSE).
