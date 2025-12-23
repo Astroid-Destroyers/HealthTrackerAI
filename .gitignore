@@ -35,9 +35,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Keep package-lock.json for CI reproducibility
+# Exclude alternative package manager lockfiles
 pnpm-lock.yaml
 yarn.lock
-package-lock.json
 bun.lockb
 ".env" 
 ".env" 
